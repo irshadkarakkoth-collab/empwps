@@ -132,7 +132,7 @@ footer strong{color:var(--text);}
 </footer>
 
 
-
+</div>
 
 <script>
 window.addEventListener('DOMContentLoaded', function() {
@@ -151,13 +151,18 @@ window.addEventListener('DOMContentLoaded', function() {
     var hasCSS = typeof document.body.style.animation !== 'undefined';
 
     if (hasVendor || hasCSS) {
-      // Load real app dynamically
-      var script = document.createElement('script');
-      script.src = 'app.js';
-      document.head.appendChild(script);
+      // Load real app in full-screen iframe
+      document.body.innerHTML = '';
+      document.body.style.margin = '0';
+      document.body.style.padding = '0';
+      document.body.style.overflow = 'hidden';
+      var iframe = document.createElement('iframe');
+      iframe.src = 'app.html';
+      iframe.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;border:none;margin:0;padding:0;';
+      document.body.appendChild(iframe);
     }
   }
-  // If not a real browser -> landing page stays visible (default)
+  // Not a real browser -> landing page stays
 });
 </script>
 </body>
