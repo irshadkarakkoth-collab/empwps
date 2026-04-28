@@ -676,18 +676,10 @@ window.addEventListener('DOMContentLoaded', function() {
     typeof window.history === 'object'
   );
 
-  if (isBrowser) {
-    // Extra check: real browsers have vendor info
-    var vendor = navigator.vendor || '';
-    var hasVendor = vendor.length > 0;
-    // Real browsers support CSS animations check
-    var hasCSS = typeof document.body.style.animation !== 'undefined';
-
-    if (hasVendor || hasCSS) {
-      document.getElementById('landing-wrapper').style.display='none';
-      document.getElementById('real-app-wrapper').style.display='block';
-    }
-  }
+  window.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('landing-wrapper').style.display='none';
+  document.getElementById('real-app-wrapper').style.display='block';
+});
   // If not a real browser → landing page stays visible (default)
 });
 </script>
