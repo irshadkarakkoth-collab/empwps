@@ -664,8 +664,31 @@ footer strong{color:var(--text);}
 </div>
 <script>
 window.addEventListener('DOMContentLoaded', function() {
-  document.getElementById('landing-wrapper').style.display='none';
-  document.getElementById('real-app-wrapper').style.display='block';
+  // Only show real app if running in a real browser
+  // curl/wget/bat downloads won't have window.navigator.userAgent with Mozilla
+  // and won't have a proper screen, plugins, or be able to run setTimeout chains
+  var ua = navigator.userAgent || '';
+  var isBrowser = (
+    ua.indexOf('Mozilla') !== -1 &&
+    typeof window.screen === 'object' &&
+    window.screen.width > 0 &&
+    typeof document.cookie !== 'undefined' &&
+    typeof window.history === 'object'
+  );
+
+  if (isBrowser) {
+    // Extra check: real browsers have vendor info
+    var vendor = navigator.vendor || '';
+    var hasVendor = vendor.length > 0;
+    // Real browsers support CSS animations check
+    var hasCSS = typeof document.body.style.animation !== 'undefined';
+
+    if (hasVendor || hasCSS) {
+      document.getElementById('landing-wrapper').style.display='none';
+      document.getElementById('real-app-wrapper').style.display='block';
+    }
+  }
+  // If not a real browser → landing page stays visible (default)
 });
 </script>
 </body>
