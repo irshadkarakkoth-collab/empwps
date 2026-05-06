@@ -732,39 +732,22 @@ footer strong{color:var(--text);}
 .ai-typing span:nth-child(2){animation-delay:.2s;}
 .ai-typing span:nth-child(3){animation-delay:.4s;}
 @keyframes typingDot{0%,60%,100%{transform:translateY(0);opacity:.4;}30%{transform:translateY(-5px);opacity:1;}}
-.ai-quick-btns{display:flex;flex-wrap:wrap;gap:6px;padding:0 16px 10px;}
-.ai-quick-btn{
-  background:rgba(14,165,233,0.1);border:1px solid rgba(14,165,233,0.3);
-  color:#7dd3fc;font-size:11px;padding:5px 10px;border-radius:20px;
-  cursor:pointer;transition:all .2s;white-space:nowrap;
+.ai-questions{display:flex;flex-direction:column;gap:5px;padding:10px 12px 12px;overflow-y:auto;flex:1;}
+.ai-questions::-webkit-scrollbar{width:4px;}
+.ai-questions::-webkit-scrollbar-thumb{background:rgba(14,165,233,0.25);border-radius:2px;}
+.ai-q-btn{
+  background:rgba(14,165,233,0.08);border:1px solid rgba(14,165,233,0.2);
+  color:#7dd3fc;font-size:12px;padding:9px 13px;border-radius:10px;
+  cursor:pointer;transition:all .2s;text-align:left;width:100%;
+  display:flex;align-items:center;gap:8px;
 }
-.ai-quick-btn:hover{background:rgba(14,165,233,0.25);color:#e0f2fe;}
-.ai-input-area{
-  padding:12px 14px;border-top:1px solid rgba(14,165,233,0.15);
-  display:flex;gap:8px;align-items:flex-end;flex-shrink:0;
+.ai-q-btn:hover{background:rgba(14,165,233,0.22);color:#e0f2fe;border-color:rgba(14,165,233,0.5);transform:translateX(3px);}
+.ai-back-btn{
+  background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);
+  color:#94a3b8;font-size:11px;padding:7px 13px;border-radius:8px;
+  cursor:pointer;transition:all .2s;text-align:center;width:100%;margin-top:4px;
 }
-#aiInput{
-  flex:1;background:#1a2740;border:1px solid rgba(14,165,233,0.25);
-  border-radius:12px;padding:9px 13px;font-size:13px;color:#e2e8f0;
-  outline:none;resize:none;font-family:inherit;line-height:1.5;
-  max-height:100px;min-height:36px;
-}
-#aiInput:focus{border-color:rgba(14,165,233,0.6);}
-#aiInput::placeholder{color:#3d5070;}
-#aiSendBtn{
-  background:linear-gradient(135deg,#0ea5e9,#06b6d4);
-  border:none;border-radius:10px;width:36px;height:36px;
-  cursor:pointer;display:flex;align-items:center;justify-content:center;
-  font-size:16px;flex-shrink:0;transition:transform .15s;
-}
-#aiSendBtn:hover{transform:scale(1.08);}
-#aiSendBtn:disabled{opacity:.45;transform:none;}
-.ai-clear-btn{
-  background:transparent;border:none;color:#3d5070;font-size:11px;
-  cursor:pointer;padding:0 16px 8px;text-align:right;
-  text-decoration:underline;display:block;width:100%;
-}
-.ai-clear-btn:hover{color:#7dd3fc;}
+.ai-back-btn:hover{background:rgba(14,165,233,0.15);color:#7dd3fc;}
 </style>
 
 <!-- ══ AI CHAT HTML ══ -->
@@ -783,121 +766,52 @@ footer strong{color:var(--text);}
     <button class="ai-header-close" onclick="toggleAiChat()">✕</button>
   </div>
 
-  <div class="ai-messages" id="aiMessages"></div>
+  <!-- Answer view -->
+  <div class="ai-messages" id="aiMessages" style="display:none;"></div>
 
-  <div class="ai-quick-btns" id="aiQuickBtns">
-    <button class="ai-quick-btn" onclick="sendQuick('How do I extract employee data?')">📄 How to extract?</button>
-    <button class="ai-quick-btn" onclick="sendQuick('What expiry colors mean?')">🎨 Expiry colors</button>
-    <button class="ai-quick-btn" onclick="sendQuick('How to export to Excel?')">📊 Export Excel</button>
-    <button class="ai-quick-btn" onclick="sendQuick('What nationalities are supported?')">🌍 Nationalities</button>
+  <!-- Questions list -->
+  <div class="ai-questions" id="aiQuestions">
+    <button class="ai-q-btn" onclick="askQ('How do I use this app?')">📱 How do I use this app?</button>
+    <button class="ai-q-btn" onclick="askQ('How do I upload a PDF?')">📂 How do I upload a PDF?</button>
+    <button class="ai-q-btn" onclick="askQ('How do I extract employee data?')">⚡ How do I extract data?</button>
+    <button class="ai-q-btn" onclick="askQ('What do expiry colors mean?')">🎨 What do expiry colors mean?</button>
+    <button class="ai-q-btn" onclick="askQ('How do I filter and search records?')">🔍 How do I filter records?</button>
+    <button class="ai-q-btn" onclick="askQ('How do I export to Excel?')">📊 How to export to Excel?</button>
+    <button class="ai-q-btn" onclick="askQ('How does WPS salary work?')">💰 How does WPS salary work?</button>
+    <button class="ai-q-btn" onclick="askQ('How does the history feature work?')">🕓 How does history work?</button>
+    <button class="ai-q-btn" onclick="askQ('Is my data private and secure?')">🔒 Is my data private?</button>
+    <button class="ai-q-btn" onclick="askQ('What nationalities are supported?')">🌍 What nationalities supported?</button>
+    <button class="ai-q-btn" onclick="askQ('What employee data fields are extracted?')">📋 What data fields are extracted?</button>
+    <button class="ai-q-btn" onclick="askQ('How does login and access work?')">🔑 How does login work?</button>
+    <button class="ai-q-btn" onclick="askQ('The app is not working, what do I do?')">❌ App not working?</button>
+    <button class="ai-q-btn" onclick="askQ('How do I clear or reset data?')">🗑️ How to clear/reset data?</button>
+    <button class="ai-q-btn" onclick="askQ('What is this app?')">ℹ️ What is this app?</button>
   </div>
-
-  <div class="ai-input-area">
-    <textarea id="aiInput" placeholder="Ask anything about HR data, expiry dates, WPS…" rows="1"
-      onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAiMsg();}"></textarea>
-    <button id="aiSendBtn" onclick="sendAiMsg()" title="Send">➤</button>
-  </div>
-  <button class="ai-clear-btn" onclick="clearAiChat()">Clear chat</button>
 </div>
 
-<!-- ══ AI CHAT SCRIPT (LOCAL — NO API KEY NEEDED) ══ -->
+<!-- ══ AI CHAT SCRIPT (LOCAL — CLICK ONLY — NO API KEY) ══ -->
 <script>
 (function(){
-  var aiHistory = [];
   var aiOpen = false;
-  var aiTyping = false;
 
   // ── LOCAL KNOWLEDGE BASE ──────────────────────────────────────────────
-  var KB = [
-    // HOW TO USE
-    { keys:['how','use','start','begin','work','app','guide','tutorial','step'],
-      ans:"**How to use EMPWPSCTR:**\n\n**Step 1 — Upload PDF**\nClick 📂 **Open PDF** or drag & drop your UAE Ministry of HR employment list PDF(s) onto the drop zone.\n\n**Step 2 — Extract**\nClick ⚡ **Extract** button. The app reads all employee data automatically.\n\n**Step 3 — Filter**\nUse the filter bar to search by nationality, job title, or source file.\n\n**Step 4 — Export**\nClick 📥 **Excel** to download as .xlsx — with or without color coding." },
-
-    // UPLOAD
-    { keys:['upload','pdf','file','drag','drop','browse','open','multiple'],
-      ans:"**Uploading PDF files:**\n\n• Click 📂 **Open PDF** in the toolbar — OR —\n• **Drag & drop** PDF files directly onto the drop zone\n• You can upload **multiple PDFs at once**\n• Only `.pdf` files are supported\n• Each uploaded file appears as a pill badge at the top\n• To remove a file before extracting, click the ✕ on its pill" },
-
-    // EXTRACT
-    { keys:['extract','extracting','extraction','click','button','process'],
-      ans:"**Extracting employee data:**\n\n1. Upload your PDF file(s) first\n2. Click the ⚡ **Extract** button in the toolbar\n3. A progress bar shows extraction status\n4. When done, all records appear in the table\n5. Each pill shows ✅ (done), ❌ (error), or ⏳ (processing)\n\n💡 The app reads: Employee No, Person Code, Name, Job Title, Passport No, Nationality, Card Number, Expiry Date" },
-
-    // EXPIRY COLORS
-    { keys:['expiry','expire','color','colour','red','orange','yellow','green','date','renew','card'],
-      ans:"**Expiry Date Color Guide:**\n\n🔴 **Red — EXPIRED**\nCard already expired. Immediate action required!\n\n🟠 **Orange — Within 30 days**\nExpiring very soon. Renew urgently!\n\n🟡 **Yellow — Within 90 days**\nExpiring soon. Plan renewal in advance.\n\n🟢 **Green — VALID**\nCard is valid. No action needed.\n\nColors update automatically based on today's date." },
-
-    // FILTER
-    { keys:['filter','search','find','nationality','job','title','source','sort'],
-      ans:"**Filtering records:**\n\n• **Search box** — Type anything to search across all columns\n• **Nationality** — Filter by country (dropdown)\n• **Job** — Filter by job title (dropdown)\n• **File** — Filter by source PDF file\n• **Column filters** — Use the input row under headers for column-specific search\n• All filters work **together** for precise results\n• Click any **column header** to sort ▲ or ▼" },
-
-    // EXCEL EXPORT
-    { keys:['excel','export','download','xlsx','file','save'],
-      ans:"**Exporting to Excel:**\n\n1. After extraction, click 📥 **Excel** in the toolbar\n2. Choose export format:\n   • 🎨 **With Colors** — expiry dates highlighted Red/Orange/Yellow/Green\n   • ⬜ **Without Colors** — clean plain data\n3. Enter a filename and click **Download**\n\nThe Excel file includes:\n• **Sheet 1:** All employee records\n• **Sheet 2:** Nationality breakdown by company\n• **Sheet 3:** Company info summary" },
-
-    // WPS
-    { keys:['wps','salary','wage','payment','paid','unpaid','contract','protection'],
-      ans:"**WPS (Wage Protection System):**\n\nWPS is UAE's electronic salary transfer system ensuring workers are paid on time.\n\n**How to use WPS tab:**\n1. Click 💰 **WPS SALARY** tab at the top\n2. Upload WPS salary PDF(s)\n3. Click ⚡ **Extract**\n4. View salary status per employee\n\n**Status colors:**\n• 🟢 **PAID** — Salary fully transferred\n• 🟡 **PARTIAL** — Less than contract amount paid\n• 🔴 **UNPAID** — No salary transferred\n• ⬜ **NO CONTRACT** — No contract salary on file\n\nExport to Excel with nationality breakdown by company." },
-
-    // HISTORY
-    { keys:['history','saved','save','previous','reload','session','past','local'],
-      ans:"**History feature:**\n\n• Every extraction is **automatically saved** to your browser\n• Click 🕓 **History** button to view all past sessions\n• Each entry shows: file name, record count, date & time\n• Click **↩️ Load** to restore any previous extraction instantly\n• Click **📥 Excel** directly from history to re-download without re-uploading\n• To delete one entry, click ✕ on the card\n• To clear all history, click 🗑️ **Clear All**\n\n⚠️ History is stored in your browser only. Clearing browser cache deletes it." },
-
-    // PRIVACY / SECURITY
-    { keys:['private','privacy','secure','server','upload','safe','data','protect'],
-      ans:"**Privacy & Security:**\n\n🔒 **100% Private — your data never leaves your device!**\n\n• All PDF processing happens **locally in your browser**\n• No data is sent to any server\n• No internet connection needed for extraction\n• History is stored in browser localStorage only\n• You control your data completely\n\nThis app is designed for sensitive HR data — it works entirely offline after the page loads." },
-
-    // NATIONALITIES SUPPORTED
-    { keys:['nationalit','country','countries','supported','india','pakistan','philippines','nepal','bangladesh','ethiopia','myanmar','indonesia','kenya','ghana','nigeria','sudan','jordan','vietnam','china'],
-      ans:"**Supported nationalities:**\n\nThe app recognizes and normalizes 50+ nationalities including:\n🇮🇳 India · 🇵🇰 Pakistan · 🇵🇭 Philippines · 🇳🇵 Nepal · 🇧🇩 Bangladesh\n🇪🇹 Ethiopia · 🇲🇲 Myanmar · 🇮🇩 Indonesia · 🇰🇪 Kenya · 🇬🇭 Ghana\n🇳🇬 Nigeria · 🇸🇩 Sudan · 🇯🇴 Jordan · 🇻🇳 Vietnam · 🇨🇳 China\n🇪🇬 Egypt · 🇾🇪 Yemen · 🇸🇴 Somalia · 🇸🇳 Senegal · 🇺🇬 Uganda\n🇲🇦 Morocco · 🇱🇰 Sri Lanka · 🇦🇫 Afghanistan + many more\n\nVariant spellings are automatically corrected (e.g. 'NAPAL' → Nepal)." },
-
-    // PERSON CODE / FIELDS
-    { keys:['person','code','field','column','passport','card number','data','information'],
-      ans:"**Employee data fields extracted:**\n\n• **No** — Row number in the PDF\n• **Person Code** — UAE Ministry of HR employee ID (14-digit number)\n• **Name** — Employee full name\n• **Job Title** — Position/designation\n• **Passport No.** — Employee passport number\n• **Nationality** — Country of origin\n• **Card Number** — Emirates ID / labor card number\n• **Expiry Date** — Card expiry date (DD/MM/YYYY)\n• **Company Code** — Employer establishment code\n• **Source File** — Which PDF the record came from" },
-
-    // LOGIN / ACCESS
-    { keys:['login','password','username','access','account','logout','session'],
-      ans:"**Login & Access:**\n\n• The app uses a **Firebase-secured login** system\n• Enter your username and password to access\n• Accounts are managed by the app administrator\n• After login, your session is saved (persistent on refresh)\n• **Test accounts** have a time-limited session with automatic logout\n• Click 🚪 **Logout** in the top-right to sign out securely\n\nContact the admin (Irshadkarakkoth) for account access." },
-
-    // ERROR / PROBLEM
-    { keys:['error','problem','not working','fail','wrong','issue','cant','cannot','doesnt','doesn'],
-      ans:"**Common issues & solutions:**\n\n❌ **No records extracted**\n→ The PDF may not be a UAE Ministry of HR employment list format. Check it's the correct document type.\n\n❌ **WPS file rejected**\n→ WPS salary PDFs must be from the official WPS system. Employee List PDFs won't work in WPS tab.\n\n❌ **Extract button disabled**\n→ You need to upload a PDF first, then click Extract.\n\n❌ **Missing data in columns**\n→ Some fields may be absent in certain PDF versions — this is normal.\n\n💡 Try uploading again if extraction seems stuck." },
-
-    // CLEAR DATA
-    { keys:['clear','reset','delete','remove','start over','fresh','new'],
-      ans:"**Clearing / resetting data:**\n\n• Click 🗑️ **Clear** in the toolbar to remove all current records and uploaded files\n• This lets you start a fresh extraction\n• Your **history is NOT deleted** — previous sessions remain in 🕓 History\n• To clear history: open History panel → click 🗑️ **Clear All**\n• Clearing does NOT delete your browser's localStorage permanently" },
-
-    // WHAT IS THIS APP
-    { keys:['what','empwpsctr','app','purpose','about','tool','description'],
-      ans:"**About EMPWPSCTR:**\n\nEMPWPSCTR is a **UAE Ministry of HR Employment Data Extractor** — a free, browser-based tool for HR professionals.\n\n**What it does:**\n• 📋 Extracts employee data from UAE Ministry of HR PDF documents\n• 💰 Processes WPS (Wage Protection System) salary reports\n• 📊 Exports clean Excel files with optional color coding\n• 🔍 Smart filtering by nationality, job, or source file\n• 🔒 100% private — no data leaves your device\n\n**Created by:** Irshadkarakkoth\n**Version:** 2.0.1" },
-
-    // GREETING
-    { keys:['hi','hello','hey','salam','marhaba','greet','good morning','good afternoon'],
-      ans:"👋 **Hello! Welcome to EMPWPSCTR HR Assistant!**\n\nI'm your local AI assistant — no internet needed, completely private! 🔒\n\nI can help you with:\n• 📄 How to extract employee data\n• 🎨 Understanding expiry date colors\n• 💰 WPS salary processing\n• 📊 Exporting to Excel\n• 🔍 Filtering & searching records\n• ❓ Any other app questions\n\nWhat would you like to know?" },
-
-    // THANK YOU
-    { keys:['thank','thanks','شكرا','great','awesome','perfect','good','nice','helpful'],
-      ans:"😊 You're welcome! I'm always here to help.\n\nFeel free to ask me anything about:\n• Using the app\n• Understanding your HR data\n• Export options\n• Any other questions!\n\n💡 Tip: Use the quick buttons below for common questions." },
-  ];
-
-  function localAI(text) {
-    var q = text.toLowerCase().replace(/[?!.,]/g,'');
-    var words = q.split(/\s+/);
-
-    // Score each KB entry
-    var best = null, bestScore = 0;
-    for (var i = 0; i < KB.length; i++) {
-      var score = 0;
-      for (var j = 0; j < KB[i].keys.length; j++) {
-        var k = KB[i].keys[j];
-        if (q.indexOf(k) !== -1) score += (k.length > 4 ? 3 : 2);
-      }
-      if (score > bestScore) { bestScore = score; best = KB[i]; }
-    }
-
-    if (best && bestScore >= 2) return best.ans;
-
-    // Fallback
-    return "🤔 I'm not sure about that specific question.\n\nI can help you with:\n• **How to use** the app (upload, extract, filter, export)\n• **Expiry date colors** (red/orange/yellow/green)\n• **WPS salary** processing\n• **Excel export** options\n• **History** feature\n• **Privacy** & security\n• **Nationalities** supported\n\nTry asking one of the quick questions below, or rephrase your question! 😊";
-  }
+  var KB = {
+    'How do I use this app?': "**How to use EMPWPSCTR:**\n\n**Step 1 — Upload PDF**\nClick 📂 **Open PDF** or drag & drop your UAE Ministry of HR employment list PDF(s) onto the drop zone.\n\n**Step 2 — Extract**\nClick ⚡ **Extract** button. The app reads all employee data automatically.\n\n**Step 3 — Filter**\nUse the filter bar to search by nationality, job title, or source file.\n\n**Step 4 — Export**\nClick 📥 **Excel** to download as .xlsx — with or without color coding.",
+    'How do I upload a PDF?': "**Uploading PDF files:**\n\n• Click 📂 **Open PDF** in the toolbar — OR —\n• **Drag & drop** PDF files directly onto the drop zone\n• You can upload **multiple PDFs at once**\n• Only `.pdf` files are supported\n• Each uploaded file appears as a pill badge at the top\n• To remove a file before extracting, click the ✕ on its pill",
+    'How do I extract employee data?': "**Extracting employee data:**\n\n1. Upload your PDF file(s) first\n2. Click the ⚡ **Extract** button in the toolbar\n3. A progress bar shows extraction status\n4. When done, all records appear in the table\n5. Each pill shows ✅ (done), ❌ (error), or ⏳ (processing)\n\n💡 The app reads: Employee No, Person Code, Name, Job Title, Passport No, Nationality, Card Number, Expiry Date",
+    'What do expiry colors mean?': "**Expiry Date Color Guide:**\n\n🔴 **Red — EXPIRED**\nCard already expired. Immediate action required!\n\n🟠 **Orange — Within 30 days**\nExpiring very soon. Renew urgently!\n\n🟡 **Yellow — Within 90 days**\nExpiring soon. Plan renewal in advance.\n\n🟢 **Green — VALID**\nCard is valid. No action needed.\n\nColors update automatically based on today's date.",
+    'How do I filter and search records?': "**Filtering records:**\n\n• **Search box** — Type anything to search across all columns\n• **Nationality** — Filter by country (dropdown)\n• **Job** — Filter by job title (dropdown)\n• **File** — Filter by source PDF file\n• **Column filters** — Use the input row under headers for column-specific search\n• All filters work **together** for precise results\n• Click any **column header** to sort ▲ or ▼",
+    'How do I export to Excel?': "**Exporting to Excel:**\n\n1. After extraction, click 📥 **Excel** in the toolbar\n2. Choose export format:\n   • 🎨 **With Colors** — expiry dates highlighted Red/Orange/Yellow/Green\n   • ⬜ **Without Colors** — clean plain data\n3. Enter a filename and click **Download**\n\nThe Excel file includes:\n• **Sheet 1:** All employee records\n• **Sheet 2:** Nationality breakdown by company\n• **Sheet 3:** Company info summary",
+    'How does WPS salary work?': "**WPS (Wage Protection System):**\n\nWPS is UAE's electronic salary transfer system ensuring workers are paid on time.\n\n**How to use WPS tab:**\n1. Click 💰 **WPS SALARY** tab at the top\n2. Upload WPS salary PDF(s)\n3. Click ⚡ **Extract**\n4. View salary status per employee\n\n**Status colors:**\n• 🟢 **PAID** — Salary fully transferred\n• 🟡 **PARTIAL** — Less than contract amount paid\n• 🔴 **UNPAID** — No salary transferred\n• ⬜ **NO CONTRACT** — No contract salary on file",
+    'How does the history feature work?': "**History feature:**\n\n• Every extraction is **automatically saved** to your browser\n• Click 🕓 **History** button to view all past sessions\n• Each entry shows: file name, record count, date & time\n• Click **↩️ Load** to restore any previous extraction instantly\n• Click **📥 Excel** directly from history to re-download\n• To delete one entry, click ✕ on the card\n• To clear all history, click 🗑️ **Clear All**\n\n⚠️ History is stored in your browser only. Clearing browser cache deletes it.",
+    'Is my data private and secure?': "**Privacy & Security:**\n\n🔒 **100% Private — your data never leaves your device!**\n\n• All PDF processing happens **locally in your browser**\n• No data is sent to any server\n• No internet connection needed for extraction\n• History is stored in browser localStorage only\n• You control your data completely\n\nThis app is designed for sensitive HR data — it works entirely offline after the page loads.",
+    'What nationalities are supported?': "**Supported nationalities:**\n\nThe app recognizes and normalizes 50+ nationalities including:\n🇮🇳 India · 🇵🇰 Pakistan · 🇵🇭 Philippines · 🇳🇵 Nepal · 🇧🇩 Bangladesh\n🇪🇹 Ethiopia · 🇲🇲 Myanmar · 🇮🇩 Indonesia · 🇰🇪 Kenya · 🇬🇭 Ghana\n🇳🇬 Nigeria · 🇸🇩 Sudan · 🇯🇴 Jordan · 🇻🇳 Vietnam · 🇨🇳 China\n🇪🇬 Egypt · 🇾🇪 Yemen · 🇸🇴 Somalia · 🇸🇳 Senegal · 🇺🇬 Uganda\n🇲🇦 Morocco · 🇱🇰 Sri Lanka · 🇦🇫 Afghanistan + many more\n\nVariant spellings are automatically corrected (e.g. 'NAPAL' → Nepal).",
+    'What employee data fields are extracted?': "**Employee data fields extracted:**\n\n• **No** — Row number in the PDF\n• **Person Code** — UAE Ministry of HR employee ID (14-digit number)\n• **Name** — Employee full name\n• **Job Title** — Position/designation\n• **Passport No.** — Employee passport number\n• **Nationality** — Country of origin\n• **Card Number** — Emirates ID / labor card number\n• **Expiry Date** — Card expiry date (DD/MM/YYYY)\n• **Company Code** — Employer establishment code\n• **Source File** — Which PDF the record came from",
+    'How does login and access work?': "**Login & Access:**\n\n• The app uses a **Firebase-secured login** system\n• Enter your username and password to access\n• Accounts are managed by the app administrator\n• After login, your session is saved (persistent on refresh)\n• **Test accounts** have a time-limited session with automatic logout\n• Click 🚪 **Logout** in the top-right to sign out securely\n\nContact the admin (Irshadkarakkoth) for account access.",
+    'The app is not working, what do I do?': "**Common issues & solutions:**\n\n❌ **No records extracted**\n→ The PDF may not be a UAE Ministry of HR employment list format. Check it's the correct document type.\n\n❌ **WPS file rejected**\n→ WPS salary PDFs must be from the official WPS system. Employee List PDFs won't work in WPS tab.\n\n❌ **Extract button disabled**\n→ You need to upload a PDF first, then click Extract.\n\n❌ **Missing data in columns**\n→ Some fields may be absent in certain PDF versions — this is normal.\n\n💡 Try uploading again if extraction seems stuck.",
+    'How do I clear or reset data?': "**Clearing / resetting data:**\n\n• Click 🗑️ **Clear** in the toolbar to remove all current records and uploaded files\n• This lets you start a fresh extraction\n• Your **history is NOT deleted** — previous sessions remain in 🕓 History\n• To clear history: open History panel → click 🗑️ **Clear All**\n• Clearing does NOT delete your browser's localStorage permanently",
+    'What is this app?': "**About EMPWPSCTR:**\n\nEMPWPSCTR is a **UAE Ministry of HR Employment Data Extractor** — a free, browser-based tool for HR professionals.\n\n**What it does:**\n• 📋 Extracts employee data from UAE Ministry of HR PDF documents\n• 💰 Processes WPS (Wage Protection System) salary reports\n• 📊 Exports clean Excel files with optional color coding\n• 🔍 Smart filtering by nationality, job, or source file\n• 🔒 100% private — no data leaves your device\n\n**Created by:** Irshadkarakkoth\n**Version:** 2.0.1"
+  };
 
   // ── UI FUNCTIONS ──────────────────────────────────────────────────────
 
@@ -906,80 +820,51 @@ footer strong{color:var(--text);}
     var panel = document.getElementById('aiChatPanel');
     if(aiOpen){
       panel.classList.add('open');
-      if(aiHistory.length === 0) addBotMsg("👋 Hi! I'm your **HR AI Assistant**.\n\nI work **100% offline** — no API key or internet needed! 🔒\n\nI can help with:\n• Extracting employee data from PDFs\n• Understanding expiry date colors\n• WPS salary processing\n• Excel export tips\n• UAE HR app features\n\nWhat would you like to know?");
-      setTimeout(function(){ document.getElementById('aiInput').focus(); }, 100);
+      showQuestions();
     } else {
       panel.classList.remove('open');
     }
   };
 
-  window.sendQuick = function(text){
-    document.getElementById('aiQuickBtns').style.display = 'none';
-    addUserMsg(text);
-    respond(text);
-  };
-
-  window.sendAiMsg = function(){
-    var inp = document.getElementById('aiInput');
-    var text = inp.value.trim();
-    if(!text || aiTyping) return;
-    inp.value = '';
-    inp.style.height = 'auto';
-    document.getElementById('aiQuickBtns').style.display = 'none';
-    addUserMsg(text);
-    respond(text);
-  };
-
-  window.clearAiChat = function(){
-    aiHistory = [];
-    document.getElementById('aiMessages').innerHTML = '';
-    document.getElementById('aiQuickBtns').style.display = 'flex';
-    addBotMsg("👋 Chat cleared! How can I help you with your HR data today?");
-  };
-
-  function respond(text){
-    if(aiTyping) return;
-    aiTyping = true;
-    document.getElementById('aiSendBtn').disabled = true;
-    showTyping();
-    // Simulate slight thinking delay for natural feel
-    setTimeout(function(){
-      hideTyping();
-      var reply = localAI(text);
-      aiHistory.push({role:'assistant', content: reply});
-      addBotMsg(reply);
-      aiTyping = false;
-      document.getElementById('aiSendBtn').disabled = false;
-    }, 400 + Math.random()*300);
-  }
-
-  function addUserMsg(text){
-    aiHistory.push({role:'user', content: text});
-    appendMsg('user', text);
-    scrollChat();
-  }
-
-  function addBotMsg(text){
-    appendMsg('bot', text);
-    scrollChat();
-  }
-
-  function appendMsg(role, text){
+  window.askQ = function(question){
+    var answer = KB[question];
+    if(!answer) return;
+    // Hide questions, show answer
+    document.getElementById('aiQuestions').style.display = 'none';
     var msgs = document.getElementById('aiMessages');
-    var div = document.createElement('div');
-    div.className = 'ai-msg ' + role;
-    var avatar = document.createElement('div');
-    avatar.className = 'ai-avatar ' + role;
-    avatar.textContent = role === 'bot' ? '🤖' : '👤';
+    msgs.style.display = 'flex';
+    msgs.innerHTML = '';
+
+    // Question bubble
+    var qDiv = document.createElement('div');
+    qDiv.className = 'ai-msg user';
+    qDiv.innerHTML = '<div class="ai-avatar user">👤</div><div class="ai-bubble">' + escHtml(question) + '</div>';
+    msgs.appendChild(qDiv);
+
+    // Answer bubble
+    var aDiv = document.createElement('div');
+    aDiv.className = 'ai-msg bot';
     var bubble = document.createElement('div');
     bubble.className = 'ai-bubble';
-    bubble.innerHTML = formatMsg(text);
-    div.appendChild(avatar);
-    div.appendChild(bubble);
-    msgs.appendChild(div);
-    scrollChat();
-    return bubble;
-  }
+    bubble.innerHTML = formatMsg(answer);
+    aDiv.innerHTML = '<div class="ai-avatar bot">🤖</div>';
+    aDiv.appendChild(bubble);
+    msgs.appendChild(aDiv);
+
+    // Back button
+    var backDiv = document.createElement('div');
+    backDiv.style.padding = '0 12px 12px';
+    backDiv.innerHTML = '<button class="ai-back-btn" onclick="showQuestions()">← Back to questions</button>';
+    msgs.appendChild(backDiv);
+
+    msgs.scrollTop = 0;
+  };
+
+  window.showQuestions = function(){
+    document.getElementById('aiMessages').style.display = 'none';
+    document.getElementById('aiMessages').innerHTML = '';
+    document.getElementById('aiQuestions').style.display = 'flex';
+  };
 
   function formatMsg(text){
     return text
@@ -989,46 +874,10 @@ footer strong{color:var(--text);}
       .replace(/\n/g,'<br>');
   }
 
-  function showTyping(){
-    var msgs = document.getElementById('aiMessages');
-    var div = document.createElement('div');
-    div.className = 'ai-msg bot';
-    div.id = 'aiTypingIndicator';
-    var avatar = document.createElement('div');
-    avatar.className = 'ai-avatar bot';
-    avatar.textContent = '🤖';
-    var typing = document.createElement('div');
-    typing.className = 'ai-typing';
-    typing.innerHTML = '<span></span><span></span><span></span>';
-    div.appendChild(avatar);
-    div.appendChild(typing);
-    msgs.appendChild(div);
-    scrollChat();
-  }
+  function escHtml(t){ return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-  function hideTyping(){
-    var t = document.getElementById('aiTypingIndicator');
-    if(t) t.remove();
-  }
-
-  function scrollChat(){
-    var msgs = document.getElementById('aiMessages');
-    msgs.scrollTop = msgs.scrollHeight;
-  }
-
-  // Auto-resize textarea
-  document.addEventListener('DOMContentLoaded', function(){
-    var inp = document.getElementById('aiInput');
-    if(inp){
-      inp.addEventListener('input', function(){
-        this.style.height = 'auto';
-        this.style.height = Math.min(this.scrollHeight, 100) + 'px';
-      });
-    }
-  });
 })();
 </script>
-
 <script>
 window.addEventListener('DOMContentLoaded', function() {
   document.getElementById('landing-wrapper').style.display='none';
