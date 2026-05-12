@@ -863,11 +863,16 @@ footer strong{color:var(--text);}
     inp.style.height = 'auto';
 
     addUserMsg(text);
+    if(isAiGreetingOnly(text)){
+      addBotMsg('Hello! I can help with this EMPWPSCTR app whenever you have a question.');
+      return;
+    }
     if(isAiClearlyUnrelatedQuestion(text)){
       addBotMsg('I can only help with this EMPWPSCTR app: uploads, extraction, WPS salary, Excel export, history, filters, login, visible screen issues, and troubleshooting.');
       return;
     }
-    var appContext = collectAiAppContext();
+    var useScreenContext = shouldUseAiScreenContext(text);
+    var appContext = useScreenContext ? collectAiAppContext() : '';
     chatHistory.push({ role:'user', content:text });
 
     var typingId = addTyping();
@@ -879,7 +884,7 @@ footer strong{color:var(--text);}
       headers:{'Authorization':'Bearer '+_k,'Content-Type':'application/json'},
       body:JSON.stringify({
         model:'llama-3.1-8b-instant',
-        messages:buildAiMessages(appContext, text),
+        messages:buildAiMessages(appContext, text, useScreenContext),
         max_tokens:600,
         temperature:0.25
       })
@@ -951,11 +956,22 @@ footer strong{color:var(--text);}
     return q && unrelatedWords.test(q) && !appWords.test(q);
   }
 
-  function buildAiMessages(appContext, latestText){
-    var contextPrompt = SYSTEM_PROMPT + '\n\nApp-only rule: Only answer questions about this EMPWPSCTR web app, its current screen, visible issues, PDF extraction, WPS salary, Excel export, login, history, filters, data table, and troubleshooting. If a user asks anything unrelated, briefly say you can only help with this app.\n\nScreen-context honesty rules:\n- Base answers on the CURRENT APP SCREEN CONTEXT, not guesses.\n- Never say the whole app is "fully working", "fully functional", "ready for use", "no issue", or "working perfectly" just because records, buttons, or filters are visible.\n- Disabled buttons are not proof of success or failure by themselves. Explain what they might mean only if the context supports it.\n- If the user asks whether the app is fully working on their system, say you cannot confirm the whole app from screen context alone. State only what is visible, what is not tested, and what steps to test next.\n- If the context does not show enough evidence, say that clearly.\n\nYou receive a fresh CURRENT APP SCREEN CONTEXT block with each user question. Use it to understand what the user is currently seeing in the app, including visible errors, uploaded files, table rows, filters, progress dialogs, and recent JavaScript issues. If the context shows a problem, diagnose it directly. Do not claim you can see pixels or private content outside this web app.';
+  function isAiGreetingOnly(text){
+    var q = cleanAiText(text).toLowerCase();
+    return /^(hi|hello|hallo|hai|hey|salam|assalam|good morning|good afternoon|good evening|thanks|thank you)$/i.test(q);
+  }
+
+  function shouldUseAiScreenContext(text){
+    var q = cleanAiText(text).toLowerCase();
+    if(isAiWholeAppHealthQuestion(text)) return true;
+    return /(current screen|this screen|screen|visible|what can you see|can you see|look|shown|showing|on my screen|here|right now|now|status|issue|error|problem|not working|stuck|why|disabled|enable|missing|uploaded|selected|file list|table|row|record|filter|count|progress|button)/.test(q);
+  }
+
+  function buildAiMessages(appContext, latestText, useScreenContext){
+    var contextPrompt = SYSTEM_PROMPT + '\n\nApp-only rule: Only answer questions about this EMPWPSCTR web app, its current screen, visible issues, PDF extraction, WPS salary, Excel export, login, history, filters, data table, and troubleshooting. If a user asks anything unrelated, briefly say you can only help with this app.\n\nAnswering style rules:\n- Answer the exact question only.\n- Do not add current-screen analysis, disabled-button explanations, file counts, record counts, or troubleshooting unless the user asks about the current screen, a visible issue, why something happened, or what is not working.\n- For general app questions like "How to export Excel?" or "What do expiry colors mean?", answer normally from app knowledge and do not mention the current screen.\n- Keep replies short unless the user asks for steps or details.\n\nScreen-context honesty rules:\n- A CURRENT APP SCREEN CONTEXT block is included only when the user asks about the current screen or an issue.\n- If no CURRENT APP SCREEN CONTEXT block is included, do not pretend to inspect the screen.\n- Base screen-related answers on the CURRENT APP SCREEN CONTEXT, not guesses.\n- Never say the whole app is "fully working", "fully functional", "ready for use", "no issue", or "working perfectly" just because records, buttons, or filters are visible.\n- Disabled buttons are not proof of success or failure by themselves. Explain what they might mean only if the user asks about those buttons or the context clearly shows an error.\n- If the user asks whether the app is fully working on their system, say you cannot confirm the whole app from screen context alone. State only what is visible, what is not tested, and what steps to test next.\n- If the context does not show enough evidence, say that clearly.';
     var previousMessages = chatHistory.slice(0, -1);
     var caution = isAiWholeAppHealthQuestion(latestText) ? '\n\n[IMPORTANT FOR THIS QUESTION]\nThe user is asking if the whole app/system is working. Do not answer yes. Do not say fully functional. Give a cautious answer: "I can only see the current app screen/context." Then list visible signals, unknown/untested items, and 3 short test steps.' : '';
-    var contextualUserText = latestText + caution + '\n\n[CURRENT APP SCREEN CONTEXT]\n' + appContext;
+    var contextualUserText = latestText + caution + (useScreenContext ? '\n\n[CURRENT APP SCREEN CONTEXT]\n' + appContext : '\n\n[NO SCREEN CONTEXT]\nThe user did not ask about the current screen. Answer only the question from app knowledge.');
     return [{role:'system', content:contextPrompt}].concat(previousMessages).concat([{role:'user', content:contextualUserText}]);
   }
 
