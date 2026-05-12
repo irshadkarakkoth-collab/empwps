@@ -687,7 +687,7 @@ footer strong{color:var(--text);}
 }
 #aiChatPanel{
   position:fixed;bottom:100px;right:28px;z-index:8000;
-  width:370px;max-height:580px;
+  width:390px;max-height:600px;
   background:#0f1a2e;border:1px solid rgba(14,165,233,0.3);
   border-radius:20px;display:none;flex-direction:column;
   box-shadow:0 20px 60px rgba(0,0,0,0.7);
@@ -732,22 +732,62 @@ footer strong{color:var(--text);}
 .ai-typing span:nth-child(2){animation-delay:.2s;}
 .ai-typing span:nth-child(3){animation-delay:.4s;}
 @keyframes typingDot{0%,60%,100%{transform:translateY(0);opacity:.4;}30%{transform:translateY(-5px);opacity:1;}}
-.ai-questions{display:flex;flex-direction:column;gap:5px;padding:10px 12px 12px;overflow-y:auto;flex:1;}
-.ai-questions::-webkit-scrollbar{width:4px;}
-.ai-questions::-webkit-scrollbar-thumb{background:rgba(14,165,233,0.25);border-radius:2px;}
-.ai-q-btn{
+.ai-input-area{
+  padding:12px;border-top:1px solid rgba(14,165,233,0.15);flex-shrink:0;
+  display:flex;gap:8px;align-items:center;background:#0d1826;
+}
+.ai-input{
+  flex:1;background:#1a2740;border:1px solid rgba(14,165,233,0.2);
+  border-radius:12px;padding:10px 14px;color:#e2e8f0;font-size:13px;
+  outline:none;resize:none;font-family:'Space Grotesk',sans-serif;
+  max-height:80px;overflow-y:auto;
+}
+.ai-input::placeholder{color:#4a5568;}
+.ai-input:focus{border-color:rgba(14,165,233,0.5);}
+.ai-send{
+  width:38px;height:38px;border-radius:10px;
+  background:linear-gradient(135deg,#0ea5e9,#06b6d4);
+  border:none;color:#fff;font-size:16px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:transform .15s,opacity .15s;flex-shrink:0;
+}
+.ai-send:hover{transform:scale(1.1);}
+.ai-send:disabled{opacity:0.4;cursor:not-allowed;transform:none;}
+.ai-key-setup{
+  padding:16px;display:flex;flex-direction:column;gap:12px;
+}
+.ai-key-title{font-size:13px;font-weight:700;color:#e2e8f0;margin-bottom:4px;}
+.ai-key-desc{font-size:12px;color:#64748b;line-height:1.5;}
+.ai-key-input{
+  background:#1a2740;border:1px solid rgba(14,165,233,0.25);
+  border-radius:10px;padding:10px 14px;color:#e2e8f0;font-size:12px;
+  outline:none;width:100%;font-family:monospace;box-sizing:border-box;
+}
+.ai-key-input:focus{border-color:rgba(14,165,233,0.5);}
+.ai-key-btn{
+  background:linear-gradient(135deg,#0ea5e9,#06b6d4);
+  border:none;border-radius:10px;padding:11px;color:#fff;
+  font-size:13px;font-weight:700;cursor:pointer;width:100%;
+  transition:opacity .2s;
+}
+.ai-key-btn:hover{opacity:0.9;}
+.ai-key-link{font-size:11px;color:#0ea5e9;text-align:center;cursor:pointer;text-decoration:underline;}
+.ai-quick-btns{
+  padding:8px 12px 12px;display:flex;flex-wrap:wrap;gap:6px;flex-shrink:0;
+  border-top:1px solid rgba(14,165,233,0.1);
+}
+.ai-quick-btn{
   background:rgba(14,165,233,0.08);border:1px solid rgba(14,165,233,0.2);
-  color:#7dd3fc;font-size:12px;padding:9px 13px;border-radius:10px;
-  cursor:pointer;transition:all .2s;text-align:left;width:100%;
-  display:flex;align-items:center;gap:8px;
+  color:#7dd3fc;font-size:11px;padding:5px 10px;border-radius:20px;
+  cursor:pointer;transition:all .2s;white-space:nowrap;
 }
-.ai-q-btn:hover{background:rgba(14,165,233,0.22);color:#e0f2fe;border-color:rgba(14,165,233,0.5);transform:translateX(3px);}
-.ai-back-btn{
-  background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);
-  color:#94a3b8;font-size:11px;padding:7px 13px;border-radius:8px;
-  cursor:pointer;transition:all .2s;text-align:center;width:100%;margin-top:4px;
+.ai-quick-btn:hover{background:rgba(14,165,233,0.22);color:#e0f2fe;border-color:rgba(14,165,233,0.5);}
+.ai-error{color:#ef4444;font-size:12px;padding:4px 0;}
+.ai-model-badge{
+  font-size:10px;background:rgba(16,185,129,0.15);color:#10b981;
+  border:1px solid rgba(16,185,129,0.3);border-radius:20px;
+  padding:2px 8px;display:inline-block;margin-top:4px;
 }
-.ai-back-btn:hover{background:rgba(14,165,233,0.15);color:#7dd3fc;}
 </style>
 
 <!-- ══ AI CHAT HTML ══ -->
@@ -761,120 +801,281 @@ footer strong{color:var(--text);}
     <div class="ai-avatar bot ai-header-icon">🤖</div>
     <div class="ai-header-info">
       <div class="ai-header-title">HR AI Assistant</div>
-      <div class="ai-header-sub">Local AI · No API Key · Always ready</div>
+      <div class="ai-header-sub" id="aiHeaderSub">Powered by Groq · Free AI</div>
     </div>
     <button class="ai-header-close" onclick="toggleAiChat()">✕</button>
   </div>
 
-  <!-- Answer view -->
-  <div class="ai-messages" id="aiMessages" style="display:none;"></div>
+  <!-- Key Setup View -->
+  <div id="aiKeySetup" class="ai-key-setup">
+    <div class="ai-key-title">🔑 Setup Groq AI (Free)</div>
+    <div class="ai-key-desc">
+      Get a <strong>free</strong> Groq API key to enable real AI chat.<br>
+      Your key is stored only in your browser — never sent anywhere else.
+    </div>
+    <input class="ai-key-input" id="aiKeyInput" type="password" placeholder="Paste your Groq API key (gsk_...)" autocomplete="off"/>
+    <button class="ai-key-btn" onclick="saveGroqKey()">✅ Save & Start Chatting</button>
+    <div class="ai-key-link" onclick="window.open('https://console.groq.com/keys','_blank')">🔗 Get free key at console.groq.com →</div>
+    <div style="font-size:11px;color:#334155;text-align:center;margin-top:4px;">
+      Free tier: ~14,400 requests/day · No credit card needed
+    </div>
+  </div>
 
-  <!-- Questions list -->
-  <div class="ai-questions" id="aiQuestions">
-    <button class="ai-q-btn" onclick="askQ('How do I use this app?')">📱 How do I use this app?</button>
-    <button class="ai-q-btn" onclick="askQ('How do I upload a PDF?')">📂 How do I upload a PDF?</button>
-    <button class="ai-q-btn" onclick="askQ('How do I extract employee data?')">⚡ How do I extract data?</button>
-    <button class="ai-q-btn" onclick="askQ('What do expiry colors mean?')">🎨 What do expiry colors mean?</button>
-    <button class="ai-q-btn" onclick="askQ('How do I filter and search records?')">🔍 How do I filter records?</button>
-    <button class="ai-q-btn" onclick="askQ('How do I export to Excel?')">📊 How to export to Excel?</button>
-    <button class="ai-q-btn" onclick="askQ('How does WPS salary work?')">💰 How does WPS salary work?</button>
-    <button class="ai-q-btn" onclick="askQ('How does the history feature work?')">🕓 How does history work?</button>
-    <button class="ai-q-btn" onclick="askQ('Is my data private and secure?')">🔒 Is my data private?</button>
-    <button class="ai-q-btn" onclick="askQ('What nationalities are supported?')">🌍 What nationalities supported?</button>
-    <button class="ai-q-btn" onclick="askQ('What employee data fields are extracted?')">📋 What data fields are extracted?</button>
-    <button class="ai-q-btn" onclick="askQ('How does login and access work?')">🔑 How does login work?</button>
-    <button class="ai-q-btn" onclick="askQ('The app is not working, what do I do?')">❌ App not working?</button>
-    <button class="ai-q-btn" onclick="askQ('How do I clear or reset data?')">🗑️ How to clear/reset data?</button>
-    <button class="ai-q-btn" onclick="askQ('What is this app?')">ℹ️ What is this app?</button>
+  <!-- Chat View (hidden until key saved) -->
+  <div id="aiChatView" style="display:none;flex-direction:column;flex:1;min-height:0;">
+    <div class="ai-messages" id="aiMessages"></div>
+    <div class="ai-quick-btns" id="aiQuickBtns">
+      <span class="ai-quick-btn" onclick="quickAsk('How do I extract employee data?')">📋 Extract data</span>
+      <span class="ai-quick-btn" onclick="quickAsk('What do expiry colors mean?')">🎨 Expiry colors</span>
+      <span class="ai-quick-btn" onclick="quickAsk('How to export Excel?')">📊 Excel export</span>
+      <span class="ai-quick-btn" onclick="quickAsk('How does WPS salary work?')">💰 WPS salary</span>
+      <span class="ai-quick-btn" onclick="quickAsk('Is my data private?')">🔒 Privacy</span>
+      <span class="ai-quick-btn" onclick="quickAsk('What nationalities are supported?')">🌍 Nationalities</span>
+    </div>
+    <div class="ai-input-area">
+      <textarea class="ai-input" id="aiUserInput" placeholder="Ask anything about this app…" rows="1"
+        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAiMsg();}"
+        oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,80)+'px';"
+      ></textarea>
+      <button class="ai-send" id="aiSendBtn" onclick="sendAiMsg()">➤</button>
+    </div>
+    <div style="text-align:center;padding:4px 0 8px;font-size:10px;color:#1e3a5f;">
+      <span id="aiKeyStatus"></span>
+      &nbsp;·&nbsp;
+      <span style="cursor:pointer;color:#0ea5e9;text-decoration:underline;" onclick="resetGroqKey()">Change key</span>
+    </div>
   </div>
 </div>
 
-<!-- ══ AI CHAT SCRIPT (LOCAL — CLICK ONLY — NO API KEY) ══ -->
+<!-- ══ AI CHAT SCRIPT (GROQ POWERED — REAL AI) ══ -->
 <script>
 (function(){
   var aiOpen = false;
+  var chatHistory = [];
+  var isLoading = false;
 
-  // ── LOCAL KNOWLEDGE BASE ──────────────────────────────────────────────
-  var KB = {
-    'How do I use this app?': "**How to use EMPWPSCTR:**\n\n**Step 1 — Upload PDF**\nClick 📂 **Open PDF** or drag & drop your UAE Ministry of HR employment list PDF(s) onto the drop zone.\n\n**Step 2 — Extract**\nClick ⚡ **Extract** button. The app reads all employee data automatically.\n\n**Step 3 — Filter**\nUse the filter bar to search by nationality, job title, or source file.\n\n**Step 4 — Export**\nClick 📥 **Excel** to download as .xlsx — with or without color coding.",
-    'How do I upload a PDF?': "**Uploading PDF files:**\n\n• Click 📂 **Open PDF** in the toolbar — OR —\n• **Drag & drop** PDF files directly onto the drop zone\n• You can upload **multiple PDFs at once**\n• Only `.pdf` files are supported\n• Each uploaded file appears as a pill badge at the top\n• To remove a file before extracting, click the ✕ on its pill",
-    'How do I extract employee data?': "**Extracting employee data:**\n\n1. Upload your PDF file(s) first\n2. Click the ⚡ **Extract** button in the toolbar\n3. A progress bar shows extraction status\n4. When done, all records appear in the table\n5. Each pill shows ✅ (done), ❌ (error), or ⏳ (processing)\n\n💡 The app reads: Employee No, Person Code, Name, Job Title, Passport No, Nationality, Card Number, Expiry Date",
-    'What do expiry colors mean?': "**Expiry Date Color Guide:**\n\n🔴 **Red — EXPIRED**\nCard already expired. Immediate action required!\n\n🟠 **Orange — Within 30 days**\nExpiring very soon. Renew urgently!\n\n🟡 **Yellow — Within 90 days**\nExpiring soon. Plan renewal in advance.\n\n🟢 **Green — VALID**\nCard is valid. No action needed.\n\nColors update automatically based on today's date.",
-    'How do I filter and search records?': "**Filtering records:**\n\n• **Search box** — Type anything to search across all columns\n• **Nationality** — Filter by country (dropdown)\n• **Job** — Filter by job title (dropdown)\n• **File** — Filter by source PDF file\n• **Column filters** — Use the input row under headers for column-specific search\n• All filters work **together** for precise results\n• Click any **column header** to sort ▲ or ▼",
-    'How do I export to Excel?': "**Exporting to Excel:**\n\n1. After extraction, click 📥 **Excel** in the toolbar\n2. Choose export format:\n   • 🎨 **With Colors** — expiry dates highlighted Red/Orange/Yellow/Green\n   • ⬜ **Without Colors** — clean plain data\n3. Enter a filename and click **Download**\n\nThe Excel file includes:\n• **Sheet 1:** All employee records\n• **Sheet 2:** Nationality breakdown by company\n• **Sheet 3:** Company info summary",
-    'How does WPS salary work?': "**WPS (Wage Protection System):**\n\nWPS is UAE's electronic salary transfer system ensuring workers are paid on time.\n\n**How to use WPS tab:**\n1. Click 💰 **WPS SALARY** tab at the top\n2. Upload WPS salary PDF(s)\n3. Click ⚡ **Extract**\n4. View salary status per employee\n\n**Status colors:**\n• 🟢 **PAID** — Salary fully transferred\n• 🟡 **PARTIAL** — Less than contract amount paid\n• 🔴 **UNPAID** — No salary transferred\n• ⬜ **NO CONTRACT** — No contract salary on file",
-    'How does the history feature work?': "**History feature:**\n\n• Every extraction is **automatically saved** to your browser\n• Click 🕓 **History** button to view all past sessions\n• Each entry shows: file name, record count, date & time\n• Click **↩️ Load** to restore any previous extraction instantly\n• Click **📥 Excel** directly from history to re-download\n• To delete one entry, click ✕ on the card\n• To clear all history, click 🗑️ **Clear All**\n\n⚠️ History is stored in your browser only. Clearing browser cache deletes it.",
-    'Is my data private and secure?': "**Privacy & Security:**\n\n🔒 **100% Private — your data never leaves your device!**\n\n• All PDF processing happens **locally in your browser**\n• No data is sent to any server\n• No internet connection needed for extraction\n• History is stored in browser localStorage only\n• You control your data completely\n\nThis app is designed for sensitive HR data — it works entirely offline after the page loads.",
-    'What nationalities are supported?': "**Supported nationalities:**\n\nThe app recognizes and normalizes 50+ nationalities including:\n🇮🇳 India · 🇵🇰 Pakistan · 🇵🇭 Philippines · 🇳🇵 Nepal · 🇧🇩 Bangladesh\n🇪🇹 Ethiopia · 🇲🇲 Myanmar · 🇮🇩 Indonesia · 🇰🇪 Kenya · 🇬🇭 Ghana\n🇳🇬 Nigeria · 🇸🇩 Sudan · 🇯🇴 Jordan · 🇻🇳 Vietnam · 🇨🇳 China\n🇪🇬 Egypt · 🇾🇪 Yemen · 🇸🇴 Somalia · 🇸🇳 Senegal · 🇺🇬 Uganda\n🇲🇦 Morocco · 🇱🇰 Sri Lanka · 🇦🇫 Afghanistan + many more\n\nVariant spellings are automatically corrected (e.g. 'NAPAL' → Nepal).",
-    'What employee data fields are extracted?': "**Employee data fields extracted:**\n\n• **No** — Row number in the PDF\n• **Person Code** — UAE Ministry of HR employee ID (14-digit number)\n• **Name** — Employee full name\n• **Job Title** — Position/designation\n• **Passport No.** — Employee passport number\n• **Nationality** — Country of origin\n• **Card Number** — Emirates ID / labor card number\n• **Expiry Date** — Card expiry date (DD/MM/YYYY)\n• **Company Code** — Employer establishment code\n• **Source File** — Which PDF the record came from",
-    'How does login and access work?': "**Login & Access:**\n\n• The app uses a **Firebase-secured login** system\n• Enter your username and password to access\n• Accounts are managed by the app administrator\n• After login, your session is saved (persistent on refresh)\n• **Test accounts** have a time-limited session with automatic logout\n• Click 🚪 **Logout** in the top-right to sign out securely\n\nContact the admin (Irshadkarakkoth) for account access.",
-    'The app is not working, what do I do?': "**Common issues & solutions:**\n\n❌ **No records extracted**\n→ The PDF may not be a UAE Ministry of HR employment list format. Check it's the correct document type.\n\n❌ **WPS file rejected**\n→ WPS salary PDFs must be from the official WPS system. Employee List PDFs won't work in WPS tab.\n\n❌ **Extract button disabled**\n→ You need to upload a PDF first, then click Extract.\n\n❌ **Missing data in columns**\n→ Some fields may be absent in certain PDF versions — this is normal.\n\n💡 Try uploading again if extraction seems stuck.",
-    'How do I clear or reset data?': "**Clearing / resetting data:**\n\n• Click 🗑️ **Clear** in the toolbar to remove all current records and uploaded files\n• This lets you start a fresh extraction\n• Your **history is NOT deleted** — previous sessions remain in 🕓 History\n• To clear history: open History panel → click 🗑️ **Clear All**\n• Clearing does NOT delete your browser's localStorage permanently",
-    'What is this app?': "**About EMPWPSCTR:**\n\nEMPWPSCTR is a **UAE Ministry of HR Employment Data Extractor** — a free, browser-based tool for HR professionals.\n\n**What it does:**\n• 📋 Extracts employee data from UAE Ministry of HR PDF documents\n• 💰 Processes WPS (Wage Protection System) salary reports\n• 📊 Exports clean Excel files with optional color coding\n• 🔍 Smart filtering by nationality, job, or source file\n• 🔒 100% private — no data leaves your device\n\n**Created by:** Irshadkarakkoth\n**Version:** 2.0.1"
+  var GROQ_KEY_STORE = 'empwpsctr_groq_key';
+
+  var SYSTEM_PROMPT = `You are an expert AI assistant for EMPWPSCTR — a UAE Ministry of HR Employment Data Extractor web app. Answer questions clearly and helpfully about how to use the app.
+
+Key facts about this app:
+- Extracts employee data from UAE Ministry of HR PDF documents
+- Processes WPS (Wage Protection System) salary PDFs
+- Exports to Excel with optional color coding for expiry dates
+- 100% browser-based — all data stays on the user's device (private)
+- Expiry colors: Red=expired, Orange=within 30 days, Yellow=within 90 days, Green=valid
+- WPS salary statuses: PAID, PARTIAL (less than contract), UNPAID (no salary), NO CONTRACT
+- Employee data extracted: Person Code, Name, Job Title, Passport No, Nationality, Card Number, Expiry Date, Company Code
+- History is auto-saved in browser localStorage
+- Supports 50+ nationalities including India, Pakistan, Philippines, Nepal, Bangladesh, Ethiopia, Myanmar, Indonesia, Kenya, Ghana, Nigeria, Sudan, Egypt, Yemen, Morocco, Sri Lanka, Afghanistan, China, Vietnam, Jordan and more
+- Login is Firebase-secured; contact admin (Irshadkarakkoth) for account access
+- Created by Irshadkarakkoth, Version 2.0.1
+
+Be concise, friendly, and practical. Use emoji sparingly for clarity. Format with bullet points when listing steps.`;
+
+  // ── INIT ─────────────────────────────────────────────────────────────
+  function init(){
+    var key = getKey();
+    if(key){
+      showChatView();
+    } else {
+      showKeySetup();
+    }
+  }
+
+  function getKey(){
+    try{ return localStorage.getItem(GROQ_KEY_STORE) || ''; }catch(e){ return ''; }
+  }
+
+  function setKey(k){
+    try{ localStorage.setItem(GROQ_KEY_STORE, k); }catch(e){}
+  }
+
+  function showKeySetup(){
+    document.getElementById('aiKeySetup').style.display = 'flex';
+    document.getElementById('aiKeySetup').style.flexDirection = 'column';
+    document.getElementById('aiChatView').style.display = 'none';
+    document.getElementById('aiHeaderSub').textContent = 'Setup required · Get free key';
+  }
+
+  function showChatView(){
+    document.getElementById('aiKeySetup').style.display = 'none';
+    document.getElementById('aiChatView').style.display = 'flex';
+    document.getElementById('aiHeaderSub').textContent = 'Powered by Groq · Free AI';
+    var status = document.getElementById('aiKeyStatus');
+    var key = getKey();
+    if(key) status.textContent = '🔑 Key: •••' + key.slice(-4);
+    if(chatHistory.length === 0){
+      addBotMsg("👋 Hi! I'm your HR AI Assistant. I know everything about this app — ask me anything about extracting data, WPS salary, Excel export, expiry colors, or anything else!");
+    }
+  }
+
+  // ── KEY MANAGEMENT ───────────────────────────────────────────────────
+  window.saveGroqKey = function(){
+    var inp = document.getElementById('aiKeyInput');
+    var key = (inp.value || '').trim();
+    if(!key || !key.startsWith('gsk_')){
+      inp.style.borderColor = '#ef4444';
+      inp.placeholder = '⚠ Must start with gsk_ — check your key';
+      setTimeout(function(){ inp.style.borderColor = ''; inp.placeholder = 'Paste your Groq API key (gsk_...)'; }, 3000);
+      return;
+    }
+    setKey(key);
+    inp.value = '';
+    chatHistory = [];
+    showChatView();
   };
 
-  // ── UI FUNCTIONS ──────────────────────────────────────────────────────
+  window.resetGroqKey = function(){
+    try{ localStorage.removeItem(GROQ_KEY_STORE); }catch(e){}
+    chatHistory = [];
+    document.getElementById('aiMessages').innerHTML = '';
+    showKeySetup();
+  };
 
+  // ── TOGGLE ───────────────────────────────────────────────────────────
   window.toggleAiChat = function(){
     aiOpen = !aiOpen;
     var panel = document.getElementById('aiChatPanel');
     if(aiOpen){
       panel.classList.add('open');
-      showQuestions();
+      init();
+      setTimeout(function(){
+        var inp = document.getElementById('aiUserInput');
+        if(inp && document.getElementById('aiChatView').style.display !== 'none') inp.focus();
+      }, 300);
     } else {
       panel.classList.remove('open');
     }
   };
 
-  window.askQ = function(question){
-    var answer = KB[question];
-    if(!answer) return;
-    // Hide questions, show answer
-    document.getElementById('aiQuestions').style.display = 'none';
+  // ── QUICK ASK ────────────────────────────────────────────────────────
+  window.quickAsk = function(q){
+    var inp = document.getElementById('aiUserInput');
+    if(inp) inp.value = q;
+    sendAiMsg();
+  };
+
+  // ── SEND MESSAGE ─────────────────────────────────────────────────────
+  window.sendAiMsg = function(){
+    if(isLoading) return;
+    var inp = document.getElementById('aiUserInput');
+    var text = (inp.value || '').trim();
+    if(!text) return;
+    inp.value = '';
+    inp.style.height = 'auto';
+
+    addUserMsg(text);
+    chatHistory.push({ role: 'user', content: text });
+
+    var typingId = addTyping();
+    isLoading = true;
+    document.getElementById('aiSendBtn').disabled = true;
+
+    callGroq(chatHistory, function(reply, err){
+      removeTyping(typingId);
+      isLoading = false;
+      document.getElementById('aiSendBtn').disabled = false;
+
+      if(err){
+        addBotMsg('❌ ' + err);
+        chatHistory.pop();
+      } else {
+        addBotMsg(reply);
+        chatHistory.push({ role: 'assistant', content: reply });
+        // Keep history trimmed (last 20 turns = 10 exchanges)
+        if(chatHistory.length > 20) chatHistory = chatHistory.slice(-20);
+      }
+    });
+  };
+
+  // ── GROQ API ─────────────────────────────────────────────────────────
+  function callGroq(messages, cb){
+    var key = getKey();
+    if(!key){ cb(null, 'No API key set. Please set up your Groq key first.'); return; }
+
+    fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + key,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: 'llama-3.1-8b-instant',
+        messages: [{ role: 'system', content: SYSTEM_PROMPT }].concat(messages),
+        max_tokens: 600,
+        temperature: 0.6,
+        stream: false
+      })
+    })
+    .then(function(res){ return res.json(); })
+    .then(function(data){
+      if(data.error){
+        var msg = data.error.message || 'API error';
+        if(msg.toLowerCase().includes('invalid api key') || msg.toLowerCase().includes('authentication')){
+          msg = 'Invalid API key. Click "Change key" to update it.';
+        } else if(msg.toLowerCase().includes('rate limit')){
+          msg = 'Rate limit hit. Wait a moment and try again.';
+        }
+        cb(null, '❌ ' + msg);
+      } else {
+        var reply = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+        cb(reply || 'No response received.', null);
+      }
+    })
+    .catch(function(e){
+      cb(null, 'Network error. Check your internet connection and try again.');
+    });
+  }
+
+  // ── UI HELPERS ───────────────────────────────────────────────────────
+  function addUserMsg(text){
     var msgs = document.getElementById('aiMessages');
-    msgs.style.display = 'flex';
-    msgs.innerHTML = '';
+    var div = document.createElement('div');
+    div.className = 'ai-msg user';
+    div.innerHTML = '<div class="ai-avatar user">👤</div><div class="ai-bubble">' + escHtml(text) + '</div>';
+    msgs.appendChild(div);
+    msgs.scrollTop = msgs.scrollHeight;
+  }
 
-    // Question bubble
-    var qDiv = document.createElement('div');
-    qDiv.className = 'ai-msg user';
-    qDiv.innerHTML = '<div class="ai-avatar user">👤</div><div class="ai-bubble">' + escHtml(question) + '</div>';
-    msgs.appendChild(qDiv);
+  function addBotMsg(text){
+    var msgs = document.getElementById('aiMessages');
+    var div = document.createElement('div');
+    div.className = 'ai-msg bot';
+    div.innerHTML = '<div class="ai-avatar bot">🤖</div><div class="ai-bubble">' + formatMsg(text) + '</div>';
+    msgs.appendChild(div);
+    msgs.scrollTop = msgs.scrollHeight;
+  }
 
-    // Answer bubble
-    var aDiv = document.createElement('div');
-    aDiv.className = 'ai-msg bot';
-    var bubble = document.createElement('div');
-    bubble.className = 'ai-bubble';
-    bubble.innerHTML = formatMsg(answer);
-    aDiv.innerHTML = '<div class="ai-avatar bot">🤖</div>';
-    aDiv.appendChild(bubble);
-    msgs.appendChild(aDiv);
+  function addTyping(){
+    var msgs = document.getElementById('aiMessages');
+    var id = 'typing_' + Date.now();
+    var div = document.createElement('div');
+    div.className = 'ai-msg bot';
+    div.id = id;
+    div.innerHTML = '<div class="ai-avatar bot">🤖</div><div class="ai-typing"><span></span><span></span><span></span></div>';
+    msgs.appendChild(div);
+    msgs.scrollTop = msgs.scrollHeight;
+    return id;
+  }
 
-    // Back button
-    var backDiv = document.createElement('div');
-    backDiv.style.padding = '0 12px 12px';
-    backDiv.innerHTML = '<button class="ai-back-btn" onclick="showQuestions()">← Back to questions</button>';
-    msgs.appendChild(backDiv);
-
-    msgs.scrollTop = 0;
-  };
-
-  window.showQuestions = function(){
-    document.getElementById('aiMessages').style.display = 'none';
-    document.getElementById('aiMessages').innerHTML = '';
-    document.getElementById('aiQuestions').style.display = 'flex';
-  };
+  function removeTyping(id){
+    var el = document.getElementById(id);
+    if(el) el.remove();
+  }
 
   function formatMsg(text){
-    return text
+    return escHtml(text)
       .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
       .replace(/\*(.+?)\*/g,'<em>$1</em>')
       .replace(/`(.+?)`/g,'<code style="background:rgba(14,165,233,0.15);padding:1px 5px;border-radius:3px;font-size:12px;">$1</code>')
+      .replace(/^• /gm, '&#8226; ')
       .replace(/\n/g,'<br>');
   }
 
-  function escHtml(t){ return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function escHtml(t){
+    return String(t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
 
 })();
 </script>
