@@ -753,27 +753,8 @@ footer strong{color:var(--text);}
 }
 .ai-send:hover{transform:scale(1.1);}
 .ai-send:disabled{opacity:0.4;cursor:not-allowed;transform:none;}
-.ai-key-setup{
-  padding:16px;display:flex;flex-direction:column;gap:12px;
-}
-.ai-key-title{font-size:13px;font-weight:700;color:#e2e8f0;margin-bottom:4px;}
-.ai-key-desc{font-size:12px;color:#64748b;line-height:1.5;}
-.ai-key-input{
-  background:#1a2740;border:1px solid rgba(14,165,233,0.25);
-  border-radius:10px;padding:10px 14px;color:#e2e8f0;font-size:12px;
-  outline:none;width:100%;font-family:monospace;box-sizing:border-box;
-}
-.ai-key-input:focus{border-color:rgba(14,165,233,0.5);}
-.ai-key-btn{
-  background:linear-gradient(135deg,#0ea5e9,#06b6d4);
-  border:none;border-radius:10px;padding:11px;color:#fff;
-  font-size:13px;font-weight:700;cursor:pointer;width:100%;
-  transition:opacity .2s;
-}
-.ai-key-btn:hover{opacity:0.9;}
-.ai-key-link{font-size:11px;color:#0ea5e9;text-align:center;cursor:pointer;text-decoration:underline;}
 .ai-quick-btns{
-  padding:8px 12px 12px;display:flex;flex-wrap:wrap;gap:6px;flex-shrink:0;
+  padding:8px 12px 10px;display:flex;flex-wrap:wrap;gap:6px;flex-shrink:0;
   border-top:1px solid rgba(14,165,233,0.1);
 }
 .ai-quick-btn{
@@ -782,12 +763,6 @@ footer strong{color:var(--text);}
   cursor:pointer;transition:all .2s;white-space:nowrap;
 }
 .ai-quick-btn:hover{background:rgba(14,165,233,0.22);color:#e0f2fe;border-color:rgba(14,165,233,0.5);}
-.ai-error{color:#ef4444;font-size:12px;padding:4px 0;}
-.ai-model-badge{
-  font-size:10px;background:rgba(16,185,129,0.15);color:#10b981;
-  border:1px solid rgba(16,185,129,0.3);border-radius:20px;
-  padding:2px 8px;display:inline-block;margin-top:4px;
-}
 </style>
 
 <!-- ══ AI CHAT HTML ══ -->
@@ -801,36 +776,22 @@ footer strong{color:var(--text);}
     <div class="ai-avatar bot ai-header-icon">🤖</div>
     <div class="ai-header-info">
       <div class="ai-header-title">HR AI Assistant</div>
-      <div class="ai-header-sub" id="aiHeaderSub">Powered by Groq · Free AI</div>
+      <div class="ai-header-sub">Powered by Groq · Always Ready</div>
     </div>
     <button class="ai-header-close" onclick="toggleAiChat()">✕</button>
   </div>
 
-  <!-- Key Setup View -->
-  <div id="aiKeySetup" class="ai-key-setup">
-    <div class="ai-key-title">🔑 Setup Groq AI (Free)</div>
-    <div class="ai-key-desc">
-      Get a <strong>free</strong> Groq API key to enable real AI chat.<br>
-      Your key is stored only in your browser — never sent anywhere else.
-    </div>
-    <input class="ai-key-input" id="aiKeyInput" type="password" placeholder="Paste your Groq API key (gsk_...)" autocomplete="off"/>
-    <button class="ai-key-btn" onclick="saveGroqKey()">✅ Save & Start Chatting</button>
-    <div class="ai-key-link" onclick="window.open('https://console.groq.com/keys','_blank')">🔗 Get free key at console.groq.com →</div>
-    <div style="font-size:11px;color:#334155;text-align:center;margin-top:4px;">
-      Free tier: ~14,400 requests/day · No credit card needed
-    </div>
-  </div>
-
-  <!-- Chat View (hidden until key saved) -->
-  <div id="aiChatView" style="display:none;flex-direction:column;flex:1;min-height:0;">
+  <div id="aiChatView" style="display:flex;flex-direction:column;flex:1;min-height:0;">
     <div class="ai-messages" id="aiMessages"></div>
-    <div class="ai-quick-btns" id="aiQuickBtns">
+    <div class="ai-quick-btns">
       <span class="ai-quick-btn" onclick="quickAsk('How do I extract employee data?')">📋 Extract data</span>
       <span class="ai-quick-btn" onclick="quickAsk('What do expiry colors mean?')">🎨 Expiry colors</span>
-      <span class="ai-quick-btn" onclick="quickAsk('How to export Excel?')">📊 Excel export</span>
+      <span class="ai-quick-btn" onclick="quickAsk('How to export to Excel?')">📊 Excel export</span>
       <span class="ai-quick-btn" onclick="quickAsk('How does WPS salary work?')">💰 WPS salary</span>
-      <span class="ai-quick-btn" onclick="quickAsk('Is my data private?')">🔒 Privacy</span>
+      <span class="ai-quick-btn" onclick="quickAsk('Is my data private and secure?')">🔒 Privacy</span>
       <span class="ai-quick-btn" onclick="quickAsk('What nationalities are supported?')">🌍 Nationalities</span>
+      <span class="ai-quick-btn" onclick="quickAsk('How does history work?')">🕓 History</span>
+      <span class="ai-quick-btn" onclick="quickAsk('The app is not working, what do I do?')">❌ Troubleshoot</span>
     </div>
     <div class="ai-input-area">
       <textarea class="ai-input" id="aiUserInput" placeholder="Ask anything about this app…" rows="1"
@@ -839,124 +800,43 @@ footer strong{color:var(--text);}
       ></textarea>
       <button class="ai-send" id="aiSendBtn" onclick="sendAiMsg()">➤</button>
     </div>
-    <div style="text-align:center;padding:4px 0 8px;font-size:10px;color:#1e3a5f;">
-      <span id="aiKeyStatus"></span>
-      &nbsp;·&nbsp;
-      <span style="cursor:pointer;color:#0ea5e9;text-decoration:underline;" onclick="resetGroqKey()">Change key</span>
-    </div>
   </div>
 </div>
 
-<!-- ══ AI CHAT SCRIPT (GROQ POWERED — REAL AI) ══ -->
+<!-- ══ AI CHAT SCRIPT ══ -->
 <script>
 (function(){
+  var _k = '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';
   var aiOpen = false;
   var chatHistory = [];
   var isLoading = false;
+  var welcomed = false;
 
-  var GROQ_KEY_STORE = 'empwpsctr_groq_key';
+  var SYSTEM_PROMPT = 'You are an expert AI assistant for EMPWPSCTR — a UAE Ministry of HR Employment Data Extractor web app. Answer questions clearly and helpfully.\n\nKey facts:\n- Extracts employee data from UAE Ministry of HR PDF documents\n- Processes WPS (Wage Protection System) salary PDFs\n- Exports to Excel with optional color coding for expiry dates\n- 100% browser-based — all data stays on the user\'s device (private, no server)\n- Expiry colors: Red=expired, Orange=within 30 days, Yellow=within 90 days, Green=valid\n- WPS salary statuses: PAID, PARTIAL (less than contract), UNPAID, NO CONTRACT\n- Employee data fields: Person Code, Name, Job Title, Passport No, Nationality, Card Number, Expiry Date, Company Code, Source File\n- History auto-saved in browser localStorage\n- Supports 50+ nationalities: India, Pakistan, Philippines, Nepal, Bangladesh, Ethiopia, Myanmar, Indonesia, Kenya, Ghana, Nigeria, Sudan, Egypt, Yemen, Morocco, Sri Lanka, Afghanistan, China, Vietnam, Jordan, and more\n- Login is Firebase-secured; contact admin (Irshadkarakkoth) for accounts\n- Created by Irshadkarakkoth, Version 2.0.1\n- To upload: click Open PDF or drag & drop. To extract: click Extract button. To export: click Excel button.\n- History: every extraction auto-saved; click History button to restore past sessions\n- Clear button resets current data but keeps history\n\nBe concise, friendly, and practical. Use bullet points for steps.';
 
-  var SYSTEM_PROMPT = `You are an expert AI assistant for EMPWPSCTR — a UAE Ministry of HR Employment Data Extractor web app. Answer questions clearly and helpfully about how to use the app.
-
-Key facts about this app:
-- Extracts employee data from UAE Ministry of HR PDF documents
-- Processes WPS (Wage Protection System) salary PDFs
-- Exports to Excel with optional color coding for expiry dates
-- 100% browser-based — all data stays on the user's device (private)
-- Expiry colors: Red=expired, Orange=within 30 days, Yellow=within 90 days, Green=valid
-- WPS salary statuses: PAID, PARTIAL (less than contract), UNPAID (no salary), NO CONTRACT
-- Employee data extracted: Person Code, Name, Job Title, Passport No, Nationality, Card Number, Expiry Date, Company Code
-- History is auto-saved in browser localStorage
-- Supports 50+ nationalities including India, Pakistan, Philippines, Nepal, Bangladesh, Ethiopia, Myanmar, Indonesia, Kenya, Ghana, Nigeria, Sudan, Egypt, Yemen, Morocco, Sri Lanka, Afghanistan, China, Vietnam, Jordan and more
-- Login is Firebase-secured; contact admin (Irshadkarakkoth) for account access
-- Created by Irshadkarakkoth, Version 2.0.1
-
-Be concise, friendly, and practical. Use emoji sparingly for clarity. Format with bullet points when listing steps.`;
-
-  // ── INIT ─────────────────────────────────────────────────────────────
-  function init(){
-    var key = getKey();
-    if(key){
-      showChatView();
-    } else {
-      showKeySetup();
-    }
-  }
-
-  function getKey(){
-    try{ return localStorage.getItem(GROQ_KEY_STORE) || ''; }catch(e){ return ''; }
-  }
-
-  function setKey(k){
-    try{ localStorage.setItem(GROQ_KEY_STORE, k); }catch(e){}
-  }
-
-  function showKeySetup(){
-    document.getElementById('aiKeySetup').style.display = 'flex';
-    document.getElementById('aiKeySetup').style.flexDirection = 'column';
-    document.getElementById('aiChatView').style.display = 'none';
-    document.getElementById('aiHeaderSub').textContent = 'Setup required · Get free key';
-  }
-
-  function showChatView(){
-    document.getElementById('aiKeySetup').style.display = 'none';
-    document.getElementById('aiChatView').style.display = 'flex';
-    document.getElementById('aiHeaderSub').textContent = 'Powered by Groq · Free AI';
-    var status = document.getElementById('aiKeyStatus');
-    var key = getKey();
-    if(key) status.textContent = '🔑 Key: •••' + key.slice(-4);
-    if(chatHistory.length === 0){
-      addBotMsg("👋 Hi! I'm your HR AI Assistant. I know everything about this app — ask me anything about extracting data, WPS salary, Excel export, expiry colors, or anything else!");
-    }
-  }
-
-  // ── KEY MANAGEMENT ───────────────────────────────────────────────────
-  window.saveGroqKey = function(){
-    var inp = document.getElementById('aiKeyInput');
-    var key = (inp.value || '').trim();
-    if(!key || !key.startsWith('gsk_')){
-      inp.style.borderColor = '#ef4444';
-      inp.placeholder = '⚠ Must start with gsk_ — check your key';
-      setTimeout(function(){ inp.style.borderColor = ''; inp.placeholder = 'Paste your Groq API key (gsk_...)'; }, 3000);
-      return;
-    }
-    setKey(key);
-    inp.value = '';
-    chatHistory = [];
-    showChatView();
-  };
-
-  window.resetGroqKey = function(){
-    try{ localStorage.removeItem(GROQ_KEY_STORE); }catch(e){}
-    chatHistory = [];
-    document.getElementById('aiMessages').innerHTML = '';
-    showKeySetup();
-  };
-
-  // ── TOGGLE ───────────────────────────────────────────────────────────
   window.toggleAiChat = function(){
     aiOpen = !aiOpen;
     var panel = document.getElementById('aiChatPanel');
     if(aiOpen){
       panel.classList.add('open');
-      init();
+      if(!welcomed){
+        welcomed = true;
+        addBotMsg('👋 Hi! I\'m your HR AI Assistant — ask me anything about this app!\n\nI can help with extracting data, WPS salary, Excel export, expiry colors, filters, history, and more.');
+      }
       setTimeout(function(){
         var inp = document.getElementById('aiUserInput');
-        if(inp && document.getElementById('aiChatView').style.display !== 'none') inp.focus();
+        if(inp) inp.focus();
       }, 300);
     } else {
       panel.classList.remove('open');
     }
   };
 
-  // ── QUICK ASK ────────────────────────────────────────────────────────
   window.quickAsk = function(q){
-    var inp = document.getElementById('aiUserInput');
-    if(inp) inp.value = q;
+    document.getElementById('aiUserInput').value = q;
     sendAiMsg();
   };
 
-  // ── SEND MESSAGE ─────────────────────────────────────────────────────
   window.sendAiMsg = function(){
     if(isLoading) return;
     var inp = document.getElementById('aiUserInput');
@@ -966,95 +846,73 @@ Be concise, friendly, and practical. Use emoji sparingly for clarity. Format wit
     inp.style.height = 'auto';
 
     addUserMsg(text);
-    chatHistory.push({ role: 'user', content: text });
+    chatHistory.push({ role:'user', content:text });
 
     var typingId = addTyping();
     isLoading = true;
     document.getElementById('aiSendBtn').disabled = true;
 
-    callGroq(chatHistory, function(reply, err){
+    fetch('https://api.groq.com/openai/v1/chat/completions',{
+      method:'POST',
+      headers:{'Authorization':'Bearer '+_k,'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'llama-3.1-8b-instant',
+        messages:[{role:'system',content:SYSTEM_PROMPT}].concat(chatHistory),
+        max_tokens:600,
+        temperature:0.6
+      })
+    })
+    .then(function(r){return r.json();})
+    .then(function(data){
       removeTyping(typingId);
       isLoading = false;
       document.getElementById('aiSendBtn').disabled = false;
-
-      if(err){
-        addBotMsg('❌ ' + err);
+      if(data.error){
+        var m = data.error.message || 'API error';
+        if(m.includes('rate limit')) m = 'Rate limit reached. Please wait a moment and try again.';
+        addBotMsg('⚠️ ' + m);
         chatHistory.pop();
       } else {
+        var reply = data.choices[0].message.content;
         addBotMsg(reply);
-        chatHistory.push({ role: 'assistant', content: reply });
-        // Keep history trimmed (last 20 turns = 10 exchanges)
+        chatHistory.push({role:'assistant',content:reply});
         if(chatHistory.length > 20) chatHistory = chatHistory.slice(-20);
       }
+    })
+    .catch(function(){
+      removeTyping(typingId);
+      isLoading = false;
+      document.getElementById('aiSendBtn').disabled = false;
+      addBotMsg('⚠️ Network error. Please check your connection and try again.');
+      chatHistory.pop();
     });
   };
 
-  // ── GROQ API ─────────────────────────────────────────────────────────
-  function callGroq(messages, cb){
-    var key = getKey();
-    if(!key){ cb(null, 'No API key set. Please set up your Groq key first.'); return; }
-
-    fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': 'Bearer ' + key,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: 'llama-3.1-8b-instant',
-        messages: [{ role: 'system', content: SYSTEM_PROMPT }].concat(messages),
-        max_tokens: 600,
-        temperature: 0.6,
-        stream: false
-      })
-    })
-    .then(function(res){ return res.json(); })
-    .then(function(data){
-      if(data.error){
-        var msg = data.error.message || 'API error';
-        if(msg.toLowerCase().includes('invalid api key') || msg.toLowerCase().includes('authentication')){
-          msg = 'Invalid API key. Click "Change key" to update it.';
-        } else if(msg.toLowerCase().includes('rate limit')){
-          msg = 'Rate limit hit. Wait a moment and try again.';
-        }
-        cb(null, '❌ ' + msg);
-      } else {
-        var reply = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
-        cb(reply || 'No response received.', null);
-      }
-    })
-    .catch(function(e){
-      cb(null, 'Network error. Check your internet connection and try again.');
-    });
-  }
-
-  // ── UI HELPERS ───────────────────────────────────────────────────────
   function addUserMsg(text){
     var msgs = document.getElementById('aiMessages');
-    var div = document.createElement('div');
-    div.className = 'ai-msg user';
-    div.innerHTML = '<div class="ai-avatar user">👤</div><div class="ai-bubble">' + escHtml(text) + '</div>';
-    msgs.appendChild(div);
+    var d = document.createElement('div');
+    d.className = 'ai-msg user';
+    d.innerHTML = '<div class="ai-avatar user">👤</div><div class="ai-bubble">'+escHtml(text)+'</div>';
+    msgs.appendChild(d);
     msgs.scrollTop = msgs.scrollHeight;
   }
 
   function addBotMsg(text){
     var msgs = document.getElementById('aiMessages');
-    var div = document.createElement('div');
-    div.className = 'ai-msg bot';
-    div.innerHTML = '<div class="ai-avatar bot">🤖</div><div class="ai-bubble">' + formatMsg(text) + '</div>';
-    msgs.appendChild(div);
+    var d = document.createElement('div');
+    d.className = 'ai-msg bot';
+    d.innerHTML = '<div class="ai-avatar bot">🤖</div><div class="ai-bubble">'+fmt(text)+'</div>';
+    msgs.appendChild(d);
     msgs.scrollTop = msgs.scrollHeight;
   }
 
   function addTyping(){
     var msgs = document.getElementById('aiMessages');
-    var id = 'typing_' + Date.now();
-    var div = document.createElement('div');
-    div.className = 'ai-msg bot';
-    div.id = id;
-    div.innerHTML = '<div class="ai-avatar bot">🤖</div><div class="ai-typing"><span></span><span></span><span></span></div>';
-    msgs.appendChild(div);
+    var id = 'typ'+Date.now();
+    var d = document.createElement('div');
+    d.className = 'ai-msg bot'; d.id = id;
+    d.innerHTML = '<div class="ai-avatar bot">🤖</div><div class="ai-typing"><span></span><span></span><span></span></div>';
+    msgs.appendChild(d);
     msgs.scrollTop = msgs.scrollHeight;
     return id;
   }
@@ -1064,12 +922,11 @@ Be concise, friendly, and practical. Use emoji sparingly for clarity. Format wit
     if(el) el.remove();
   }
 
-  function formatMsg(text){
-    return escHtml(text)
+  function fmt(t){
+    return escHtml(t)
       .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
       .replace(/\*(.+?)\*/g,'<em>$1</em>')
       .replace(/`(.+?)`/g,'<code style="background:rgba(14,165,233,0.15);padding:1px 5px;border-radius:3px;font-size:12px;">$1</code>')
-      .replace(/^• /gm, '&#8226; ')
       .replace(/\n/g,'<br>');
   }
 
