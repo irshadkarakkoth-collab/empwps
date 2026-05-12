@@ -881,7 +881,7 @@ footer strong{color:var(--text);}
         model:'llama-3.1-8b-instant',
         messages:buildAiMessages(appContext, text),
         max_tokens:600,
-        temperature:0.6
+        temperature:0.25
       })
     })
     .then(function(r){return r.json();})
@@ -952,10 +952,16 @@ footer strong{color:var(--text);}
   }
 
   function buildAiMessages(appContext, latestText){
-    var contextPrompt = SYSTEM_PROMPT + '\n\nApp-only rule: Only answer questions about this EMPWPSCTR web app, its current screen, visible issues, PDF extraction, WPS salary, Excel export, login, history, filters, data table, and troubleshooting. If a user asks anything unrelated, briefly say you can only help with this app.\n\nYou receive a fresh CURRENT APP SCREEN CONTEXT block with each user question. Use it to understand what the user is currently seeing in the app, including visible errors, uploaded files, table rows, filters, progress dialogs, and recent JavaScript issues. If the context shows a problem, diagnose it directly. Do not claim you can see pixels or private content outside this web app.';
+    var contextPrompt = SYSTEM_PROMPT + '\n\nApp-only rule: Only answer questions about this EMPWPSCTR web app, its current screen, visible issues, PDF extraction, WPS salary, Excel export, login, history, filters, data table, and troubleshooting. If a user asks anything unrelated, briefly say you can only help with this app.\n\nScreen-context honesty rules:\n- Base answers on the CURRENT APP SCREEN CONTEXT, not guesses.\n- Never say the whole app is "fully working", "fully functional", "ready for use", "no issue", or "working perfectly" just because records, buttons, or filters are visible.\n- Disabled buttons are not proof of success or failure by themselves. Explain what they might mean only if the context supports it.\n- If the user asks whether the app is fully working on their system, say you cannot confirm the whole app from screen context alone. State only what is visible, what is not tested, and what steps to test next.\n- If the context does not show enough evidence, say that clearly.\n\nYou receive a fresh CURRENT APP SCREEN CONTEXT block with each user question. Use it to understand what the user is currently seeing in the app, including visible errors, uploaded files, table rows, filters, progress dialogs, and recent JavaScript issues. If the context shows a problem, diagnose it directly. Do not claim you can see pixels or private content outside this web app.';
     var previousMessages = chatHistory.slice(0, -1);
-    var contextualUserText = latestText + '\n\n[CURRENT APP SCREEN CONTEXT]\n' + appContext;
+    var caution = isAiWholeAppHealthQuestion(latestText) ? '\n\n[IMPORTANT FOR THIS QUESTION]\nThe user is asking if the whole app/system is working. Do not answer yes. Do not say fully functional. Give a cautious answer: "I can only see the current app screen/context." Then list visible signals, unknown/untested items, and 3 short test steps.' : '';
+    var contextualUserText = latestText + caution + '\n\n[CURRENT APP SCREEN CONTEXT]\n' + appContext;
     return [{role:'system', content:contextPrompt}].concat(previousMessages).concat([{role:'user', content:contextualUserText}]);
+  }
+
+  function isAiWholeAppHealthQuestion(text){
+    var q = cleanAiText(text).toLowerCase();
+    return /(fully|full|complete|all|everything|system).{0,30}(working|work|ok|okay|fine|ready|function|functional)|(?:working|work|ok|okay|fine|ready|function|functional).{0,30}(fully|full|complete|all|everything|system)/.test(q);
   }
 
   var aiIssueLog = [];
@@ -993,6 +999,7 @@ footer strong{color:var(--text);}
     lines.push('Time: ' + new Date().toLocaleString());
     lines.push('Page: ' + cleanAiText(document.title || 'EMPWPSCTR'));
     lines.push('Viewport: ' + window.innerWidth + 'x' + window.innerHeight);
+    lines.push('Context limitation: this is a visible UI snapshot only. It does not prove the full app/system is working unless the user actually tested each feature.');
     if(active && active !== document.body && !isAiChatNode(active)){
       lines.push('Focused control: ' + describeAiElement(active));
     }
