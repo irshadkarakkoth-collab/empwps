@@ -768,6 +768,12 @@ footer strong{color:var(--text);}
     return match ? match[1] : '';
   }
 
+  function parsePageCount(text){
+    const clean = cleanEnglish(text);
+    const matches = [...clean.matchAll(/Page\s+\d+\s*\/\s*(\d+)/gi)];
+    return matches.length ? matches[matches.length - 1][1] : '';
+  }
+
   function updatePdfMetaLine(){
     const box = document.getElementById('empPdfMeta');
     if (!box) return;
@@ -784,7 +790,8 @@ footer strong{color:var(--text);}
       if (expected) label += ' / PDF total ' + expected;
       if (meta.companyCode) label += ' | Est. ' + meta.companyCode;
       if (meta.category) label += ' | Cat. ' + meta.category;
-      if (expected && extracted < expected) label += ' | PDF text has fewer readable employee rows';
+      if (meta.pageCount) label += ' | Pages ' + meta.pageCount;
+      if (expected && extracted < expected) label += ' | this PDF file only contains ' + extracted + ' readable rows';
       return label;
     }).join('   ||   ');
     box.style.display = 'block';
@@ -797,7 +804,8 @@ footer strong{color:var(--text);}
       extracted: parsed.records.length,
       totalEmployees: parsed.totalEmployees,
       companyCode: parsed.companyCode,
-      category: parsed.category
+      category: parsed.category,
+      pageCount: parsed.pageCount
     };
     updatePdfMetaLine();
     setTimeout(updatePdfMetaLine, 100);
@@ -809,6 +817,7 @@ footer strong{color:var(--text);}
     const companyName = parseCompanyName(text);
     const category = parseCategory(text);
     const totalEmployees = parseTotalEmployees(text);
+    const pageCount = parsePageCount(text);
     const chunks = [];
     let current = [];
 
@@ -893,6 +902,7 @@ footer strong{color:var(--text);}
         companyName: companyName,
         category: category,
         pdfTotalEmployees: totalEmployees,
+        pdfPages: pageCount,
         source: sourceName
       });
     });
@@ -903,6 +913,7 @@ footer strong{color:var(--text);}
       companyCode: companyCode,
       category: category,
       totalEmployees: totalEmployees,
+      pageCount: pageCount,
       fmt: 'mohre_passport_employee_list'
     };
   }
