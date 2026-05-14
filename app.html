@@ -520,6 +520,7 @@ footer strong{color:var(--text);}
     <span>📄 Extracted: <strong id="shExtracted">0</strong></span>
   </div>
 </div>
+<div id="empPdfMeta" style="display:none;background:#fff7e6;border-bottom:1px solid #e8c84a;padding:5px 10px;font-size:11px;color:#7d5a00;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
 <div class="fbar" id="fbar">
   <label>🔍</label>
   <input type="text" id="gs" placeholder="Search anything…" oninput="applyF()">
@@ -635,6 +636,7 @@ footer strong{color:var(--text);}
   if (typeof extractPDF !== 'function' || typeof pdfjsLib === 'undefined') return;
 
   const originalExtractPDF = extractPDF;
+  window.empParsedPdfMeta = window.empParsedPdfMeta || {};
   const nationalities = [
     'UNITED ARAB EMIRATES','SRI LANKA','PHILIPPINES','BANGLADESH','PAKISTAN',
     'AFGHANISTAN','INDONESIA','ETHIOPIA','MOROCCO','MYANMAR','VIETNAM',
@@ -653,6 +655,7 @@ footer strong{color:var(--text);}
   const nationalityRx = new RegExp('(' + nationalities.sort((a,b)=>b.length-a.length).map(escapeRx).join('|') + ')', 'i');
   const permitRx = new RegExp(permitTypes.map(escapeRx).join('|'), 'i');
   const startRx = /^([A-Z0-9]{5,12})\s+([A-Z][A-Z .'-]+)/;
+  const looseStartRx = /^([A-Z0-9]{5,12})(?:\s|$)/;
   const arabicRx = /[\u0600-\u06ff\ufb50-\ufdff\ufe70-\ufeff\x00]+/g;
 
   function cleanEnglish(text){
@@ -668,8 +671,21 @@ footer strong{color:var(--text);}
   function cleanJob(text){
     return String(text || '')
       .replace(/([a-z])([A-Z])/g, '$1 $2')
+      .replace(/\bPage\s+\d+\s*\/\s*\d+\b/gi, ' ')
       .replace(/\s+/g, ' ')
       .replace(/\b(Limited|Unlimited|He has an escape report)\b.*$/i, '')
+      .trim()
+      .replace(/^[-: ]+|[-: ]+$/g, '');
+  }
+
+  function cleanName(text){
+    return cleanEnglish(text)
+      .replace(permitRx, ' ')
+      .replace(/\bPage\s+\d+\s*\/\s*\d+\b/gi, ' ')
+      .replace(/\b(Card Type|Contract Type|Limited|Unlimited|Underprocess)\b/gi, ' ')
+      .replace(/\b\d{6,14}\b/g, ' ')
+      .replace(/\d{2}\/\d{2}\/\d{4}/g, ' ')
+      .replace(/\s+/g, ' ')
       .trim()
       .replace(/^[-: ]+|[-: ]+$/g, '');
   }
@@ -683,13 +699,27 @@ footer strong{color:var(--text);}
       /Contract Type/i.test(clean);
   }
 
+  function isPassportToken(token){
+    token = String(token || '').trim();
+    if (!/^[A-Z0-9]{5,12}$/.test(token)) return false;
+    if (!/\d/.test(token) || /^RP\d+/i.test(token)) return false;
+    if (/^\d+$/.test(token) && token.length < 8) return false;
+    return true;
+  }
+
   function isRecordStart(line){
-    const match = startRx.exec(line);
-    return !!(match && /\d/.test(match[1]) && !/^RP\d+/i.test(match[1]));
+    const clean = cleanEnglish(line);
+    const token = (clean.split(/\s+/)[0] || '').trim();
+    if (!isPassportToken(token)) return false;
+    return !!(startRx.exec(clean) || permitRx.test(clean) || clean === token);
   }
 
   function skipLine(line){
     const clean = cleanEnglish(line);
+    const firstToken = (clean.split(/\s+/)[0] || '').trim();
+    if (isPassportToken(firstToken)) return false;
+    if (/\b\d{14}\b/.test(clean)) return false;
+    if (/\d{2}\/\d{2}\/\d{4}/.test(clean) && /Page\s+\d+\s*\//i.test(clean)) return false;
     return /(Passport Number|Person Name|Card Type|Job Name|Nationality|Card Number|Contract Type|The List Of Employees|Scan QR|Category\/|Establishment Name|Establishment Number|RP\d+AE|Page\s+\d+\s*\/|Total Number of Employees|Printing Date)/i.test(line) ||
       /(NESTO|HYPERMARKET|HYPERMARKT|SOLE PROPRIETORSHIP|NESTO MANAGEMENT OFFICE|\bQR\b)/i.test(clean);
   }
@@ -702,10 +732,34 @@ footer strong{color:var(--text);}
     return fileMatch ? fileMatch[1] : '';
   }
 
+  function cleanCompanyName(text){
+    return cleanEnglish(text)
+      .replace(/\s*-\s*BR\b/gi, ' BR')
+      .replace(/\bBR\s+(\d)\s+(\d)\b/gi, 'BR $1$2')
+      .replace(/\s+/g, ' ')
+      .replace(/\s+-\s*$/g, '')
+      .trim();
+  }
+
   function parseCompanyName(text){
     const clean = cleanEnglish(text);
+    const companyCode = parseCompanyCode(text);
+    if (companyCode) {
+      const byCode = clean.match(new RegExp('\\b' + escapeRx(companyCode) + '\\s+([A-Z][A-Z0-9 .&/\\-]{8,}?)(?:\\s+Category/|\\s+\\*RP|\\s+Scan QR|\\s+Passport Number|$)', 'i'));
+      if (byCode && !/Establishment Number/i.test(byCode[1])) return cleanCompanyName(byCode[1]);
+    }
     const match = clean.match(/Establishment Name\s*\/?\s*(.*?)(?:Scan QR|Passport Number|$)/i);
-    return match ? match[1].trim() : '';
+    if (!match) return '';
+    return cleanCompanyName(match[1]
+      .replace(/^\d{4,}\s+/, '')
+      .replace(/\s+Category\/.*$/i, '')
+      .replace(/\s+\*?RP\d+AE\*?.*$/i, ''));
+  }
+
+  function parseCategory(text){
+    const clean = cleanEnglish(text);
+    const match = clean.match(/Category\s*\/?\s*(\d+)/i);
+    return match ? match[1] : '';
   }
 
   function parseTotalEmployees(text){
@@ -714,9 +768,46 @@ footer strong{color:var(--text);}
     return match ? match[1] : '';
   }
 
+  function updatePdfMetaLine(){
+    const box = document.getElementById('empPdfMeta');
+    if (!box) return;
+    const metas = Object.values(window.empParsedPdfMeta || {});
+    if (!metas.length) {
+      box.style.display = 'none';
+      box.textContent = '';
+      return;
+    }
+    box.textContent = metas.map(meta => {
+      const expected = parseInt(meta.totalEmployees || '', 10) || 0;
+      const extracted = meta.extracted || 0;
+      let label = meta.source + ': ' + extracted + ' rows';
+      if (expected) label += ' / PDF total ' + expected;
+      if (meta.companyCode) label += ' | Est. ' + meta.companyCode;
+      if (meta.category) label += ' | Cat. ' + meta.category;
+      if (expected && extracted < expected) label += ' | PDF text has fewer readable employee rows';
+      return label;
+    }).join('   ||   ');
+    box.style.display = 'block';
+  }
+
+  function rememberPdfMeta(parsed, sourceName){
+    const source = sourceName || '';
+    window.empParsedPdfMeta[source] = {
+      source: source,
+      extracted: parsed.records.length,
+      totalEmployees: parsed.totalEmployees,
+      companyCode: parsed.companyCode,
+      category: parsed.category
+    };
+    updatePdfMetaLine();
+    setTimeout(updatePdfMetaLine, 100);
+    setTimeout(updatePdfMetaLine, 800);
+  }
+
   function parseNewEmployeeList(text, sourceName){
     const companyCode = parseCompanyCode(text, sourceName);
     const companyName = parseCompanyName(text);
+    const category = parseCategory(text);
     const totalEmployees = parseTotalEmployees(text);
     const chunks = [];
     let current = [];
@@ -738,27 +829,35 @@ footer strong{color:var(--text);}
     const records = [];
     chunks.forEach(chunk => {
       const raw = cleanEnglish(chunk);
-      const start = startRx.exec(raw);
+      const start = startRx.exec(raw) || looseStartRx.exec(raw);
       if (!start) return;
 
       const passport = start[1];
-      if (!/\d/.test(passport) || /^RP\d+/i.test(passport)) return;
+      if (!isPassportToken(passport)) return;
 
       const personCodeMatch = raw.match(/\b\d{14}\b/);
       const personCode = personCodeMatch ? personCodeMatch[0] : '';
+      const personIndex = personCode ? raw.indexOf(personCode) : -1;
       const permitMatch = permitRx.exec(raw);
       const endCandidates = [];
-      if (personCode) endCandidates.push(raw.indexOf(personCode));
-      if (permitMatch) endCandidates.push(permitMatch.index);
+      if (personIndex > passport.length) endCandidates.push(personIndex);
+      if (permitMatch && permitMatch.index > passport.length) endCandidates.push(permitMatch.index);
       const nameEnd = endCandidates.filter(pos => pos > passport.length).sort((a,b)=>a-b)[0] || raw.length;
-      const name = raw.slice(passport.length, nameEnd).trim();
+      let name = cleanName(raw.slice(passport.length, nameEnd));
+      if (!name && personIndex > passport.length) {
+        name = cleanName(raw.slice(passport.length, personIndex));
+      }
       if (!name) return;
 
       const expiryMatch = raw.match(/\d{2}\/\d{2}\/\d{4}/);
       const expiry = expiryMatch ? expiryMatch[0] : '';
 
       let afterPermit = '';
-      if (permitMatch) {
+      if (permitMatch && personIndex > permitMatch.index) {
+        const betweenPermitAndCode = raw.slice(permitMatch.index + permitMatch[0].length, personIndex);
+        const afterCode = raw.slice(personIndex + personCode.length);
+        afterPermit = nationalityRx.test(betweenPermitAndCode) ? betweenPermitAndCode : (afterCode || betweenPermitAndCode);
+      } else if (permitMatch) {
         afterPermit = raw.slice(permitMatch.index + permitMatch[0].length);
       } else if (personCode && raw.indexOf(personCode) >= 0) {
         afterPermit = raw.slice(raw.indexOf(personCode) + personCode.length);
@@ -768,7 +867,7 @@ footer strong{color:var(--text);}
 
       const nationalityMatch = nationalityRx.exec(afterPermit);
       const nationality = nationalityMatch ? nationalityMatch[0].toUpperCase() : '';
-      const job = nationalityMatch ? cleanJob(afterPermit.slice(0, nationalityMatch.index).replace(permitRx, '')) : '';
+      const job = nationalityMatch ? cleanJob(afterPermit.slice(0, nationalityMatch.index).replace(permitRx, '').replace(/\b\d{6,14}\b/g, '')) : '';
 
       let cardNo = '';
       const numberSource = expiry ? raw.slice(0, raw.indexOf(expiry)) : raw;
@@ -791,6 +890,9 @@ footer strong{color:var(--text);}
         cardNo: cardNo,
         expiry: expiry,
         companyCode: companyCode,
+        companyName: companyName,
+        category: category,
+        pdfTotalEmployees: totalEmployees,
         source: sourceName
       });
     });
@@ -799,6 +901,7 @@ footer strong{color:var(--text);}
       records: records,
       companyName: companyName,
       companyCode: companyCode,
+      category: category,
       totalEmployees: totalEmployees,
       fmt: 'mohre_passport_employee_list'
     };
@@ -843,7 +946,10 @@ footer strong{color:var(--text);}
       const text = await readPdfText(file);
       if (looksLikeNewEmployeeList(text)) {
         const parsed = parseNewEmployeeList(text, sourceName || file.name);
-        if (parsed.records.length) return parsed;
+        if (parsed.records.length) {
+          rememberPdfMeta(parsed, sourceName || file.name);
+          return parsed;
+        }
       }
     } catch (err) {
       console.warn('New employee-list parser skipped:', err);
@@ -853,8 +959,18 @@ footer strong{color:var(--text);}
 
   window.empNewFormatParser = {
     parseText: parseNewEmployeeList,
-    cleanEnglish: cleanEnglish
+    cleanEnglish: cleanEnglish,
+    updatePdfMetaLine: updatePdfMetaLine
   };
+
+  if (typeof clearAll === 'function') {
+    const originalClearAll = clearAll;
+    clearAll = function(){
+      window.empParsedPdfMeta = {};
+      updatePdfMetaLine();
+      return originalClearAll.apply(this, arguments);
+    };
+  }
 })();
 </script>
 <!-- EXCEL COLOR CHOICE MODAL -->
