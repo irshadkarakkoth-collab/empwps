@@ -720,6 +720,11 @@ footer strong{color:var(--text);}
     if (isPassportToken(firstToken)) return false;
     if (/\b\d{14}\b/.test(clean)) return false;
     if (/\d{2}\/\d{2}\/\d{4}/.test(clean) && /Page\s+\d+\s*\//i.test(clean)) return false;
+    // Skip page header rows (repeated on every page) – these look like column headers
+    if (/^\s*(No\.?\s*)?Passport\s+(No\.?\s*)?Person\s+/i.test(clean)) return true;
+    if (/^\s*No\.?\s*Person\s+Code/i.test(clean)) return true;
+    if (/Passport\s+Number.*Person\s+Name/i.test(clean)) return true;
+    if (/Person\s+Name.*Card\s+Type/i.test(clean)) return true;
     return /(Passport Number|Person Name|Card Type|Job Name|Nationality|Card Number|Contract Type|The List Of Employees|Scan QR|Category\/|Establishment Name|Establishment Number|RP\d+AE|Page\s+\d+\s*\/|Total Number of Employees|Printing Date)/i.test(line) ||
       /(NESTO|HYPERMARKET|HYPERMARKT|SOLE PROPRIETORSHIP|NESTO MANAGEMENT OFFICE|\bQR\b)/i.test(clean);
   }
@@ -826,6 +831,8 @@ footer strong{color:var(--text);}
       if (!line || skipLine(line)) return;
       const clean = cleanEnglish(line);
       if (!clean) return;
+      // Extra guard: skip lines that are purely header-like column names (repeated on each page)
+      if (/^(No\.?\s*|#\s*)?(Passport\s+(No\.?|Number)|Person\s+(Name|Code)|Card\s+Type|Job\s+Name|Nationality|Card\s+Number|Contract\s+Type|Expiry\s+Date)/i.test(clean)) return;
       if (isRecordStart(clean)) {
         if (current.length) chunks.push(current.join(' '));
         current = [line];
