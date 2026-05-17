@@ -692,11 +692,14 @@ footer strong{color:var(--text);}
 
   function looksLikeNewEmployeeList(text){
     const clean = cleanEnglish(text);
-    return /The List Of Employees/i.test(text) &&
-      /Passport Number/i.test(clean) &&
-      /Person Name/i.test(clean) &&
-      /Card Type/i.test(clean) &&
-      /Contract Type/i.test(clean);
+    const hasHeader = /The List Of Employees/i.test(clean) || /Passport\s+(No\.?|Number)\s+Person\s+Name/i.test(clean);
+    const hasIdentityColumns =
+      /Passport\s+(No\.?|Number)/i.test(clean) &&
+      /Person\s+Name/i.test(clean);
+    const hasWorkColumns =
+      /Nationality/i.test(clean) &&
+      (/Card\s+Type/i.test(clean) || /Contract\s+Type/i.test(clean) || /Job\s+Name/i.test(clean));
+    return hasHeader && hasIdentityColumns && hasWorkColumns;
   }
 
   function isPassportToken(token){
@@ -962,12 +965,16 @@ footer strong{color:var(--text);}
   extractPDF = async function(file, sourceName){
     try {
       const text = await readPdfText(file);
-      if (looksLikeNewEmployeeList(text)) {
-        const parsed = parseNewEmployeeList(text, sourceName || file.name);
-        if (parsed.records.length) {
-          rememberPdfMeta(parsed, sourceName || file.name);
-          return parsed;
-        }
+      const parsed = parseNewEmployeeList(text, sourceName || file.name);
+      const totalEmployees = parseInt(parsed.totalEmployees || '', 10) || 0;
+      const hasNewFormatSignals =
+        looksLikeNewEmployeeList(text) ||
+        totalEmployees > 0 ||
+        !!parsed.companyCode ||
+        !!parsed.category;
+      if (parsed.records.length && hasNewFormatSignals) {
+        rememberPdfMeta(parsed, sourceName || file.name);
+        return parsed;
       }
     } catch (err) {
       console.warn('New employee-list parser skipped:', err);
