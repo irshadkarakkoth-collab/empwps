@@ -704,17 +704,32 @@ footer strong{color:var(--text);}
 
   function isPassportToken(token){
     token = String(token || '').trim();
-    if (!/^[A-Z0-9]{5,12}$/.test(token)) return false;
+    if (!/^[A-Z0-9]{5,15}$/.test(token)) return false;
     if (!/\d/.test(token) || /^RP\d+/i.test(token)) return false;
     if (/^\d+$/.test(token) && token.length < 8) return false;
     return true;
   }
 
+  function extractPassportAtLineStart(line){
+    const clean = cleanEnglish(line);
+    if (!clean) return '';
+    const direct = clean.match(/^([A-Z0-9]{5,15})(?:\s|$)/);
+    if (direct && isPassportToken(direct[1])) return direct[1];
+    const numbered = clean.match(/^\d{1,4}\s*[-.)]?\s*([A-Z0-9]{5,15})(?:\s|$)/);
+    if (numbered && isPassportToken(numbered[1])) return numbered[1];
+    return '';
+  }
+
   function isRecordStart(line){
     const clean = cleanEnglish(line);
-    const token = (clean.split(/\s+/)[0] || '').trim();
-    if (!isPassportToken(token)) return false;
-    return !!(startRx.exec(clean) || permitRx.test(clean) || clean === token);
+    const token = extractPassportAtLineStart(clean);
+    if (!token) return false;
+    return !!(
+      startRx.exec(clean) ||
+      permitRx.test(clean) ||
+      /\b\d{14}\b/.test(clean) ||
+      clean === token
+    );
   }
 
   function skipLine(line){
@@ -848,10 +863,12 @@ footer strong{color:var(--text);}
     const records = [];
     chunks.forEach(chunk => {
       const raw = cleanEnglish(chunk);
-      const start = startRx.exec(raw) || looseStartRx.exec(raw);
+      const startToken = extractPassportAtLineStart(raw);
+      const cleanedForStart = startToken ? raw.replace(/^\d{1,4}\s*[-.)]?\s*/, '') : raw;
+      const start = startRx.exec(cleanedForStart) || looseStartRx.exec(cleanedForStart);
       if (!start) return;
 
-      const passport = start[1];
+      const passport = startToken || start[1];
       if (!isPassportToken(passport)) return;
 
       const personCodeMatch = raw.match(/\b\d{14}\b/);
@@ -916,6 +933,86 @@ footer strong{color:var(--text);}
         source: sourceName
       });
     });
+
+    // Fallback pass: when line-based chunking misses records (common in some PDFs),
+    // recover records by anchoring on the 14-digit Person Code pattern.
+    if (records.length) {
+      const expectedCount = parseInt(totalEmployees || '', 10) || 0;
+      if (!expectedCount || records.length < expectedCount) {
+        const byCode = [];
+        const seenCodes = new Set(records.map(r => String(r.personCode || '').trim()).filter(Boolean));
+        const cleanAll = cleanEnglish(text);
+        const codeMatches = [...cleanAll.matchAll(/\b\d{14}\b/g)];
+        codeMatches.forEach(match => {
+          const personCode = String(match[0] || '').trim();
+          if (!personCode || seenCodes.has(personCode)) return;
+
+          const windowStart = Math.max(0, (match.index || 0) - 260);
+          const windowEnd = Math.min(cleanAll.length, (match.index || 0) + personCode.length + 320);
+          const around = cleanAll.slice(windowStart, windowEnd);
+          const localCodeIndex = Math.max(0, (match.index || 0) - windowStart);
+          const before = around.slice(0, localCodeIndex);
+          const after = around.slice(localCodeIndex + personCode.length);
+
+          const beforeTokens = before.split(/\s+/);
+          let passport = '';
+          for (let i = beforeTokens.length - 1; i >= 0; i--) {
+            const token = String(beforeTokens[i] || '').replace(/[^A-Z0-9]/gi, '').toUpperCase();
+            if (!token) continue;
+            if (!isPassportToken(token)) continue;
+            if (token === companyCode) continue;
+            passport = token;
+            break;
+          }
+          if (!passport) return;
+
+          const passPos = before.lastIndexOf(passport);
+          const nameRaw = passPos >= 0 ? before.slice(passPos + passport.length) : '';
+          const name = cleanName(nameRaw);
+          if (!name) return;
+
+          const nationalityMatch = nationalityRx.exec(after);
+          const nationality = nationalityMatch ? nationalityMatch[0].toUpperCase() : '';
+          const job = nationalityMatch
+            ? cleanJob(after.slice(0, nationalityMatch.index).replace(permitRx, '').replace(/\b\d{6,14}\b/g, ''))
+            : '';
+          const expiryMatch = after.match(/\d{2}\/\d{2}\/\d{4}/);
+          const expiry = expiryMatch ? expiryMatch[0] : '';
+
+          const numberSource = expiry ? after.slice(0, after.indexOf(expiry)) : after;
+          let candidates = numberSource.match(/\b\d{6,13}\b/g) || [];
+          candidates = candidates.filter(value =>
+            value !== personCode &&
+            value !== companyCode &&
+            !passport.includes(value)
+          );
+          const cardNo = candidates.length ? candidates[candidates.length - 1] : '';
+
+          seenCodes.add(personCode);
+          byCode.push({
+            no: 0,
+            personCode: personCode,
+            name: name,
+            job: job,
+            passport: passport,
+            nationality: nationality,
+            cardNo: cardNo,
+            expiry: expiry,
+            companyCode: companyCode,
+            companyName: companyName,
+            category: category,
+            pdfTotalEmployees: totalEmployees,
+            pdfPages: pageCount,
+            source: sourceName
+          });
+        });
+
+        if (byCode.length) {
+          records.push(...byCode);
+          records.forEach((record, index) => { record.no = index + 1; });
+        }
+      }
+    }
 
     return {
       records: records,
