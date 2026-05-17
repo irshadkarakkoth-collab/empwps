@@ -654,8 +654,8 @@ footer strong{color:var(--text);}
   const escapeRx = value => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const nationalityRx = new RegExp('(' + nationalities.sort((a,b)=>b.length-a.length).map(escapeRx).join('|') + ')', 'i');
   const permitRx = new RegExp(permitTypes.map(escapeRx).join('|'), 'i');
-  const startRx = /^([A-Z0-9]{5,12})\s+([A-Z][A-Z .'-]+)/;
-  const looseStartRx = /^([A-Z0-9]{5,12})(?:\s|$)/;
+  const startRx = /^([A-Z0-9]{5,15})\s+([A-Z][A-Z .'-]+)/;
+  const looseStartRx = /^([A-Z0-9]{5,15})(?:\s|$)/;
   const arabicRx = /[\u0600-\u06ff\ufb50-\ufdff\ufe70-\ufeff\x00]+/g;
 
   function cleanEnglish(text){
@@ -706,6 +706,8 @@ footer strong{color:var(--text);}
     token = String(token || '').trim();
     if (!/^[A-Z0-9]{5,15}$/.test(token)) return false;
     if (!/\d/.test(token) || /^RP\d+/i.test(token)) return false;
+    // Person code is 14-digit numeric in this format; never treat it as passport.
+    if (/^\d{13,15}$/.test(token)) return false;
     if (/^\d+$/.test(token) && token.length < 8) return false;
     return true;
   }
@@ -861,8 +863,37 @@ footer strong{color:var(--text);}
     if (current.length) chunks.push(current.join(' '));
 
     const records = [];
-    chunks.forEach(chunk => {
-      const raw = cleanEnglish(chunk);
+    function splitMergedChunk(raw){
+      const clean = cleanEnglish(raw);
+      if (!clean) return [];
+      const starts = [0];
+      const startTokenRx = /\b([A-Z0-9]{5,15})\b/g;
+      let match;
+      while ((match = startTokenRx.exec(clean))) {
+        const token = String(match[1] || '');
+        if (!isPassportToken(token)) continue;
+        if (match.index === 0) continue;
+        const next = clean.slice(match.index + token.length);
+        // Record starts always continue into a name token (uppercase/lowercase latin).
+        if (!/^\s+[A-Z]/.test(next)) continue;
+        if (match.index - starts[starts.length - 1] < 20) continue;
+        starts.push(match.index);
+      }
+      if (starts.length === 1) return [clean];
+      starts.sort((a, b) => a - b);
+      const out = [];
+      for (let i = 0; i < starts.length; i++) {
+        const s = starts[i];
+        const e = i + 1 < starts.length ? starts[i + 1] : clean.length;
+        const part = clean.slice(s, e).trim();
+        if (part) out.push(part);
+      }
+      return out;
+    }
+
+    function parseChunkRaw(raw){
+      raw = cleanEnglish(raw);
+      if (!raw) return;
       const startToken = extractPassportAtLineStart(raw);
       const cleanedForStart = startToken ? raw.replace(/^\d{1,4}\s*[-.)]?\s*/, '') : raw;
       const start = startRx.exec(cleanedForStart) || looseStartRx.exec(cleanedForStart);
@@ -884,6 +915,7 @@ footer strong{color:var(--text);}
         name = cleanName(raw.slice(passport.length, personIndex));
       }
       if (!name) return;
+      if (!/[A-Z]/i.test(name)) return;
 
       const expiryMatch = raw.match(/\d{2}\/\d{2}\/\d{4}/);
       const expiry = expiryMatch ? expiryMatch[0] : '';
@@ -932,6 +964,10 @@ footer strong{color:var(--text);}
         pdfPages: pageCount,
         source: sourceName
       });
+    }
+
+    chunks.forEach(chunk => {
+      splitMergedChunk(chunk).forEach(parseChunkRaw);
     });
 
     // Fallback pass: when line-based chunking misses records (common in some PDFs),
@@ -970,6 +1006,7 @@ footer strong{color:var(--text);}
           const nameRaw = passPos >= 0 ? before.slice(passPos + passport.length) : '';
           const name = cleanName(nameRaw);
           if (!name) return;
+          if (!/[A-Z]/i.test(name)) return;
 
           const nationalityMatch = nationalityRx.exec(after);
           const nationality = nationalityMatch ? nationalityMatch[0].toUpperCase() : '';
@@ -1026,19 +1063,27 @@ footer strong{color:var(--text);}
   }
 
   function lineTextFromItems(items){
-    const rows = [];
+    const entries = [];
     (items || []).forEach(item => {
       const text = (item.str || '').replace(/\x00/g, '').trim();
       if (!text) return;
       const transform = item.transform || [0,0,0,0,0,0];
       const x = transform[4] || 0;
       const y = transform[5] || 0;
-      let row = rows.find(candidate => Math.abs(candidate.y - y) <= 2.5);
+      entries.push({ x, y, text });
+    });
+
+    // Sort first and group with tighter Y tolerance to avoid merging adjacent employee rows.
+    entries.sort((a, b) => (b.y - a.y) || (a.x - b.x));
+    const rows = [];
+    const yTolerance = 1.0;
+    entries.forEach(entry => {
+      let row = rows.find(candidate => Math.abs(candidate.y - entry.y) <= yTolerance);
       if (!row) {
-        row = { y: y, items: [] };
+        row = { y: entry.y, items: [] };
         rows.push(row);
       }
-      row.items.push({ x: x, text: text });
+      row.items.push({ x: entry.x, text: entry.text });
     });
 
     return rows
