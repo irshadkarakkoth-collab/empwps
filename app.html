@@ -1121,6 +1121,87 @@ footer strong{color:var(--text);}
       .join('\n');
   }
 
+  async function ensureTesseractLoaded(){
+    if (window.Tesseract && (window.Tesseract.createWorker || window.Tesseract.recognize)) {
+      return window.Tesseract;
+    }
+    if (window.__empTesseractLoadPromise) return window.__empTesseractLoadPromise;
+    window.__empTesseractLoadPromise = new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@6/dist/tesseract.min.js';
+      script.async = true;
+      script.onload = () => resolve(window.Tesseract);
+      script.onerror = () => reject(new Error('Failed to load OCR engine'));
+      document.head.appendChild(script);
+    });
+    return window.__empTesseractLoadPromise;
+  }
+
+  function normalizeOcrText(text){
+    return String(text || '')
+      .replace(/\x00/g, ' ')
+      .replace(/Passpor[tf]\s*Numbe[r]?/gi, 'Passport Number')
+      .replace(/Cont[r]?act\s*Type/gi, 'Contract Type')
+      .replace(/N1PAL/gi, 'NIPAL')
+      .replace(/\s+/g, ' ')
+      .replace(/\s*Page\s+\d+\s*\/\s*\d+\s*/gi, '\n')
+      .trim();
+  }
+
+  async function readPdfTextViaOCR(file, onPageProgress){
+    const Tesseract = await ensureTesseractLoaded();
+    if (!Tesseract) throw new Error('OCR engine unavailable');
+
+    const buffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(buffer) }).promise;
+
+    let worker = null;
+    if (typeof Tesseract.createWorker === 'function') {
+      try {
+        worker = await Tesseract.createWorker('eng');
+      } catch (_) {
+        try {
+          worker = await Tesseract.createWorker();
+          if (worker && typeof worker.loadLanguage === 'function') await worker.loadLanguage('eng');
+          if (worker && typeof worker.initialize === 'function') await worker.initialize('eng');
+        } catch (_) {
+          worker = null;
+        }
+      }
+    }
+
+    const pageTexts = [];
+    for (let pageNo = 1; pageNo <= pdf.numPages; pageNo++) {
+      const page = await pdf.getPage(pageNo);
+      const viewport = page.getViewport({ scale: 2.4 });
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d', { willReadFrequently: true });
+      canvas.width = Math.max(1, Math.floor(viewport.width));
+      canvas.height = Math.max(1, Math.floor(viewport.height));
+      await page.render({ canvasContext: context, viewport: viewport }).promise;
+
+      let ocrText = '';
+      if (worker && typeof worker.recognize === 'function') {
+        const result = await worker.recognize(canvas);
+        ocrText = (result && result.data && result.data.text) ? result.data.text : '';
+      } else if (typeof Tesseract.recognize === 'function') {
+        const result = await Tesseract.recognize(canvas, 'eng');
+        ocrText = (result && result.data && result.data.text) ? result.data.text : '';
+      }
+
+      pageTexts.push(normalizeOcrText(ocrText));
+      canvas.width = 1;
+      canvas.height = 1;
+      if (typeof onPageProgress === 'function') onPageProgress(pageNo, pdf.numPages);
+    }
+
+    if (worker && typeof worker.terminate === 'function') {
+      try { await worker.terminate(); } catch (_) {}
+    }
+
+    return pageTexts.join('\n');
+  }
+
   extractPDF = async function(file, sourceName){
     function recordCompleteness(record){
       if (!record || typeof record !== 'object') return 0;
@@ -1241,6 +1322,23 @@ footer strong{color:var(--text);}
           }
         } catch (legacyErr) {
           console.warn('Legacy parser comparison skipped:', legacyErr);
+        }
+      }
+
+      const targetTotal = parseInt(chosen.totalEmployees || parsed.totalEmployees || '', 10) || 0;
+      const needsOcrRecovery = targetTotal > 0 && chosen.records.length < targetTotal;
+      if (needsOcrRecovery) {
+        try {
+          if (typeof sb === 'function') sb(0, '🔍 OCR fallback running...');
+          const ocrText = await readPdfTextViaOCR(file, (pageNo, totalPages) => {
+            if (typeof sb === 'function') sb(0, '🔍 OCR page ' + pageNo + '/' + totalPages + '...');
+          });
+          const ocrParsed = parseNewEmployeeList(ocrText, source);
+          const mergedOcr = mergeParsed(chosen, ocrParsed, source);
+          const ocrCandidates = [chosen, ocrParsed, mergedOcr];
+          chosen = ocrCandidates.sort((a, b) => qualityScore(b) - qualityScore(a))[0] || chosen;
+        } catch (ocrErr) {
+          console.warn('OCR fallback failed:', ocrErr);
         }
       }
 
