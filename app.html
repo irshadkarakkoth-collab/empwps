@@ -876,6 +876,11 @@ footer strong{color:var(--text);}
         const next = clean.slice(match.index + token.length);
         // Record starts always continue into a name token (uppercase/lowercase latin).
         if (!/^\s+[A-Z]/.test(next)) continue;
+        // Guard against false split on card number + trailing surname fragments.
+        // A real record start usually reaches person code or permit phrase soon.
+        const lookahead = clean.slice(match.index, Math.min(clean.length, match.index + 260));
+        const hasRecordSignals = /\b\d{14}\b/.test(lookahead) || permitRx.test(lookahead);
+        if (!hasRecordSignals) continue;
         if (match.index - starts[starts.length - 1] < 20) continue;
         starts.push(match.index);
       }
@@ -1105,18 +1110,125 @@ footer strong{color:var(--text);}
   }
 
   extractPDF = async function(file, sourceName){
+    function recordCompleteness(record){
+      if (!record || typeof record !== 'object') return 0;
+      let score = 0;
+      if (record.passport) score += 3;
+      if (record.name) score += 3;
+      if (record.job) score += 2;
+      if (record.nationality) score += 2;
+      if (record.cardNo) score += 2;
+      if (record.expiry) score += 2;
+      if (record.personCode) score += 1;
+      return score;
+    }
+
+    function normalizeRecordShape(record, meta, source){
+      const safe = record && typeof record === 'object' ? record : {};
+      return {
+        no: safe.no || 0,
+        personCode: safe.personCode || '',
+        name: safe.name || '',
+        job: safe.job || '',
+        passport: safe.passport || '',
+        nationality: safe.nationality || '',
+        cardNo: safe.cardNo || '',
+        expiry: safe.expiry || '',
+        companyCode: safe.companyCode || meta.companyCode || '',
+        companyName: safe.companyName || meta.companyName || '',
+        category: safe.category || meta.category || '',
+        pdfTotalEmployees: safe.pdfTotalEmployees || meta.totalEmployees || '',
+        pdfPages: safe.pdfPages || meta.pageCount || '',
+        source: safe.source || source || ''
+      };
+    }
+
+    function keyForRecord(record){
+      const passport = String(record.passport || '').trim();
+      const name = cleanName(record.name || '').toUpperCase();
+      const cardNo = String(record.cardNo || '').trim();
+      const expiry = String(record.expiry || '').trim();
+      if (passport && name) return passport + '|' + name;
+      if (passport && cardNo && expiry) return passport + '|' + cardNo + '|' + expiry;
+      if (name && cardNo && expiry) return name + '|' + cardNo + '|' + expiry;
+      return passport + '|' + name + '|' + cardNo + '|' + expiry;
+    }
+
+    function qualityScore(parsed){
+      const recs = parsed && Array.isArray(parsed.records) ? parsed.records : [];
+      const fullRows = recs.filter(r => {
+        const hasCore = !!(r && r.passport && r.name);
+        const hasWork = !!(r && (r.job || r.nationality));
+        const hasDoc = !!(r && (r.cardNo || r.expiry));
+        return hasCore && hasWork && hasDoc;
+      }).length;
+      return (recs.length * 1000) + (fullRows * 10);
+    }
+
+    function mergeParsed(primary, secondary, source){
+      const meta = {
+        companyName: primary.companyName || secondary.companyName || '',
+        companyCode: primary.companyCode || secondary.companyCode || '',
+        category: primary.category || secondary.category || '',
+        totalEmployees: primary.totalEmployees || secondary.totalEmployees || '',
+        pageCount: primary.pageCount || secondary.pageCount || ''
+      };
+      const map = new Map();
+      const push = (record) => {
+        const normalized = normalizeRecordShape(record, meta, source);
+        const key = keyForRecord(normalized);
+        const existing = map.get(key);
+        if (!existing || recordCompleteness(normalized) > recordCompleteness(existing)) {
+          map.set(key, normalized);
+        }
+      };
+      (primary.records || []).forEach(push);
+      (secondary.records || []).forEach(push);
+      const records = Array.from(map.values());
+      records.forEach((record, index) => { record.no = index + 1; });
+      return {
+        records: records,
+        companyName: meta.companyName,
+        companyCode: meta.companyCode,
+        category: meta.category,
+        totalEmployees: meta.totalEmployees,
+        pageCount: meta.pageCount,
+        fmt: 'mohre_passport_employee_list'
+      };
+    }
+
     try {
       const text = await readPdfText(file);
-      const parsed = parseNewEmployeeList(text, sourceName || file.name);
+      const source = sourceName || file.name;
+      const parsed = parseNewEmployeeList(text, source);
       const totalEmployees = parseInt(parsed.totalEmployees || '', 10) || 0;
+      const coreFilled = parsed.records.filter(r => r && r.passport && r.name && (r.job || r.nationality) && (r.cardNo || r.expiry)).length;
+      const lowCoverage = totalEmployees > 0 && parsed.records.length < Math.ceil(totalEmployees * 0.85);
+      const weakDetails = parsed.records.length > 0 && coreFilled < Math.ceil(parsed.records.length * 0.65);
+      let chosen = parsed;
+
+      if (lowCoverage || weakDetails) {
+        try {
+          const legacy = await originalExtractPDF.apply(this, arguments);
+          if (legacy && Array.isArray(legacy.records) && legacy.records.length) {
+            const merged = mergeParsed(parsed, legacy, source);
+            const candidates = [parsed, legacy, merged];
+            chosen = candidates.sort((a, b) => qualityScore(b) - qualityScore(a))[0] || parsed;
+          }
+        } catch (legacyErr) {
+          console.warn('Legacy parser comparison skipped:', legacyErr);
+        }
+      }
+
+      const chosenTotalEmployees = parseInt(chosen.totalEmployees || parsed.totalEmployees || '', 10) || 0;
       const hasNewFormatSignals =
         looksLikeNewEmployeeList(text) ||
-        totalEmployees > 0 ||
-        !!parsed.companyCode ||
-        !!parsed.category;
-      if (parsed.records.length && hasNewFormatSignals) {
-        rememberPdfMeta(parsed, sourceName || file.name);
-        return parsed;
+        chosenTotalEmployees > 0 ||
+        !!chosen.companyCode ||
+        !!chosen.category;
+      if (chosen.records.length && hasNewFormatSignals) {
+        rememberPdfMeta(chosen, source);
+        return chosen;
       }
     } catch (err) {
       console.warn('New employee-list parser skipped:', err);
