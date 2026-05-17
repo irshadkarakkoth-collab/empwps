@@ -1073,7 +1073,7 @@ footer strong{color:var(--text);}
     };
   }
 
-  function lineTextFromItems(items){
+  function lineTextFromItems(items, yTolerance){
     const entries = [];
     (items || []).forEach(item => {
       const text = (item.str || '').replace(/\x00/g, '').trim();
@@ -1087,7 +1087,7 @@ footer strong{color:var(--text);}
     // Sort first and group with tighter Y tolerance to avoid merging adjacent employee rows.
     entries.sort((a, b) => (b.y - a.y) || (a.x - b.x));
     const rows = [];
-    const yTolerance = 1.0;
+    yTolerance = Number(yTolerance || 1.0);
     entries.forEach(entry => {
       let row = rows.find(candidate => Math.abs(candidate.y - entry.y) <= yTolerance);
       if (!row) {
@@ -1103,16 +1103,22 @@ footer strong{color:var(--text);}
       .join('\n');
   }
 
-  async function readPdfText(file){
+  async function readPdfPageItems(file){
     const buffer = await file.arrayBuffer();
     const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(buffer) }).promise;
     const pages = [];
     for (let pageNo = 1; pageNo <= pdf.numPages; pageNo++) {
       const page = await pdf.getPage(pageNo);
       const content = await page.getTextContent({ normalizeWhitespace: true });
-      pages.push(lineTextFromItems(content.items));
+      pages.push(content.items || []);
     }
-    return pages.join('\n');
+    return pages;
+  }
+
+  function pageItemsToText(pageItems, yTolerance){
+    return (pageItems || [])
+      .map(items => lineTextFromItems(items, yTolerance))
+      .join('\n');
   }
 
   extractPDF = async function(file, sourceName){
@@ -1168,7 +1174,9 @@ footer strong{color:var(--text);}
         const hasDoc = !!(r && (r.cardNo || r.expiry));
         return hasCore && hasWork && hasDoc;
       }).length;
-      return (recs.length * 1000) + (fullRows * 10);
+      const partialRows = Math.max(0, recs.length - fullRows);
+      // Prefer fully-populated rows first; only then increase count.
+      return (fullRows * 10000) - (partialRows * 500) + (recs.length * 5);
     }
 
     function mergeParsed(primary, secondary, source){
@@ -1204,9 +1212,19 @@ footer strong{color:var(--text);}
     }
 
     try {
-      const text = await readPdfText(file);
       const source = sourceName || file.name;
-      const parsed = parseNewEmployeeList(text, source);
+      const pageItems = await readPdfPageItems(file);
+      const tolerances = [0.35, 0.6, 0.85, 1.0, 1.2, 1.5, 2.0, 2.5, 3.0];
+      const variants = [];
+      let signalText = '';
+      tolerances.forEach(tol => {
+        const text = pageItemsToText(pageItems, tol);
+        if (!signalText) signalText = text;
+        const parsedVariant = parseNewEmployeeList(text, source);
+        parsedVariant._tol = tol;
+        variants.push(parsedVariant);
+      });
+      const parsed = variants.sort((a, b) => qualityScore(b) - qualityScore(a))[0] || parseNewEmployeeList(signalText, source);
       const totalEmployees = parseInt(parsed.totalEmployees || '', 10) || 0;
       const coreFilled = parsed.records.filter(r => r && r.passport && r.name && (r.job || r.nationality) && (r.cardNo || r.expiry)).length;
       const lowCoverage = totalEmployees > 0 && parsed.records.length < Math.ceil(totalEmployees * 0.85);
@@ -1228,7 +1246,7 @@ footer strong{color:var(--text);}
 
       const chosenTotalEmployees = parseInt(chosen.totalEmployees || parsed.totalEmployees || '', 10) || 0;
       const hasNewFormatSignals =
-        looksLikeNewEmployeeList(text) ||
+        looksLikeNewEmployeeList(signalText) ||
         chosenTotalEmployees > 0 ||
         !!chosen.companyCode ||
         !!chosen.category;
