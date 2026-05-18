@@ -1186,6 +1186,8 @@ footer strong{color:var(--text);}
   var chatHistory = [];
   var isLoading = false;
   var welcomed = false;
+  var cooldownUntil = 0;
+  var cooldownTimer = null;
 
   var SYSTEM_PROMPT = 'You are an expert AI assistant for EMPWPSCTR — a UAE Ministry of HR Employment Data Extractor web app. Answer questions clearly and helpfully.\n\nKey facts:\n- Extracts employee data from UAE Ministry of HR PDF documents\n- Processes WPS (Wage Protection System) salary PDFs\n- Exports to Excel with optional color coding for expiry dates\n- PDF extraction and Excel export run in the browser. When AI chat is used, the question and current visible app context are sent to the AI API so the assistant can help with what is on screen.\n- Expiry colors: Red=expired, Orange=within 30 days, Yellow=within 90 days, Green=valid\n- WPS salary statuses: PAID, PARTIAL (less than contract), UNPAID, NO CONTRACT\n- Employee data fields: Person Code, Name, Job Title, Passport No, Nationality, Card Number, Expiry Date, Company Code, Source File\n- History auto-saved in browser localStorage\n- Supports 50+ nationalities: India, Pakistan, Philippines, Nepal, Bangladesh, Ethiopia, Myanmar, Indonesia, Kenya, Ghana, Nigeria, Sudan, Egypt, Yemen, Morocco, Sri Lanka, Afghanistan, China, Vietnam, Jordan, and more\n- Login is Firebase-secured; contact admin (Irshadkarakkoth) for accounts\n- Created by Irshadkarakkoth, Version 2.0.1\n- To upload: click Open PDF or drag & drop. To extract: click Extract button. To export: click Excel button.\n- History: every extraction auto-saved; click History button to restore past sessions\n- Clear button resets current data but keeps history\n\nBe concise, friendly, and practical. Use bullet points for steps.';
 
@@ -1215,8 +1217,32 @@ footer strong{color:var(--text);}
     sendAiMsg();
   };
 
+  function startCooldown(){
+    cooldownUntil = Date.now() + 30000;
+    var btn = document.getElementById('aiSendBtn');
+    var inp = document.getElementById('aiUserInput');
+    if(btn) btn.disabled = true;
+    if(inp) inp.disabled = true;
+    if(cooldownTimer) clearInterval(cooldownTimer);
+    cooldownTimer = setInterval(function(){
+      var remaining = Math.ceil((cooldownUntil - Date.now()) / 1000);
+      var btn2 = document.getElementById('aiSendBtn');
+      var inp2 = document.getElementById('aiUserInput');
+      if(remaining <= 0){
+        clearInterval(cooldownTimer);
+        cooldownTimer = null;
+        if(btn2){ btn2.disabled = false; btn2.textContent = 'Send'; }
+        if(inp2){ inp2.disabled = false; inp2.placeholder = 'Ask a question...'; }
+      } else {
+        if(btn2) btn2.textContent = remaining + 's';
+        if(inp2) inp2.placeholder = '⏳ Cooldown: ' + remaining + 's remaining...';
+      }
+    }, 500);
+  }
+
   window.sendAiMsg = function(){
     if(isLoading) return;
+    if(Date.now() < cooldownUntil) return;
     var inp = document.getElementById('aiUserInput');
     var text = (inp.value || '').trim();
     if(!text) return;
@@ -1226,10 +1252,12 @@ footer strong{color:var(--text);}
     addUserMsg(text);
     if(isAiGreetingOnly(text)){
       addBotMsg('Hello! I can help with this EMPWPSCTR app whenever you have a question.');
+      startCooldown();
       return;
     }
     if(isAiClearlyUnrelatedQuestion(text)){
       addBotMsg('I can only help with this EMPWPSCTR app: uploads, extraction, WPS salary, Excel export, history, filters, login, visible screen issues, and troubleshooting.');
+      startCooldown();
       return;
     }
     var useScreenContext = shouldUseAiScreenContext(text);
@@ -1265,6 +1293,7 @@ footer strong{color:var(--text);}
         addBotMsg(reply);
         chatHistory.push({role:'assistant',content:reply});
         if(chatHistory.length > 20) chatHistory = chatHistory.slice(-20);
+        startCooldown();
       }
     })
     .catch(function(){
