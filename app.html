@@ -691,12 +691,20 @@ footer strong{color:var(--text);}
   }
 
   function looksLikeNewEmployeeList(text){
-    const clean = cleanEnglish(text);
-    return /The List Of Employees/i.test(text) &&
-      /Passport Number/i.test(clean) &&
-      /Person Name/i.test(clean) &&
-      /Card Type/i.test(clean) &&
-      /Contract Type/i.test(clean);
+    // Primary signal: must have the title or Arabic equivalent
+    if (!/The List Of Employees/i.test(text) &&
+        !/\u0643\u0634\u0641 \u0627\u0644\u0639\u0627\u0645\u0644\u064a\u0646/i.test(text)) return false;
+    // Check raw text directly (no Arabic stripping) for at least 2 column headers
+    const signals = [
+      /Passport[\s\x00]*(Number|No)/i.test(text),
+      /Person[\s\x00]*Name/i.test(text),
+      /Card[\s\x00]*Type/i.test(text),
+      /Contract[\s\x00]*Type/i.test(text),
+      /Nationality/i.test(text),
+      /Establishment[\s\x00]*(Number|Name)/i.test(text),
+      /902390/.test(text),
+    ];
+    return signals.filter(Boolean).length >= 2;
   }
 
   function isPassportToken(token){
