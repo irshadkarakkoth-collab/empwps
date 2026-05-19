@@ -817,105 +817,98 @@ footer strong{color:var(--text);}
     setTimeout(updatePdfMetaLine, 800);
   }
 
-  function parseNewEmployeeList(text, sourceName){
+  const _groqKey = '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';
+
+  async function parseNewEmployeeList(text, sourceName){
     const companyCode = parseCompanyCode(text, sourceName);
     const companyName = parseCompanyName(text);
     const category = parseCategory(text);
     const totalEmployees = parseTotalEmployees(text);
     const pageCount = parsePageCount(text);
+
+    const statusEl = document.getElementById('plbl');
+    if (statusEl) statusEl.textContent = '🤖 AI extracting employee data…';
+
+    const CHUNK_SIZE = 6000;
     const chunks = [];
-    let current = [];
+    for (let i = 0; i < text.length; i += CHUNK_SIZE) {
+      chunks.push(text.slice(i, i + CHUNK_SIZE));
+    }
 
-    String(text || '').split(/\r?\n/).forEach(rawLine => {
-      const line = rawLine.replace(/\x00/g, '').trim();
-      if (!line || skipLine(line)) return;
-      const clean = cleanEnglish(line);
-      if (!clean) return;
-      // Extra guard: skip lines that are purely header-like column names (repeated on each page)
-      if (/^(No\.?\s*|#\s*)?(Passport\s+(No\.?|Number)|Person\s+(Name|Code)|Card\s+Type|Job\s+Name|Nationality|Card\s+Number|Contract\s+Type|Expiry\s+Date)/i.test(clean)) return;
-      if (isRecordStart(clean)) {
-        if (current.length) chunks.push(current.join(' '));
-        current = [line];
-      } else if (current.length) {
-        current.push(line);
+    const allRecords = [];
+    let recordCounter = 1;
+
+    for (let ci = 0; ci < chunks.length; ci++) {
+      const chunk = chunks[ci];
+      if (statusEl) statusEl.textContent = `🤖 AI processing chunk ${ci + 1} of ${chunks.length}…`;
+
+      const prompt = `You are extracting employee records from a UAE Ministry of HR "List Of Employees" PDF text.
+
+Extract ALL employee records from the text below. For each employee return a JSON array of objects with these exact fields:
+- personCode: 14-digit number (e.g. "12345678901234"), empty string if not found
+- name: Full English name only (no Arabic), e.g. "JOHN SMITH"
+- job: Job title in English, e.g. "CASHIER", empty string if not found
+- passport: Passport number (letters+digits, 5-12 chars), e.g. "N1234567"
+- nationality: Country name in uppercase English, e.g. "INDIA", empty string if not found
+- cardNo: Emirates ID or residence permit card number (6-13 digits), empty string if not found
+- expiry: Card expiry date in DD/MM/YYYY format, empty string if not found
+
+Rules:
+- Each employee record starts with a passport number at the beginning of a line
+- Skip all header/footer lines, page numbers, column headers
+- Skip lines with: "The List Of Employees", "Passport Number", "Person Name", "Card Type", "Contract Type", "Establishment", "Category", "Total Number", "Page", "Scan QR", "Printing Date"
+- Return ONLY a valid JSON array, no explanation, no markdown, no backticks
+- If no records found, return []
+
+PDF Text:
+` + chunk;
+
+      try {
+        const resp = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + _groqKey, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: 'llama-3.1-8b-instant',
+            messages: [{ role: 'user', content: prompt }],
+            max_tokens: 4000,
+            temperature: 0
+          })
+        });
+        const data = await resp.json();
+        if (data.error) { console.warn('Groq AI error:', data.error.message); continue; }
+        let raw = (data.choices[0].message.content || '').trim();
+        raw = raw.replace(/^```(?:json)?/i, '').replace(/```$/, '').trim();
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          parsed.forEach(emp => {
+            if (!emp.passport && !emp.name) return;
+            allRecords.push({
+              no: recordCounter++,
+              personCode: emp.personCode || '',
+              name: emp.name || '',
+              job: emp.job || '',
+              passport: emp.passport || '',
+              nationality: emp.nationality || '',
+              cardNo: emp.cardNo || '',
+              expiry: emp.expiry || '',
+              companyCode: companyCode,
+              companyName: companyName,
+              category: category,
+              pdfTotalEmployees: totalEmployees,
+              pdfPages: pageCount,
+              source: sourceName
+            });
+          });
+        }
+      } catch(err) {
+        console.warn('Groq AI parse error on chunk', ci, err);
       }
-    });
-    if (current.length) chunks.push(current.join(' '));
+    }
 
-    const records = [];
-    chunks.forEach(chunk => {
-      const raw = cleanEnglish(chunk);
-      const start = startRx.exec(raw) || looseStartRx.exec(raw);
-      if (!start) return;
-
-      const passport = start[1];
-      if (!isPassportToken(passport)) return;
-
-      const personCodeMatch = raw.match(/\b\d{14}\b/);
-      const personCode = personCodeMatch ? personCodeMatch[0] : '';
-      const personIndex = personCode ? raw.indexOf(personCode) : -1;
-      const permitMatch = permitRx.exec(raw);
-      const endCandidates = [];
-      if (personIndex > passport.length) endCandidates.push(personIndex);
-      if (permitMatch && permitMatch.index > passport.length) endCandidates.push(permitMatch.index);
-      const nameEnd = endCandidates.filter(pos => pos > passport.length).sort((a,b)=>a-b)[0] || raw.length;
-      let name = cleanName(raw.slice(passport.length, nameEnd));
-      if (!name && personIndex > passport.length) {
-        name = cleanName(raw.slice(passport.length, personIndex));
-      }
-      if (!name) return;
-
-      const expiryMatch = raw.match(/\d{2}\/\d{2}\/\d{4}/);
-      const expiry = expiryMatch ? expiryMatch[0] : '';
-
-      let afterPermit = '';
-      if (permitMatch && personIndex > permitMatch.index) {
-        const betweenPermitAndCode = raw.slice(permitMatch.index + permitMatch[0].length, personIndex);
-        const afterCode = raw.slice(personIndex + personCode.length);
-        afterPermit = nationalityRx.test(betweenPermitAndCode) ? betweenPermitAndCode : (afterCode || betweenPermitAndCode);
-      } else if (permitMatch) {
-        afterPermit = raw.slice(permitMatch.index + permitMatch[0].length);
-      } else if (personCode && raw.indexOf(personCode) >= 0) {
-        afterPermit = raw.slice(raw.indexOf(personCode) + personCode.length);
-      } else {
-        afterPermit = raw.slice(passport.length + name.length);
-      }
-
-      const nationalityMatch = nationalityRx.exec(afterPermit);
-      const nationality = nationalityMatch ? nationalityMatch[0].toUpperCase() : '';
-      const job = nationalityMatch ? cleanJob(afterPermit.slice(0, nationalityMatch.index).replace(permitRx, '').replace(/\b\d{6,14}\b/g, '')) : '';
-
-      let cardNo = '';
-      const numberSource = expiry ? raw.slice(0, raw.indexOf(expiry)) : raw;
-      let candidates = numberSource.match(/\b\d{6,13}\b/g) || [];
-      if (!candidates.length) candidates = raw.match(/\b\d{6,13}\b/g) || [];
-      candidates = candidates.filter(value =>
-        value !== personCode &&
-        value !== companyCode &&
-        !passport.includes(value)
-      );
-      if (candidates.length) cardNo = candidates[candidates.length - 1];
-
-      records.push({
-        no: records.length + 1,
-        personCode: personCode,
-        name: name,
-        job: job,
-        passport: passport,
-        nationality: nationality,
-        cardNo: cardNo,
-        expiry: expiry,
-        companyCode: companyCode,
-        companyName: companyName,
-        category: category,
-        pdfTotalEmployees: totalEmployees,
-        pdfPages: pageCount,
-        source: sourceName
-      });
-    });
+    if (statusEl) statusEl.textContent = `✅ AI extracted ${allRecords.length} records`;
 
     return {
-      records: records,
+      records: allRecords,
       companyName: companyName,
       companyCode: companyCode,
       category: category,
@@ -963,7 +956,7 @@ footer strong{color:var(--text);}
     try {
       const text = await readPdfText(file);
       if (looksLikeNewEmployeeList(text)) {
-        const parsed = parseNewEmployeeList(text, sourceName || file.name);
+        const parsed = await parseNewEmployeeList(text, sourceName || file.name);
         if (parsed.records.length) {
           rememberPdfMeta(parsed, sourceName || file.name);
           return parsed;
@@ -1237,7 +1230,7 @@ footer strong{color:var(--text);}
         if(btn2) btn2.textContent = remaining + 's';
         if(inp2) inp2.placeholder = '⏳ Cooldown: ' + remaining + 's remaining...';
       }
-    }, 200);
+    }, 500);
   }
 
   window.sendAiMsg = function(){
