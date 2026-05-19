@@ -964,12 +964,11 @@ PDF Text:
   extractPDF = async function(file, sourceName){
     try {
       const text = await readPdfText(file);
-      if (looksLikeNewEmployeeList(text)) {
-        const parsed = await parseNewEmployeeList(text, sourceName || file.name);
-        if (parsed.records.length) {
-          rememberPdfMeta(parsed, sourceName || file.name);
-          return parsed;
-        }
+      // Always try AI extraction first — works with any employee list format
+      const parsed = await parseNewEmployeeList(text, sourceName || file.name);
+      if (parsed.records.length) {
+        rememberPdfMeta(parsed, sourceName || file.name);
+        return parsed;
       }
     } catch (err) {
       console.warn('New employee-list parser skipped:', err);
