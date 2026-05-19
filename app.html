@@ -857,15 +857,16 @@ Extract ALL employee records from the text below. For each employee return a JSO
 - personCode: 14-digit number (e.g. "12345678901234"), empty string if not found
 - name: Full English name only (no Arabic), e.g. "JOHN SMITH"
 - job: Job title in English, e.g. "CASHIER", empty string if not found
-- passport: Passport number (letters+digits, 5-12 chars), e.g. "N1234567"
+- passport: Passport number (letters+digits, 5-12 chars), e.g. "N1234567", empty string if not found
 - nationality: Country name in uppercase English, e.g. "INDIA", empty string if not found
 - cardNo: Emirates ID or residence permit card number (6-13 digits), empty string if not found
 - expiry: Card expiry date in DD/MM/YYYY format, empty string if not found
 
 Rules:
-- Each employee record starts with a passport number at the beginning of a line
+- Look for employee data rows — they typically contain a person name, passport number, and/or nationality
+- Each row may be arranged differently depending on PDF format — look for ANY combination of these fields to identify an employee record
 - Skip all header/footer lines, page numbers, column headers
-- Skip lines with: "The List Of Employees", "Passport Number", "Person Name", "Card Type", "Contract Type", "Establishment", "Category", "Total Number", "Page", "Scan QR", "Printing Date"
+- Skip lines with ONLY: "The List Of Employees", "Passport Number", "Person Name", "Card Type", "Contract Type", "Establishment", "Category", "Total Number", "Page", "Scan QR", "Printing Date"
 - Return ONLY a valid JSON array, no explanation, no markdown, no backticks
 - If no records found, return []
 
