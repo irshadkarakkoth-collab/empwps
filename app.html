@@ -1218,8 +1218,10 @@ PDF Text:
     sendAiMsg();
   };
 
+  var COOLDOWN_SECONDS = 5; // ← Change this value (in seconds)
+
   function startCooldown(){
-    cooldownUntil = Date.now() + 1222;
+    cooldownUntil = Date.now() + (COOLDOWN_SECONDS * 1000);
     var btn = document.getElementById('aiSendBtn');
     var inp = document.getElementById('aiUserInput');
     if(btn) btn.disabled = true;
