@@ -1565,5 +1565,270 @@ window.addEventListener('DOMContentLoaded', function() {
   document.getElementById('real-app-wrapper').style.display='block';
 });
 </script>
+
+<!-- ══ WPS SALARY % THRESHOLD — EXTRACT INTERCEPT ══ -->
+<script>
+(function(){
+  var _threshold  = 80;   // remembered between extractions
+  var _paidColIdx = -1;
+  var _ctrtColIdx = -1;
+  var _pctColIdx  = -1;
+  var _hooked     = false;  // extract button already intercepted?
+  var _extracting = false;  // suppress re-intercept when we re-dispatch click
+
+  /* ════════════════════════════════════════════════════════
+     MODAL  — shown when user clicks Extract in WPS tab
+     ════════════════════════════════════════════════════════ */
+  function showThresholdModal(onConfirm){
+    if(document.getElementById('wpsPctModal')) return;
+
+    var overlay = document.createElement('div');
+    overlay.id = 'wpsPctModal';
+    overlay.style.cssText = [
+      'position:fixed','inset:0','z-index:99999',
+      'background:rgba(0,0,0,.65)',
+      'display:flex','align-items:center','justify-content:center'
+    ].join(';');
+
+    overlay.innerHTML =
+      '<style>' +
+        '@keyframes wpsModalIn{from{opacity:0;transform:scale(.93)}to{opacity:1;transform:scale(1)}}' +
+        '#wpsPctBox{animation:wpsModalIn .18s ease;}' +
+        '#wpsPctInput:focus{border-color:#0ea5e9!important;outline:none;}' +
+      '</style>' +
+      '<div id="wpsPctBox" style="' +
+        'background:#1a2540;border:1px solid rgba(14,165,233,.4);border-radius:18px;' +
+        'padding:40px 44px 32px;width:360px;max-width:94vw;' +
+        'box-shadow:0 32px 80px rgba(0,0,0,.85);text-align:center;font-family:inherit;">' +
+
+        '<div style="font-size:40px;margin-bottom:12px;">💰</div>' +
+        '<div style="font-size:18px;font-weight:800;color:#e2e8f0;margin-bottom:8px;letter-spacing:.3px;">Set Salary % Threshold</div>' +
+        '<div style="font-size:13px;color:#64748b;margin-bottom:28px;line-height:1.65;">' +
+          'Enter the threshold before extraction.<br>' +
+          'The <strong style="color:#7dd3fc;">%</strong> column will show ' +
+          '<code style="background:rgba(14,165,233,.12);padding:1px 6px;border-radius:4px;">&gt;X%</code> ' +
+          'or <code style="background:rgba(239,68,68,.12);color:#fca5a5;padding:1px 6px;border-radius:4px;">&lt;X%</code> per employee.' +
+        '</div>' +
+
+        '<div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:28px;">' +
+          '<input id="wpsPctInput" type="number" min="1" max="200" value="'+_threshold+'" ' +
+            'style="width:100px;border:2px solid rgba(14,165,233,.35);border-radius:12px;' +
+            'padding:12px 8px;font-size:30px;font-weight:800;color:#0ea5e9;text-align:center;' +
+            'background:#0d1826;transition:border-color .2s;" autocomplete="off">' +
+          '<span style="font-size:30px;font-weight:800;color:#e2e8f0;">%</span>' +
+        '</div>' +
+
+        '<div style="display:flex;gap:10px;">' +
+          '<button id="wpsPctCancel" style="' +
+            'flex:1;background:transparent;color:#94a3b8;' +
+            'border:1px solid rgba(255,255,255,.12);border-radius:10px;' +
+            'padding:13px;font-size:14px;font-weight:700;cursor:pointer;' +
+            'transition:border-color .2s,color .2s;"' +
+            ' onmouseover="this.style.borderColor=\'rgba(255,255,255,.3)\';this.style.color=\'#e2e8f0\'"' +
+            ' onmouseout="this.style.borderColor=\'rgba(255,255,255,.12)\';this.style.color=\'#94a3b8\'">' +
+            'Cancel' +
+          '</button>' +
+          '<button id="wpsPctConfirm" style="' +
+            'flex:2;background:linear-gradient(135deg,#0ea5e9,#06b6d4);color:#fff;border:none;' +
+            'border-radius:10px;padding:13px;font-size:14px;font-weight:800;cursor:pointer;' +
+            'transition:opacity .2s;"' +
+            ' onmouseover="this.style.opacity=\'.88\'"' +
+            ' onmouseout="this.style.opacity=\'1\'">' +
+            '⚡ Extract' +
+          '</button>' +
+        '</div>' +
+        '<div id="wpsPctErr" style="color:#f87171;font-size:12px;margin-top:12px;min-height:18px;"></div>' +
+      '</div>';
+
+    document.body.appendChild(overlay);
+
+    var inp    = document.getElementById('wpsPctInput');
+    var btnOk  = document.getElementById('wpsPctConfirm');
+    var btnX   = document.getElementById('wpsPctCancel');
+    var errLbl = document.getElementById('wpsPctErr');
+
+    setTimeout(function(){ if(inp){ inp.focus(); inp.select(); } }, 80);
+
+    function doConfirm(){
+      var v = parseFloat(inp.value);
+      if(isNaN(v) || v <= 0 || v > 200){
+        errLbl.textContent = '⚠️ Please enter a number between 1 and 200';
+        inp.focus(); return;
+      }
+      _threshold = v;
+      closeModal();
+      onConfirm(v);
+    }
+    function closeModal(){
+      var m = document.getElementById('wpsPctModal');
+      if(m) m.remove();
+    }
+
+    btnOk.onclick  = doConfirm;
+    btnX.onclick   = closeModal;
+    overlay.addEventListener('mousedown', function(e){ if(e.target===overlay) closeModal(); });
+    inp.addEventListener('keydown', function(e){
+      if(e.key==='Enter')  doConfirm();
+      if(e.key==='Escape') closeModal();
+    });
+  }
+
+  /* ════════════════════════════════════════════════════════
+     COLUMN DETECTION — finds Paid, Contract, % columns
+     ════════════════════════════════════════════════════════ */
+  function detectColumns(table){
+    _paidColIdx = _ctrtColIdx = _pctColIdx = -1;
+    Array.prototype.forEach.call(table.querySelectorAll('thead th'), function(th, i){
+      var t = (th.textContent||'').trim().toLowerCase();
+      if(t === '%' || t === 'pct')                    _pctColIdx  = i;
+      if(/paid.?sal|salary.?paid/i.test(t))           _paidColIdx = i;
+      if(/contract.?sal|contract.?amount/i.test(t))   _ctrtColIdx = i;
+    });
+    // numeric fallback — last two large-number cols = paid, contract
+    if(_paidColIdx < 0 || _ctrtColIdx < 0){
+      var fr = table.querySelector('tbody tr');
+      if(fr){
+        var cands = [];
+        Array.prototype.forEach.call(fr.querySelectorAll('td'), function(td, i){
+          var n = parseFloat((td.textContent||'').replace(/,/g,''));
+          if(!isNaN(n) && n > 100) cands.push(i);
+        });
+        if(cands.length >= 2){
+          _paidColIdx = cands[cands.length-2];
+          _ctrtColIdx = cands[cands.length-1];
+        }
+      }
+    }
+    // % col fallback — col with most ">xx%" patterns in first 10 rows
+    if(_pctColIdx < 0){
+      var hits = {};
+      Array.prototype.forEach.call(table.querySelectorAll('tbody tr'), function(row, ri){
+        if(ri > 9) return;
+        Array.prototype.forEach.call(row.querySelectorAll('td'), function(td, i){
+          if(/>?\d+%/.test((td.textContent||'').trim())) hits[i]=(hits[i]||0)+1;
+        });
+      });
+      var best=-1, bv=0;
+      Object.keys(hits).forEach(function(k){ if(hits[k]>bv){bv=hits[k];best=+k;} });
+      if(best>=0) _pctColIdx = best;
+    }
+  }
+
+  /* ════════════════════════════════════════════════════════
+     REWRITE — labels each % cell relative to threshold
+     ════════════════════════════════════════════════════════ */
+  function rewritePctColumn(table, threshold){
+    if(_pctColIdx < 0) return;
+    Array.prototype.forEach.call(table.querySelectorAll('tbody tr'), function(row){
+      var tds  = Array.prototype.slice.call(row.querySelectorAll('td'));
+      var cell = tds[_pctColIdx];
+      if(!cell) return;
+      var pct = null;
+      if(_paidColIdx>=0 && _ctrtColIdx>=0 && tds[_paidColIdx] && tds[_ctrtColIdx]){
+        var paid = parseFloat((tds[_paidColIdx].textContent||'').replace(/,/g,''));
+        var ctrt = parseFloat((tds[_ctrtColIdx].textContent||'').replace(/,/g,''));
+        if(!isNaN(paid) && !isNaN(ctrt) && ctrt>0) pct = (paid/ctrt)*100;
+      }
+      if(pct===null) return;
+      var label, color, bg;
+      if(Math.abs(pct-100)<0.5){
+        label='100%';            color='#155724'; bg='#c6efce';
+      } else if(pct>100){
+        label='>100%';           color='#155724'; bg='#c6efce';
+      } else if(pct>=threshold){
+        label='>'+threshold+'%'; color='#7d4e00'; bg='#fff3cd';
+      } else {
+        label='<'+threshold+'%'; color='#721c24'; bg='#ffc7c7';
+      }
+      cell.textContent = label;
+      cell.style.cssText = 'text-align:center;font-weight:800;font-size:12px;' +
+        'color:'+color+';background:'+bg+';border-radius:4px;padding:2px 6px;';
+    });
+    // update header tooltip
+    var ths = table.querySelectorAll('thead th');
+    if(ths[_pctColIdx]) ths[_pctColIdx].title = 'Threshold: '+threshold+'%';
+  }
+
+  /* ════════════════════════════════════════════════════════
+     HOOK — intercepts the WPS Extract button click
+     ════════════════════════════════════════════════════════ */
+  function hookExtractButton(){
+    var wpsSection = document.getElementById('wpsSection');
+    if(!wpsSection || _hooked) return false;
+
+    // find the Extract button by its label text
+    var extractBtn = null;
+    Array.prototype.forEach.call(wpsSection.querySelectorAll('button'), function(b){
+      if(!extractBtn && /extract/i.test((b.textContent||'').trim())) extractBtn = b;
+    });
+    if(!extractBtn) return false;
+
+    // capture-phase: fires before the app's own listener
+    extractBtn.addEventListener('click', function(e){
+      if(_extracting) return;           // we dispatched this — let it through
+      e.stopImmediatePropagation();
+      e.preventDefault();
+
+      var btn = this;
+      showThresholdModal(function(threshold){
+        // flag → re-dispatch → unflag (dispatchEvent is synchronous)
+        _extracting = true;
+        btn.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true}));
+        _extracting = false;
+
+        // watch for the results table to populate, then rewrite % column
+        var wps = document.getElementById('wpsSection');
+        if(!wps) return;
+        var obs = new MutationObserver(function(_, self){
+          var table = wps.querySelector('table');
+          if(!table || !table.querySelector('tbody tr')) return;
+          self.disconnect();
+          clearTimeout(safetyTimer);
+          setTimeout(function(){
+            detectColumns(table);
+            rewritePctColumn(table, threshold);
+          }, 250);
+        });
+        var safetyTimer = setTimeout(function(){ obs.disconnect(); }, 30000);
+        obs.observe(wps, {childList:true, subtree:true});
+      });
+    }, true /* capture */);
+
+    _hooked = true;
+    return true;
+  }
+
+  /* ════════════════════════════════════════════════════════
+     BOOT — watch for WPS section to be ready
+     ════════════════════════════════════════════════════════ */
+  function startWatching(){
+    var wpsSection = document.getElementById('wpsSection');
+    if(!wpsSection) return;
+    new MutationObserver(function(){
+      if(!_hooked) hookExtractButton();
+    }).observe(wpsSection, {childList:true, subtree:true});
+  }
+
+  function hookSwitchMode(){
+    var orig = window.switchMode;
+    if(typeof orig !== 'function') return false;
+    window.switchMode = function(mode){
+      orig.apply(this, arguments);
+      if(mode==='wps') setTimeout(function(){ if(!_hooked) hookExtractButton(); }, 300);
+    };
+    return true;
+  }
+
+  window.addEventListener('DOMContentLoaded', function(){
+    startWatching();
+    if(!hookSwitchMode()){
+      var tries=0, iv=setInterval(function(){
+        if(hookSwitchMode() || ++tries>30) clearInterval(iv);
+      }, 200);
+    }
+    setTimeout(hookExtractButton, 800);
+  });
+})();
+</script>
 </body>
 </html>
