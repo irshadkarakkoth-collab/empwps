@@ -1952,8 +1952,130 @@ window.addEventListener('DOMContentLoaded', function() {
 <!-- ══ WPS SALARY % THRESHOLD FILTER ══ -->
 <script>
 (function(){
-  var _injected = false;
+  var _injected   = false;
   var _filterActive = false;
+  var _threshold  = 80;          // default threshold %
+  var _paidColIdx = -1;          // auto-detected column indices
+  var _ctrtColIdx = -1;
+  var _pctColIdx  = -1;
+  var _originalPctCells = [];    // backup of original % cell content
+
+  /* ── detect column indices from <thead> ── */
+  function detectColumns(table){
+    var ths = Array.prototype.slice.call(table.querySelectorAll('thead th'));
+    ths.forEach(function(th, i){
+      var t = (th.textContent||'').trim().toLowerCase();
+      if(t === '%' || t === 'pct' || t === 'percent')               _pctColIdx  = i;
+      if(/paid.?sal|salary.?paid|paid.?amount/i.test(t))            _paidColIdx = i;
+      if(/contract.?sal|contract.?amount|sal.?contract/i.test(t))   _ctrtColIdx = i;
+    });
+    // fallback: scan first data row for salary-size numbers
+    if(_paidColIdx < 0 || _ctrtColIdx < 0){
+      var firstRow = table.querySelector('tbody tr');
+      if(firstRow){
+        var tds = Array.prototype.slice.call(firstRow.querySelectorAll('td'));
+        var candidates = [];
+        tds.forEach(function(td, i){
+          var n = parseFloat((td.textContent||'').replace(/,/g,''));
+          if(!isNaN(n) && n > 100) candidates.push({i:i, n:n});
+        });
+        if(candidates.length >= 2 && _paidColIdx < 0){
+          _paidColIdx = candidates[candidates.length-2].i;
+          _ctrtColIdx = candidates[candidates.length-1].i;
+        }
+      }
+    }
+    // fallback for % col: find col whose cells mostly contain ">xx%" patterns
+    if(_pctColIdx < 0){
+      var rows = Array.prototype.slice.call(table.querySelectorAll('tbody tr')).slice(0,10);
+      var colHits = {};
+      rows.forEach(function(row){
+        var tds = Array.prototype.slice.call(row.querySelectorAll('td'));
+        tds.forEach(function(td, i){
+          if(/>?\d+%/.test((td.textContent||'').trim()))
+            colHits[i] = (colHits[i]||0) + 1;
+        });
+      });
+      var best = -1, bestScore = 0;
+      Object.keys(colHits).forEach(function(k){
+        if(colHits[k] > bestScore){ bestScore = colHits[k]; best = parseInt(k); }
+      });
+      if(best >= 0) _pctColIdx = best;
+    }
+  }
+
+  /* ── get actual paid/contract ratio for a row ── */
+  function getRowActualPct(row){
+    var tds = Array.prototype.slice.call(row.querySelectorAll('td'));
+    // from detected paid/contract columns
+    if(_paidColIdx >= 0 && _ctrtColIdx >= 0 && tds[_paidColIdx] && tds[_ctrtColIdx]){
+      var paid = parseFloat((tds[_paidColIdx].textContent||'').replace(/,/g,''));
+      var ctrt = parseFloat((tds[_ctrtColIdx].textContent||'').replace(/,/g,''));
+      if(!isNaN(paid) && !isNaN(ctrt) && ctrt > 0) return (paid/ctrt)*100;
+    }
+    // fallback: last two salary-sized numbers in row
+    var amounts = [];
+    tds.forEach(function(td){
+      var raw = (td.textContent||'').replace(/,/g,'').trim();
+      var n = parseFloat(raw);
+      if(!isNaN(n) && n > 100) amounts.push(n);
+    });
+    if(amounts.length >= 2){
+      var c = amounts[amounts.length-2], p = amounts[amounts.length-1];
+      if(c > 0) return (p/c)*100;
+    }
+    return null;
+  }
+
+  /* ── rewrite the "%" column cells with new threshold label ── */
+  function rewritePctColumn(threshold){
+    var wpsSection = document.getElementById('wpsSection');
+    if(!wpsSection || _pctColIdx < 0) return;
+    var rows = Array.prototype.slice.call(wpsSection.querySelectorAll('tbody tr'));
+    rows.forEach(function(row, ri){
+      var tds = Array.prototype.slice.call(row.querySelectorAll('td'));
+      var pctCell = tds[_pctColIdx];
+      if(!pctCell) return;
+      // save original text once
+      if(!_originalPctCells[ri]) _originalPctCells[ri] = pctCell.textContent.trim();
+      var actualPct = getRowActualPct(row);
+      if(actualPct === null) return;
+      var label, color, bg;
+      if(Math.abs(actualPct - 100) < 0.5){
+        label = '100%';   color = '#155724'; bg = '#c6efce';
+      } else if(actualPct > 100){
+        label = '>100%';  color = '#155724'; bg = '#c6efce';
+      } else if(actualPct >= threshold){
+        label = '>'+threshold+'%'; color = '#7d4e00'; bg = '#fff3cd';
+      } else {
+        label = '<'+threshold+'%'; color = '#721c24'; bg = '#ffc7c7';
+      }
+      pctCell.textContent = label;
+      pctCell.style.cssText = 'text-align:center;font-weight:800;font-size:12px;color:'+color+';background:'+bg+';border-radius:4px;padding:2px 6px;';
+    });
+    // also update the column header to show current threshold
+    var hdrPctCell = null;
+    var ths = Array.prototype.slice.call(wpsSection.querySelectorAll('thead th'));
+    if(ths[_pctColIdx]) hdrPctCell = ths[_pctColIdx];
+    if(hdrPctCell) hdrPctCell.title = 'Threshold: '+threshold+'%';
+  }
+
+  /* ── restore original % column ── */
+  function restorePctColumn(){
+    var wpsSection = document.getElementById('wpsSection');
+    if(!wpsSection || _pctColIdx < 0) return;
+    var rows = Array.prototype.slice.call(wpsSection.querySelectorAll('tbody tr'));
+    rows.forEach(function(row, ri){
+      var tds = Array.prototype.slice.call(row.querySelectorAll('td'));
+      var pctCell = tds[_pctColIdx];
+      if(!pctCell) return;
+      if(_originalPctCells[ri]){
+        pctCell.textContent = _originalPctCells[ri];
+        pctCell.style.cssText = '';
+      }
+    });
+    _originalPctCells = [];
+  }
 
   function tryInject(){
     var wpsSection = document.getElementById('wpsSection');
@@ -1997,42 +2119,18 @@ window.addEventListener('DOMContentLoaded', function() {
 
     document.getElementById('wpsThMode').onchange = function(){
       var isBetween = this.value === 'between';
-      document.getElementById('wpsThAndLbl').style.display  = isBetween ? '' : 'none';
-      document.getElementById('wpsThVal2').style.display    = isBetween ? '' : 'none';
+      document.getElementById('wpsThAndLbl').style.display = isBetween ? '' : 'none';
+      document.getElementById('wpsThVal2').style.display   = isBetween ? '' : 'none';
     };
 
     ['wpsThVal','wpsThVal2'].forEach(function(id){
       var el = document.getElementById(id);
       if(el) el.addEventListener('keydown', function(e){ if(e.key==='Enter') applyFilter(); });
     });
-  }
 
-  function getRowPct(row){
-    var cells = Array.prototype.slice.call(row.querySelectorAll('td'));
-    if(!cells.length) return null;
-
-    // Strategy 1: cell explicitly shows a % value like "85.3%"
-    for(var i=0;i<cells.length;i++){
-      var t = (cells[i].textContent||'').trim();
-      var m = t.match(/^(\d+(?:\.\d+)?)\s*%$/);
-      if(m) return parseFloat(m[1]);
-    }
-
-    // Strategy 2: find two salary-size numbers (contract vs paid)
-    var amounts = [];
-    for(var j=0;j<cells.length;j++){
-      var raw = (cells[j].textContent||'').replace(/,/g,'').trim();
-      var n = parseFloat(raw);
-      if(!isNaN(n) && n > 100 && /^\d+(\.\d+)?$/.test(raw)){
-        amounts.push({idx:j, val:n});
-      }
-    }
-    if(amounts.length >= 2){
-      var contract = amounts[amounts.length-2].val;
-      var paid     = amounts[amounts.length-1].val;
-      if(contract > 0) return Math.min(300, (paid/contract)*100);
-    }
-    return null;
+    // auto-detect columns now that we have the table
+    var table = wpsSection.querySelector('table');
+    if(table){ detectColumns(table); rewritePctColumn(_threshold); }
   }
 
   function applyFilter(){
@@ -2041,14 +2139,20 @@ window.addEventListener('DOMContentLoaded', function() {
     var v2   = parseFloat((document.getElementById('wpsThVal2')||{}).value);
     var info = document.getElementById('wpsThInfo');
 
-    if(isNaN(v1)){ if(info) info.textContent='⚠️ Enter a valid %'; return; }
+    if(isNaN(v1) || v1 < 0){ if(info) info.textContent='⚠️ Enter a valid %'; return; }
 
+    _threshold = v1;
+
+    // 1. Rewrite the % column labels with the new threshold
+    rewritePctColumn(_threshold);
+
+    // 2. Filter rows
     var wpsSection = document.getElementById('wpsSection');
     var rows = wpsSection ? wpsSection.querySelectorAll('tbody tr') : [];
     var shown=0, hidden=0, skipped=0;
 
     Array.prototype.forEach.call(rows, function(row){
-      var pct = getRowPct(row);
+      var pct = getRowActualPct(row);
       if(pct===null){ row.style.display=''; skipped++; return; }
       var show = false;
       if(mode==='below')        show = pct < v1;
@@ -2062,20 +2166,27 @@ window.addEventListener('DOMContentLoaded', function() {
 
     _filterActive = true;
     if(info){
-      info.textContent = shown + ' shown · ' + hidden + ' hidden' +
+      info.textContent = '✔ ' + shown + ' shown · ' + hidden + ' filtered' +
         (skipped ? ' · '+skipped+' no-data' : '');
     }
   }
 
   function clearFilter(){
+    // restore rows
     var wpsSection = document.getElementById('wpsSection');
     if(wpsSection) Array.prototype.forEach.call(
       wpsSection.querySelectorAll('tbody tr'), function(r){ r.style.display=''; }
     );
+    // restore original % column labels
+    restorePctColumn();
+    _threshold    = 80;
     _filterActive = false;
-    _injected = false;
+    _injected     = false;
     var info = document.getElementById('wpsThInfo');
-    if(info){ info.textContent='Filter cleared'; setTimeout(function(){ info.textContent=''; },2000); }
+    if(info){ info.textContent='Cleared — showing all rows'; setTimeout(function(){ info.textContent=''; },2500); }
+    // reset input
+    var inp = document.getElementById('wpsThVal');
+    if(inp) inp.value = '80';
   }
 
   function startObserver(){
