@@ -654,8 +654,8 @@ footer strong{color:var(--text);}
   const escapeRx = value => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const nationalityRx = new RegExp('(' + nationalities.sort((a,b)=>b.length-a.length).map(escapeRx).join('|') + ')', 'i');
   const permitRx = new RegExp(permitTypes.map(escapeRx).join('|'), 'i');
-  const startRx = /^([A-Z0-9]{5,15})\s+([A-Z][A-Z .'-]+)/;
-  const looseStartRx = /^([A-Z0-9]{5,15})(?:\s|$)/;
+  const startRx = /^([A-Z0-9]{5,12})\s+([A-Z][A-Z .'-]+)/;
+  const looseStartRx = /^([A-Z0-9]{5,12})(?:\s|$)/;
   const arabicRx = /[\u0600-\u06ff\ufb50-\ufdff\ufe70-\ufeff\x00]+/g;
 
   function cleanEnglish(text){
@@ -692,51 +692,26 @@ footer strong{color:var(--text);}
 
   function looksLikeNewEmployeeList(text){
     const clean = cleanEnglish(text);
-    const hasHeader = /The List Of Employees/i.test(clean) || /Passport\s+(No\.?|Number)\s+Person\s+Name/i.test(clean);
-    const hasIdentityColumns =
-      /Passport\s+(No\.?|Number)/i.test(clean) &&
-      /Person\s+Name/i.test(clean);
-    const hasWorkColumns =
-      /Nationality/i.test(clean) &&
-      (/Card\s+Type/i.test(clean) || /Contract\s+Type/i.test(clean) || /Job\s+Name/i.test(clean));
-    return hasHeader && hasIdentityColumns && hasWorkColumns;
+    return /The List Of Employees/i.test(text) &&
+      /Passport Number/i.test(clean) &&
+      /Person Name/i.test(clean) &&
+      /Card Type/i.test(clean) &&
+      /Contract Type/i.test(clean);
   }
 
   function isPassportToken(token){
     token = String(token || '').trim();
-    if (!/^[A-Z0-9]{5,15}$/.test(token)) return false;
+    if (!/^[A-Z0-9]{5,12}$/.test(token)) return false;
     if (!/\d/.test(token) || /^RP\d+/i.test(token)) return false;
-    // Person code is 14-digit numeric in this format; never treat it as passport.
-    if (/^\d{13,15}$/.test(token)) return false;
-    // Pure numeric starts are noisy in this PDF:
-    // keep only 8-digit numeric passports, reject other numeric lengths.
-    if (/^\d+$/.test(token)) {
-      if (token.length === 8) return true;
-      return false;
-    }
+    if (/^\d+$/.test(token) && token.length < 8) return false;
     return true;
-  }
-
-  function extractPassportAtLineStart(line){
-    const clean = cleanEnglish(line);
-    if (!clean) return '';
-    const direct = clean.match(/^([A-Z0-9]{5,15})(?:\s|$)/);
-    if (direct && isPassportToken(direct[1])) return direct[1];
-    const numbered = clean.match(/^\d{1,4}\s*[-.)]?\s*([A-Z0-9]{5,15})(?:\s|$)/);
-    if (numbered && isPassportToken(numbered[1])) return numbered[1];
-    return '';
   }
 
   function isRecordStart(line){
     const clean = cleanEnglish(line);
-    const token = extractPassportAtLineStart(clean);
-    if (!token) return false;
-    return !!(
-      startRx.exec(clean) ||
-      permitRx.test(clean) ||
-      /\b\d{14}\b/.test(clean) ||
-      clean === token
-    );
+    const token = (clean.split(/\s+/)[0] || '').trim();
+    if (!isPassportToken(token)) return false;
+    return !!(startRx.exec(clean) || permitRx.test(clean) || clean === token);
   }
 
   function skipLine(line){
@@ -868,49 +843,12 @@ footer strong{color:var(--text);}
     if (current.length) chunks.push(current.join(' '));
 
     const records = [];
-    function splitMergedChunk(raw){
-      const clean = cleanEnglish(raw);
-      if (!clean) return [];
-      const starts = [0];
-      const startTokenRx = /\b([A-Z0-9]{5,15})\b/g;
-      let match;
-      while ((match = startTokenRx.exec(clean))) {
-        const token = String(match[1] || '');
-        if (!isPassportToken(token)) continue;
-        if (match.index === 0) continue;
-        const next = clean.slice(match.index + token.length);
-        // Record starts always continue into a name token (uppercase/lowercase latin).
-        if (!/^\s+[A-Z]/.test(next)) continue;
-        // Guard against false split on card number + trailing surname fragments.
-        // A real record start usually reaches person code or permit phrase soon.
-        const lookahead = clean.slice(match.index, Math.min(clean.length, match.index + 260));
-        const hasRecordSignals = /\b\d{14}\b/.test(lookahead) || permitRx.test(lookahead);
-        const isNumericPassport = /^\d{8}$/.test(token);
-        if (!hasRecordSignals && !isNumericPassport) continue;
-        if (match.index - starts[starts.length - 1] < 20) continue;
-        starts.push(match.index);
-      }
-      if (starts.length === 1) return [clean];
-      starts.sort((a, b) => a - b);
-      const out = [];
-      for (let i = 0; i < starts.length; i++) {
-        const s = starts[i];
-        const e = i + 1 < starts.length ? starts[i + 1] : clean.length;
-        const part = clean.slice(s, e).trim();
-        if (part) out.push(part);
-      }
-      return out;
-    }
-
-    function parseChunkRaw(raw){
-      raw = cleanEnglish(raw);
-      if (!raw) return;
-      const startToken = extractPassportAtLineStart(raw);
-      const cleanedForStart = startToken ? raw.replace(/^\d{1,4}\s*[-.)]?\s*/, '') : raw;
-      const start = startRx.exec(cleanedForStart) || looseStartRx.exec(cleanedForStart);
+    chunks.forEach(chunk => {
+      const raw = cleanEnglish(chunk);
+      const start = startRx.exec(raw) || looseStartRx.exec(raw);
       if (!start) return;
 
-      const passport = startToken || start[1];
+      const passport = start[1];
       if (!isPassportToken(passport)) return;
 
       const personCodeMatch = raw.match(/\b\d{14}\b/);
@@ -926,7 +864,6 @@ footer strong{color:var(--text);}
         name = cleanName(raw.slice(passport.length, personIndex));
       }
       if (!name) return;
-      if (!/[A-Z]/i.test(name)) return;
 
       const expiryMatch = raw.match(/\d{2}\/\d{2}\/\d{4}/);
       const expiry = expiryMatch ? expiryMatch[0] : '';
@@ -975,92 +912,7 @@ footer strong{color:var(--text);}
         pdfPages: pageCount,
         source: sourceName
       });
-    }
-
-    chunks.forEach(chunk => {
-      splitMergedChunk(chunk).forEach(parseChunkRaw);
     });
-
-    // Fallback pass: when line-based chunking misses records (common in some PDFs),
-    // recover records by anchoring on the 14-digit Person Code pattern.
-    if (records.length) {
-      const expectedCount = parseInt(totalEmployees || '', 10) || 0;
-      if (!expectedCount || records.length < expectedCount) {
-        const byCode = [];
-        const seenCodes = new Set(records.map(r => String(r.personCode || '').trim()).filter(Boolean));
-        const cleanAll = cleanEnglish(text);
-        const codeMatches = [...cleanAll.matchAll(/\b\d{14}\b/g)];
-        codeMatches.forEach(match => {
-          const personCode = String(match[0] || '').trim();
-          if (!personCode || seenCodes.has(personCode)) return;
-
-          const windowStart = Math.max(0, (match.index || 0) - 260);
-          const windowEnd = Math.min(cleanAll.length, (match.index || 0) + personCode.length + 320);
-          const around = cleanAll.slice(windowStart, windowEnd);
-          const localCodeIndex = Math.max(0, (match.index || 0) - windowStart);
-          const before = around.slice(0, localCodeIndex);
-          const after = around.slice(localCodeIndex + personCode.length);
-
-          const beforeTokens = before.split(/\s+/);
-          let passport = '';
-          for (let i = beforeTokens.length - 1; i >= 0; i--) {
-            const token = String(beforeTokens[i] || '').replace(/[^A-Z0-9]/gi, '').toUpperCase();
-            if (!token) continue;
-            if (!isPassportToken(token)) continue;
-            if (token === companyCode) continue;
-            passport = token;
-            break;
-          }
-          if (!passport) return;
-
-          const passPos = before.lastIndexOf(passport);
-          const nameRaw = passPos >= 0 ? before.slice(passPos + passport.length) : '';
-          const name = cleanName(nameRaw);
-          if (!name) return;
-          if (!/[A-Z]/i.test(name)) return;
-
-          const nationalityMatch = nationalityRx.exec(after);
-          const nationality = nationalityMatch ? nationalityMatch[0].toUpperCase() : '';
-          const job = nationalityMatch
-            ? cleanJob(after.slice(0, nationalityMatch.index).replace(permitRx, '').replace(/\b\d{6,14}\b/g, ''))
-            : '';
-          const expiryMatch = after.match(/\d{2}\/\d{2}\/\d{4}/);
-          const expiry = expiryMatch ? expiryMatch[0] : '';
-
-          const numberSource = expiry ? after.slice(0, after.indexOf(expiry)) : after;
-          let candidates = numberSource.match(/\b\d{6,13}\b/g) || [];
-          candidates = candidates.filter(value =>
-            value !== personCode &&
-            value !== companyCode &&
-            !passport.includes(value)
-          );
-          const cardNo = candidates.length ? candidates[candidates.length - 1] : '';
-
-          seenCodes.add(personCode);
-          byCode.push({
-            no: 0,
-            personCode: personCode,
-            name: name,
-            job: job,
-            passport: passport,
-            nationality: nationality,
-            cardNo: cardNo,
-            expiry: expiry,
-            companyCode: companyCode,
-            companyName: companyName,
-            category: category,
-            pdfTotalEmployees: totalEmployees,
-            pdfPages: pageCount,
-            source: sourceName
-          });
-        });
-
-        if (byCode.length) {
-          records.push(...byCode);
-          records.forEach((record, index) => { record.no = index + 1; });
-        }
-      }
-    }
 
     return {
       records: records,
@@ -1073,28 +925,20 @@ footer strong{color:var(--text);}
     };
   }
 
-  function lineTextFromItems(items, yTolerance){
-    const entries = [];
+  function lineTextFromItems(items){
+    const rows = [];
     (items || []).forEach(item => {
       const text = (item.str || '').replace(/\x00/g, '').trim();
       if (!text) return;
       const transform = item.transform || [0,0,0,0,0,0];
       const x = transform[4] || 0;
       const y = transform[5] || 0;
-      entries.push({ x, y, text });
-    });
-
-    // Sort first and group with tighter Y tolerance to avoid merging adjacent employee rows.
-    entries.sort((a, b) => (b.y - a.y) || (a.x - b.x));
-    const rows = [];
-    yTolerance = Number(yTolerance || 1.0);
-    entries.forEach(entry => {
-      let row = rows.find(candidate => Math.abs(candidate.y - entry.y) <= yTolerance);
+      let row = rows.find(candidate => Math.abs(candidate.y - y) <= 2.5);
       if (!row) {
-        row = { y: entry.y, items: [] };
+        row = { y: y, items: [] };
         rows.push(row);
       }
-      row.items.push({ x: entry.x, text: entry.text });
+      row.items.push({ x: x, text: text });
     });
 
     return rows
@@ -1103,254 +947,27 @@ footer strong{color:var(--text);}
       .join('\n');
   }
 
-  async function readPdfPageItems(file){
+  async function readPdfText(file){
     const buffer = await file.arrayBuffer();
     const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(buffer) }).promise;
     const pages = [];
     for (let pageNo = 1; pageNo <= pdf.numPages; pageNo++) {
       const page = await pdf.getPage(pageNo);
       const content = await page.getTextContent({ normalizeWhitespace: true });
-      pages.push(content.items || []);
+      pages.push(lineTextFromItems(content.items));
     }
-    return pages;
-  }
-
-  function pageItemsToText(pageItems, yTolerance){
-    return (pageItems || [])
-      .map(items => lineTextFromItems(items, yTolerance))
-      .join('\n');
-  }
-
-  async function ensureTesseractLoaded(){
-    if (window.Tesseract && (window.Tesseract.createWorker || window.Tesseract.recognize)) {
-      return window.Tesseract;
-    }
-    if (window.__empTesseractLoadPromise) return window.__empTesseractLoadPromise;
-    window.__empTesseractLoadPromise = new Promise((resolve, reject) => {
-      const script = document.createElement('script');
-      script.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@6/dist/tesseract.min.js';
-      script.async = true;
-      script.onload = () => resolve(window.Tesseract);
-      script.onerror = () => reject(new Error('Failed to load OCR engine'));
-      document.head.appendChild(script);
-    });
-    return window.__empTesseractLoadPromise;
-  }
-
-  function normalizeOcrText(text){
-    return String(text || '')
-      .replace(/\x00/g, ' ')
-      .replace(/Passpor[tf]\s*Numbe[r]?/gi, 'Passport Number')
-      .replace(/Cont[r]?act\s*Type/gi, 'Contract Type')
-      .replace(/N1PAL/gi, 'NIPAL')
-      .replace(/\s+/g, ' ')
-      .replace(/\s*Page\s+\d+\s*\/\s*\d+\s*/gi, '\n')
-      .trim();
-  }
-
-  async function readPdfTextViaOCR(file, onPageProgress){
-    const Tesseract = await ensureTesseractLoaded();
-    if (!Tesseract) throw new Error('OCR engine unavailable');
-
-    const buffer = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(buffer) }).promise;
-
-    let worker = null;
-    if (typeof Tesseract.createWorker === 'function') {
-      try {
-        worker = await Tesseract.createWorker('eng');
-      } catch (_) {
-        try {
-          worker = await Tesseract.createWorker();
-          if (worker && typeof worker.loadLanguage === 'function') await worker.loadLanguage('eng');
-          if (worker && typeof worker.initialize === 'function') await worker.initialize('eng');
-        } catch (_) {
-          worker = null;
-        }
-      }
-    }
-
-    const pageTexts = [];
-    for (let pageNo = 1; pageNo <= pdf.numPages; pageNo++) {
-      const page = await pdf.getPage(pageNo);
-      const viewport = page.getViewport({ scale: 2.4 });
-      const canvas = document.createElement('canvas');
-      const context = canvas.getContext('2d', { willReadFrequently: true });
-      canvas.width = Math.max(1, Math.floor(viewport.width));
-      canvas.height = Math.max(1, Math.floor(viewport.height));
-      await page.render({ canvasContext: context, viewport: viewport }).promise;
-
-      let ocrText = '';
-      if (worker && typeof worker.recognize === 'function') {
-        const result = await worker.recognize(canvas);
-        ocrText = (result && result.data && result.data.text) ? result.data.text : '';
-      } else if (typeof Tesseract.recognize === 'function') {
-        const result = await Tesseract.recognize(canvas, 'eng');
-        ocrText = (result && result.data && result.data.text) ? result.data.text : '';
-      }
-
-      pageTexts.push(normalizeOcrText(ocrText));
-      canvas.width = 1;
-      canvas.height = 1;
-      if (typeof onPageProgress === 'function') onPageProgress(pageNo, pdf.numPages);
-    }
-
-    if (worker && typeof worker.terminate === 'function') {
-      try { await worker.terminate(); } catch (_) {}
-    }
-
-    return pageTexts.join('\n');
+    return pages.join('\n');
   }
 
   extractPDF = async function(file, sourceName){
-    function recordCompleteness(record){
-      if (!record || typeof record !== 'object') return 0;
-      let score = 0;
-      if (record.passport) score += 3;
-      if (record.name) score += 3;
-      if (record.job) score += 2;
-      if (record.nationality) score += 2;
-      if (record.cardNo) score += 2;
-      if (record.expiry) score += 2;
-      if (record.personCode) score += 1;
-      return score;
-    }
-
-    function normalizeRecordShape(record, meta, source){
-      const safe = record && typeof record === 'object' ? record : {};
-      return {
-        no: safe.no || 0,
-        personCode: safe.personCode || '',
-        name: safe.name || '',
-        job: safe.job || '',
-        passport: safe.passport || '',
-        nationality: safe.nationality || '',
-        cardNo: safe.cardNo || '',
-        expiry: safe.expiry || '',
-        companyCode: safe.companyCode || meta.companyCode || '',
-        companyName: safe.companyName || meta.companyName || '',
-        category: safe.category || meta.category || '',
-        pdfTotalEmployees: safe.pdfTotalEmployees || meta.totalEmployees || '',
-        pdfPages: safe.pdfPages || meta.pageCount || '',
-        source: safe.source || source || ''
-      };
-    }
-
-    function keyForRecord(record){
-      const passport = String(record.passport || '').trim();
-      const name = cleanName(record.name || '').toUpperCase();
-      const cardNo = String(record.cardNo || '').trim();
-      const expiry = String(record.expiry || '').trim();
-      if (passport && name) return passport + '|' + name;
-      if (passport && cardNo && expiry) return passport + '|' + cardNo + '|' + expiry;
-      if (name && cardNo && expiry) return name + '|' + cardNo + '|' + expiry;
-      return passport + '|' + name + '|' + cardNo + '|' + expiry;
-    }
-
-    function qualityScore(parsed){
-      const recs = parsed && Array.isArray(parsed.records) ? parsed.records : [];
-      const fullRows = recs.filter(r => {
-        const hasCore = !!(r && r.passport && r.name);
-        const hasWork = !!(r && (r.job || r.nationality));
-        const hasDoc = !!(r && (r.cardNo || r.expiry));
-        return hasCore && hasWork && hasDoc;
-      }).length;
-      const partialRows = Math.max(0, recs.length - fullRows);
-      // Prefer fully-populated rows first; only then increase count.
-      return (fullRows * 10000) - (partialRows * 500) + (recs.length * 5);
-    }
-
-    function mergeParsed(primary, secondary, source){
-      const meta = {
-        companyName: primary.companyName || secondary.companyName || '',
-        companyCode: primary.companyCode || secondary.companyCode || '',
-        category: primary.category || secondary.category || '',
-        totalEmployees: primary.totalEmployees || secondary.totalEmployees || '',
-        pageCount: primary.pageCount || secondary.pageCount || ''
-      };
-      const map = new Map();
-      const push = (record) => {
-        const normalized = normalizeRecordShape(record, meta, source);
-        const key = keyForRecord(normalized);
-        const existing = map.get(key);
-        if (!existing || recordCompleteness(normalized) > recordCompleteness(existing)) {
-          map.set(key, normalized);
-        }
-      };
-      (primary.records || []).forEach(push);
-      (secondary.records || []).forEach(push);
-      const records = Array.from(map.values());
-      records.forEach((record, index) => { record.no = index + 1; });
-      return {
-        records: records,
-        companyName: meta.companyName,
-        companyCode: meta.companyCode,
-        category: meta.category,
-        totalEmployees: meta.totalEmployees,
-        pageCount: meta.pageCount,
-        fmt: 'mohre_passport_employee_list'
-      };
-    }
-
     try {
-      const source = sourceName || file.name;
-      const pageItems = await readPdfPageItems(file);
-      const tolerances = [0.35, 0.6, 0.85, 1.0, 1.2, 1.5, 2.0, 2.5, 3.0];
-      const variants = [];
-      let signalText = '';
-      tolerances.forEach(tol => {
-        const text = pageItemsToText(pageItems, tol);
-        if (!signalText) signalText = text;
-        const parsedVariant = parseNewEmployeeList(text, source);
-        parsedVariant._tol = tol;
-        variants.push(parsedVariant);
-      });
-      const parsed = variants.sort((a, b) => qualityScore(b) - qualityScore(a))[0] || parseNewEmployeeList(signalText, source);
-      const totalEmployees = parseInt(parsed.totalEmployees || '', 10) || 0;
-      const coreFilled = parsed.records.filter(r => r && r.passport && r.name && (r.job || r.nationality) && (r.cardNo || r.expiry)).length;
-      const lowCoverage = totalEmployees > 0 && parsed.records.length < Math.ceil(totalEmployees * 0.85);
-      const weakDetails = parsed.records.length > 0 && coreFilled < Math.ceil(parsed.records.length * 0.65);
-      let chosen = parsed;
-
-      if (lowCoverage || weakDetails) {
-        try {
-          const legacy = await originalExtractPDF.apply(this, arguments);
-          if (legacy && Array.isArray(legacy.records) && legacy.records.length) {
-            const merged = mergeParsed(parsed, legacy, source);
-            const candidates = [parsed, legacy, merged];
-            chosen = candidates.sort((a, b) => qualityScore(b) - qualityScore(a))[0] || parsed;
-          }
-        } catch (legacyErr) {
-          console.warn('Legacy parser comparison skipped:', legacyErr);
+      const text = await readPdfText(file);
+      if (looksLikeNewEmployeeList(text)) {
+        const parsed = parseNewEmployeeList(text, sourceName || file.name);
+        if (parsed.records.length) {
+          rememberPdfMeta(parsed, sourceName || file.name);
+          return parsed;
         }
-      }
-
-      const targetTotal = parseInt(chosen.totalEmployees || parsed.totalEmployees || '', 10) || 0;
-      const needsOcrRecovery = targetTotal > 0 && chosen.records.length < targetTotal;
-      if (needsOcrRecovery) {
-        try {
-          if (typeof sb === 'function') sb(0, '🔍 OCR fallback running...');
-          const ocrText = await readPdfTextViaOCR(file, (pageNo, totalPages) => {
-            if (typeof sb === 'function') sb(0, '🔍 OCR page ' + pageNo + '/' + totalPages + '...');
-          });
-          const ocrParsed = parseNewEmployeeList(ocrText, source);
-          const mergedOcr = mergeParsed(chosen, ocrParsed, source);
-          const ocrCandidates = [chosen, ocrParsed, mergedOcr];
-          chosen = ocrCandidates.sort((a, b) => qualityScore(b) - qualityScore(a))[0] || chosen;
-        } catch (ocrErr) {
-          console.warn('OCR fallback failed:', ocrErr);
-        }
-      }
-
-      const chosenTotalEmployees = parseInt(chosen.totalEmployees || parsed.totalEmployees || '', 10) || 0;
-      const hasNewFormatSignals =
-        looksLikeNewEmployeeList(signalText) ||
-        chosenTotalEmployees > 0 ||
-        !!chosen.companyCode ||
-        !!chosen.category;
-      if (chosen.records.length && hasNewFormatSignals) {
-        rememberPdfMeta(chosen, source);
-        return chosen;
       }
     } catch (err) {
       console.warn('New employee-list parser skipped:', err);
