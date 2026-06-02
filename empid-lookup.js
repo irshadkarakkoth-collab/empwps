@@ -365,40 +365,21 @@
     var hdrRow = document.querySelector('#sw table thead tr.hdr');
     if (!hdrRow || document.getElementById('th-empId')) return;
 
-    var colgroup = document.querySelector('#sw table colgroup');
-    if (colgroup && !colgroup.dataset.empIdAdded) {
-      var cols = colgroup.querySelectorAll('col');
-      if (cols.length > 1) {
-        var newCol = document.createElement('col');
-        newCol.style.width = '100px';
-        colgroup.insertBefore(newCol, cols[1]);
-        colgroup.dataset.empIdAdded = '1';
-      }
-    }
+    // Append EMP. ID at the END — never insert in the middle (breaks app.js column tracking)
+    var th = document.createElement('th');
+    th.id = 'th-empId';
+    th.textContent = 'EMP. ID';
+    th.style.cssText = 'background:#142030;color:#7dd3fc;font-weight:800;white-space:nowrap;text-align:center;font-size:12px;letter-spacing:.3px;border-left:2px solid rgba(14,165,233,.3);cursor:default;';
+    th.title = 'Employee ID — loaded from cloud mapping';
+    hdrRow.appendChild(th);
 
-    var ths = hdrRow.querySelectorAll('th');
-    if (ths.length > 1) {
-      var th = document.createElement('th');
-      th.id = 'th-empId';
-      th.textContent = 'EMP. ID';
-      th.style.cssText = 'background:#142030;color:#7dd3fc;font-weight:800;white-space:nowrap;text-align:center;font-size:12px;letter-spacing:.3px;border-left:2px solid rgba(14,165,233,.3);cursor:default;';
-      th.title = 'Employee ID — loaded from cloud mapping';
-      hdrRow.insertBefore(th, ths[1]);
-    }
-
+    // Also append an empty placeholder in the filter row (no input — avoids disrupting app.js filters)
     var filterRow = document.querySelector('#sw table thead tr.cfr');
     if (filterRow && !document.getElementById('cf-empId')) {
-      var cfths = filterRow.querySelectorAll('th');
-      if (cfths.length > 1) {
-        var fth = document.createElement('th');
-        var inp = document.createElement('input');
-        inp.id = 'cf-empId';
-        inp.placeholder = 'EMP ID\u2026';
-        inp.style.cssText = 'width:90px;';
-        inp.oninput = function () { filterByEmpId(inp.value); };
-        fth.appendChild(inp);
-        filterRow.insertBefore(fth, cfths[1]);
-      }
+      var fth = document.createElement('th');
+      fth.id = 'cf-empId';
+      fth.style.cssText = 'background:#142030;border-left:2px solid rgba(14,165,233,.15);';
+      filterRow.appendChild(fth);
     }
   }
 
@@ -424,10 +405,8 @@
       empIdCell = document.createElement('td');
       empIdCell.setAttribute('data-empid', '');
       empIdCell.style.cssText = 'font-size:12px;font-family:monospace;text-align:center;border-left:2px solid rgba(14,165,233,.15);';
-      var tds = row.querySelectorAll('td');
-      if (tds.length > 1) row.insertBefore(empIdCell, tds[1]);
-      else if (tds.length === 1) row.appendChild(empIdCell);
-      else row.appendChild(empIdCell);
+      // Always append at the END — inserting mid-row breaks app.js column tracking
+      row.appendChild(empIdCell);
     }
 
     // Find 14-digit person code in the row
@@ -506,32 +485,16 @@
     th.textContent = 'EMP. ID';
     th.style.cssText = 'background:#142030;color:#7dd3fc;font-weight:800;white-space:nowrap;text-align:center;font-size:12px;letter-spacing:.3px;border-left:2px solid rgba(14,165,233,.3);cursor:default;';
     th.title = 'Employee ID — from cloud mapping';
-    hdrRow.insertBefore(th, ths[1]);
+    // Append at END to avoid disrupting app.js column index tracking
+    hdrRow.appendChild(th);
 
-    // Filter row if present
+    // Append blank placeholder in filter row only — no input to avoid conflicts
     var filterRow = thead.querySelector('tr.cfr');
     if (filterRow && !filterRow.querySelector('[data-empid-filter]')) {
-      var cfths = filterRow.querySelectorAll('th');
-      if (cfths.length > 1) {
-        var fth = document.createElement('th');
-        var inp = document.createElement('input');
-        inp.setAttribute('data-empid-filter', '1');
-        inp.placeholder = 'EMP ID\u2026';
-        inp.style.cssText = 'width:90px;';
-        var tbody = table.querySelector('tbody');
-        inp.oninput = (function (tb) {
-          return function () {
-            if (!tb) return;
-            tb.querySelectorAll('tr').forEach(function (row) {
-              var cell = row.querySelector('td[data-empid]');
-              if (!cell) return;
-              row.style.display = !inp.value || (cell.dataset.empid || '').toLowerCase().includes(inp.value.toLowerCase()) ? '' : 'none';
-            });
-          };
-        })(tbody);
-        fth.appendChild(inp);
-        filterRow.insertBefore(fth, cfths[1]);
-      }
+      var fth = document.createElement('th');
+      fth.setAttribute('data-empid-filter', '1');
+      fth.style.cssText = 'background:#142030;border-left:2px solid rgba(14,165,233,.15);';
+      filterRow.appendChild(fth);
     }
 
     table._empIdHdrDone = true;
