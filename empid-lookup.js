@@ -1,7 +1,32 @@
 (function () {
   'use strict';
 
-  var CACHE_KEY = 'empid_mapping_cache';
+  var CACHE_KEY    = 'empid_mapping_cache';
+  var ROLE_KEY     = 'empid_captured_role';
+  var USER_KEY     = 'empid_captured_user';
+
+  // ── Intercept _firestoreLogin to capture role at login time ──────────────
+  // app.js is obfuscated — we can't rely on its localStorage key names.
+  // Instead we wrap _firestoreLogin (defined in firebase.js) the moment it
+  // becomes available, so we store the role ourselves under a known key.
+  function hookLogin() {
+    if (window._firestoreLogin && !window._firestoreLogin._empHooked) {
+      var orig = window._firestoreLogin;
+      window._firestoreLogin = async function (u, p) {
+        var result = await orig(u, p);
+        if (result && result.status === 'ok' && result.user) {
+          localStorage.setItem(ROLE_KEY, (result.user.role || '').toLowerCase().trim());
+          localStorage.setItem(USER_KEY, (result.user.username || '').toUpperCase().trim());
+        }
+        return result;
+      };
+      window._firestoreLogin._empHooked = true;
+    }
+  }
+  // Try immediately and also after a short delay (firebase.js may load after us)
+  hookLogin();
+  setTimeout(hookLogin, 500);
+  setTimeout(hookLogin, 1500);
 
   // ── Helpers ──────────────────────────────────────────────────────────────
 
@@ -15,12 +40,17 @@
   }
 
   function isAdmin() {
-    var role = (localStorage.getItem('nesto_role') || '').toLowerCase().trim();
-    var user = (localStorage.getItem('nesto_logged_in') || '').toUpperCase().trim();
-    // Role-based check
+    // Primary: role captured at login via our _firestoreLogin hook
+    var role = (localStorage.getItem(ROLE_KEY) || '').toLowerCase().trim();
+    var user = (localStorage.getItem(USER_KEY) || '').toUpperCase().trim();
     if (role === 'admin' || role === 'owner' || role === 'full' || role === 'superadmin' || role === 'super' || role === 'manager') return true;
-    // Username-based check (NESTOADMIN and any user whose username ends with ADMIN)
+    // Fallback: legacy nesto_role key (in case it is set by some builds)
+    var legacyRole = (localStorage.getItem('nesto_role') || '').toLowerCase().trim();
+    if (legacyRole === 'admin' || legacyRole === 'owner' || legacyRole === 'full') return true;
+    // Fallback: username-based (NESTOADMIN or any *ADMIN username)
     if (user === 'NESTOADMIN' || user.endsWith('ADMIN')) return true;
+    var legacyUser = (localStorage.getItem('nesto_logged_in') || '').toUpperCase().trim();
+    if (legacyUser === 'NESTOADMIN' || legacyUser.endsWith('ADMIN')) return true;
     return false;
   }
 
