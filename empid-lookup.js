@@ -15,8 +15,13 @@
   }
 
   function isAdmin() {
-    var role = (localStorage.getItem('nesto_role') || '').toLowerCase();
-    return role === 'admin' || role === 'owner' || role === 'full';
+    var role = (localStorage.getItem('nesto_role') || '').toLowerCase().trim();
+    var user = (localStorage.getItem('nesto_logged_in') || '').toUpperCase().trim();
+    // Role-based check
+    if (role === 'admin' || role === 'owner' || role === 'full' || role === 'superadmin' || role === 'super' || role === 'manager') return true;
+    // Username-based check (NESTOADMIN and any user whose username ends with ADMIN)
+    if (user === 'NESTOADMIN' || user.endsWith('ADMIN')) return true;
+    return false;
   }
 
   // Live mapping kept in memory after load
