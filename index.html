@@ -1,64 +1,48 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<title>EMPWPSCTR — UAE Ministry of HR Employee Data Extractor</title>
+<meta name="description" content="Free browser-based tool to extract, view and export UAE Ministry of Human Resources (MOHRE) employment list PDFs. Includes WPS salary compliance checker and Excel export with expiry colour coding."/>
+<meta name="keywords" content="UAE employee data extractor, MOHRE employment list PDF, WPS salary UAE, Ministry of Human Resources UAE, work permit expiry UAE, employee list Excel export, UAE HR tool, EMPWPSCTR, wage protection system UAE"/>
+<meta name="author" content="Irshadkarakkoth"/>
+<meta name="robots" content="index, follow"/>
+<link rel="canonical" href="https://empwppconvert.web.app/"/>
+<meta property="og:type" content="website"/>
+<meta property="og:url" content="https://empwppconvert.web.app/"/>
+<meta property="og:title" content="EMPWPSCTR — UAE Ministry of HR Employee Data Extractor"/>
+<meta property="og:description" content="Extract, filter and export UAE MOHRE employment list PDFs in seconds. WPS salary compliance checker, expiry colour codes, Excel export — all in your browser."/>
+<meta property="og:image" content="https://empwppconvert.web.app/og-image.png"/>
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:title" content="EMPWPSCTR — UAE Ministry of HR Employee Data Extractor"/>
+<meta name="twitter:description" content="Extract UAE MOHRE employee list PDFs, check WPS salary compliance and export to Excel — free, private, runs 100% in your browser."/>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "EMPWPSCTR",
+  "alternateName": "UAE Ministry of HR Employment Data Extractor",
+  "url": "https://empwppconvert.web.app/",
+  "description": "Browser-based tool for extracting and managing UAE Ministry of Human Resources (MOHRE) employment list PDFs, checking WPS salary compliance, and exporting employee data to Excel.",
+  "applicationCategory": "BusinessApplication",
+  "operatingSystem": "Any (runs in browser)",
+  "offers": {"@type":"Offer","price":"0","priceCurrency":"AED"},
+  "featureList": [
+    "UAE MOHRE employment list PDF extraction",
+    "WPS Wage Protection System salary compliance checker",
+    "Work permit expiry date colour coding",
+    "Excel export with expiry colour formatting",
+    "Multi-file batch processing",
+    "AI HR Assistant chat",
+    "EMP ID auto-lookup from admin mapping"
+  ]
+}
+</script>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet"/>
-<style>
-:root{--bg:#0a0f1e;--card:#111827;--border:#1e2d45;--accent:#0ea5e9;--accent2:#06b6d4;--text:#e2e8f0;--muted:#64748b;--green:#10b981;}
-*{margin:0;padding:0;box-sizing:border-box;}
-html{scroll-behavior:smooth;}
-body{background:var(--bg);color:var(--text);font-family:'Space Grotesk',sans-serif;overflow-x:hidden;}
-.bg-grid{position:fixed;top:0;left:0;width:100%;height:100%;background-image:linear-gradient(rgba(14,165,233,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(14,165,233,0.03) 1px,transparent 1px);background-size:50px 50px;pointer-events:none;z-index:0;}
-.glow{position:fixed;width:600px;height:600px;border-radius:50%;filter:blur(120px);pointer-events:none;z-index:0;animation:glowMove 8s ease-in-out infinite alternate;}
-.glow1{background:rgba(14,165,233,0.08);top:-200px;left:-100px;}
-.glow2{background:rgba(6,182,212,0.06);bottom:-200px;right:-100px;animation-delay:4s;}
-@keyframes glowMove{from{transform:translate(0,0);}to{transform:translate(30px,30px);}}
-nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:20px 40px;background:rgba(10,15,30,0.8);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);}
-.logo{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:1px;}
-.nav-badge{background:rgba(14,165,233,0.1);border:1px solid rgba(14,165,233,0.3);color:var(--accent);padding:6px 16px;border-radius:100px;font-size:12px;font-weight:600;letter-spacing:1px;}
-.hero{position:relative;z-index:1;min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:120px 20px 80px;}
-.hero-inner{max-width:800px;}
-.hero-tag{display:inline-flex;align-items:center;gap:8px;background:rgba(14,165,233,0.08);border:1px solid rgba(14,165,233,0.2);color:var(--accent);padding:8px 20px;border-radius:100px;font-size:13px;font-weight:500;letter-spacing:1px;margin-bottom:32px;animation:fadeUp .6s ease both;}
-.hero-tag::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 2s ease infinite;}
-@keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.5;transform:scale(1.5);}}
-@keyframes fadeUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
-.hero h1{font-family:'Syne',sans-serif;font-size:clamp(40px,7vw,80px);font-weight:800;line-height:1.1;margin-bottom:24px;animation:fadeUp .6s .1s ease both;}
-.hero h1 span{background:linear-gradient(135deg,var(--accent),var(--accent2),var(--green));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
-.hero p{font-size:18px;color:var(--muted);line-height:1.7;max-width:600px;margin:0 auto 40px;animation:fadeUp .6s .2s ease both;}
-.hero-btns{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;animation:fadeUp .6s .3s ease both;}
-.btn-secondary{background:transparent;color:var(--text);border:1px solid var(--border);padding:16px 36px;border-radius:12px;font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:600;cursor:pointer;transition:all .3s;text-decoration:none;display:inline-block;}
-.btn-secondary:hover{border-color:var(--accent);color:var(--accent);}
-.stats{position:relative;z-index:1;display:flex;gap:0;border:1px solid var(--border);border-radius:16px;overflow:hidden;max-width:800px;margin:60px auto 0;background:var(--card);animation:fadeUp .6s .4s ease both;}
-.stat{flex:1;padding:28px 20px;text-align:center;border-right:1px solid var(--border);}
-.stat:last-child{border-right:none;}
-.stat-num{font-family:'Syne',sans-serif;font-size:32px;font-weight:800;color:var(--accent);display:block;}
-.stat-label{font-size:13px;color:var(--muted);margin-top:4px;}
-.section{position:relative;z-index:1;padding:100px 20px;max-width:1100px;margin:0 auto;}
-.section-tag{text-align:center;color:var(--accent);font-size:13px;font-weight:600;letter-spacing:2px;text-transform:uppercase;margin-bottom:16px;}
-.section-title{font-family:'Syne',sans-serif;font-size:clamp(28px,4vw,48px);font-weight:800;text-align:center;margin-bottom:60px;}
-.features{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px;}
-.feature{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:32px;transition:all .3s;position:relative;overflow:hidden;}
-.feature::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent);opacity:0;transition:.3s;}
-.feature:hover{border-color:rgba(14,165,233,0.3);transform:translateY(-4px);}
-.feature:hover::before{opacity:1;}
-.feature-icon{width:52px;height:52px;border-radius:12px;background:rgba(14,165,233,0.1);border:1px solid rgba(14,165,233,0.2);display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:20px;}
-.feature h3{font-size:18px;font-weight:600;margin-bottom:10px;}
-.feature p{font-size:14px;color:var(--muted);line-height:1.7;}
-.docs{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;margin-bottom:60px;}
-.doc{background:var(--card);border:1px solid var(--border);border-radius:100px;padding:10px 24px;font-size:14px;font-weight:500;display:flex;align-items:center;gap:8px;transition:.2s;}
-.doc:hover{border-color:var(--accent);color:var(--accent);}
-.doc-dot{width:8px;height:8px;border-radius:50%;}
-.steps{display:flex;flex-direction:column;gap:0;max-width:700px;margin:0 auto;}
-.step{display:flex;gap:24px;align-items:flex-start;padding:32px 0;border-bottom:1px solid var(--border);}
-.step:last-child{border-bottom:none;}
-.step-num{width:48px;height:48px;min-width:48px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:#fff;}
-.step-content h3{font-size:18px;font-weight:600;margin-bottom:8px;}
-.step-content p{font-size:14px;color:var(--muted);line-height:1.7;}
-footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:40px 20px;text-align:center;color:var(--muted);font-size:14px;}
-footer strong{color:var(--text);}
-@media(max-width:600px){nav{padding:16px 20px;}.nav-badge{display:none;}.hero h1{font-size:36px;}.stats{flex-direction:column;}.stat{border-right:none;border-bottom:1px solid var(--border);}.stat:last-child{border-bottom:none;}}
-</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div id="landing-wrapper">
@@ -110,8 +94,8 @@ footer strong{color:var(--text);}
     <div class="feature"><div class="feature-icon">💰</div><h3>WPS Salary Processing</h3><p>Process WPS salary PDFs to track paid and unpaid records, with complete history and employee-level detail for payroll reconciliation.</p></div>
     <div class="feature"><div class="feature-icon">📊</div><h3>Excel Export</h3><p>Download all extracted data as a formatted Excel (.xlsx) file with one click — ready for reporting, audit, or further analysis.</p></div>
     <div class="feature"><div class="feature-icon">🔍</div><h3>Smart Filtering</h3><p>Filter employee records by nationality, job title, or source file. Find exactly the records you need in seconds.</p></div>
+    <div class="feature"><div class="feature-icon">🆔</div><h3>EMP ID Auto-Lookup</h3><p>Admin uploads an Excel mapping of EMP ID ↔ Person Code. The app automatically matches and shows each employee's internal EMP ID as a column.</p></div>
     <div class="feature"><div class="feature-icon">🔒</div><h3>100% Private</h3><p>All processing happens locally in your browser. Your HR data is never uploaded to any server — complete data privacy guaranteed.</p></div>
-    <div class="feature"><div class="feature-icon">📱</div><h3>Works Everywhere</h3><p>Fully browser-based — works on any device, any operating system. No installation required, no software to maintain.</p></div>
   </div>
 </section>
 
@@ -131,9 +115,437 @@ footer strong{color:var(--text);}
   <a href="https://nestohrtable.netlify.app" style="display:inline-block;margin-top:24px;padding:14px 40px;background:linear-gradient(135deg,#0ea5e9,#06b6d4);color:#fff;border-radius:12px;font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:600;text-decoration:none;">Continue →</a>
 </footer>
 
+</div>
+<div id="real-app-wrapper" style="display:none;">
+
+<!-- TUTORIAL SLIDESHOW -->
+<div class="tut-ovl" id="tutOvl">
+  <div class="intro-bg" id="introBg"></div>
+  <div class="sshow">
+    <div class="sshow-header">
+      <div class="sshow-logo"><span>📋</span> EMPWPSCTR &nbsp;—&nbsp; User Tutorial</div>
+      <button class="sshow-close" id="btnSkip" onclick="closeTutorial()" title="Skip" style="display:none;">✕</button>
+    </div>
+    <div class="sshow-body">
+      <div class="slide active" id="slide0">
+        <div class="slide-badge">Welcome</div>
+        <div class="slide-title">📋 EMPWPSCTR</div>
+        <div class="slide-sub">Complete User Tutorial Guide &nbsp;•&nbsp; UAE Ministry of HR Employment List Extractor</div>
+        <div class="slide-grid">
+          <div class="slide-card"><div class="sc-icon">📄</div><div><div class="sc-title">PDF Upload</div><div class="sc-desc">Upload HR employment list PDFs instantly</div></div></div>
+          <div class="slide-card"><div class="sc-icon">⚡</div><div><div class="sc-title">Auto Extract</div><div class="sc-desc">Automatically pulls employee data from PDFs</div></div></div>
+          <div class="slide-card"><div class="sc-icon">📊</div><div><div class="sc-title">Export Data</div><div class="sc-desc">Download as Excel (.xlsx) format</div></div></div>
+          <div class="slide-card"><div class="sc-icon">🔍</div><div><div class="sc-title">Smart Filter</div><div class="sc-desc">Filter by Nationality, Job, or File source</div></div></div>
+        </div>
+        <div class="slide-tip">🌐 &nbsp; Live at: <strong style="color:#e8a020;margin-left:6px;"></strong> &nbsp;•&nbsp; Created by Irshadkarakkoth</div>
+      </div>
+      <div class="slide" id="slide1">
+        <div class="slide-badge">Overview</div>
+        <div class="slide-title">WHAT IS EMPWPSCTR?</div>
+        <div class="slide-sub">A powerful web-based tool to extract and manage employee data from UAE Ministry of Human Resources PDF files.</div>
+        <div class="slide-steps">
+          <div class="slide-step"><div class="ss-num">1</div><div><div class="ss-title">📋 EMPLOYEE LIST</div><div class="ss-desc">Extract & view employee records from HR PDFs — name, job title, passport, nationality, card number & expiry.</div></div></div>
+          <div class="slide-step"><div class="ss-num">2</div><div><div class="ss-title">💰 WPS SALARY</div><div class="ss-desc">Process salary data from WPS PDF documents — track paid & unpaid records with full history.</div></div></div>
+        </div>
+      </div>
+      <div class="slide" id="slide2">
+        <div class="slide-badge">Step 1</div>
+        <div class="slide-title">UPLOAD YOUR PDF</div>
+        <div class="slide-steps">
+          <div class="slide-step"><div class="ss-num">1</div><div><div class="ss-title">Open the Website</div><div class="ss-desc">Go to nestohrtable.netlify.app in your web browser</div></div></div>
+          <div class="slide-step"><div class="ss-num">2</div><div><div class="ss-title">📄 Drag & Drop or Browse</div><div class="ss-desc">Drag your PDF files onto the drop zone — OR — click Browse Files to select from your computer.</div></div></div>
+        </div>
+        <div class="slide-tip">💡 &nbsp; TIP: You can upload <strong>multiple PDF files at once!</strong></div>
+      </div>
+      <div class="slide" id="slide3">
+        <div class="slide-badge">Step 2</div>
+        <div class="slide-title">EXTRACT & VIEW DATA</div>
+        <div class="slide-steps">
+          <div class="slide-step"><div class="ss-num">⚡</div><div><div class="ss-title">Click Extract</div><div class="ss-desc">After uploading, click the ⚡ Extract button. The system automatically reads all employee data.</div></div></div>
+          <div class="slide-step"><div class="ss-num">📊</div><div><div class="ss-title">View the Table</div><div class="ss-desc">All records appear with: No, Person Code, Name, Job Title, Passport No., Nationality, Card Number, Expiry Date.</div></div></div>
+        </div>
+      </div>
+      <div class="slide" id="slide4">
+        <div class="slide-badge">Step 3</div>
+        <div class="slide-title">FILTER YOUR DATA</div>
+        <div class="slide-grid">
+          <div class="slide-card"><div class="sc-icon">🌍</div><div><div class="sc-title">Nationality Filter</div><div class="sc-desc">Filter employees by country of origin.</div></div></div>
+          <div class="slide-card"><div class="sc-icon">💼</div><div><div class="sc-title">Job Filter</div><div class="sc-desc">Filter by Job Title — find all with same role.</div></div></div>
+          <div class="slide-card"><div class="sc-icon">📁</div><div><div class="sc-title">File Filter</div><div class="sc-desc">Filter by specific PDF when multiple uploaded.</div></div></div>
+          <div class="slide-card"><div class="sc-icon">🔗</div><div><div class="sc-title">Combined Filters</div><div class="sc-desc">Filters work together for precise results.</div></div></div>
+        </div>
+      </div>
+      <div class="slide" id="slide5">
+        <div class="slide-badge">Expiry Colors</div>
+        <div class="slide-title">EXPIRY DATE <span>COLOR GUIDE</span></div>
+        <div class="slide-sub">Card expiry dates are color-coded so you can spot urgent renewals instantly!</div>
+        <div class="slide-grid">
+          <div class="slide-card" style="border-color:rgba(220,50,50,.5);background:rgba(220,50,50,.12);">
+            <div class="sc-icon">🔴</div>
+            <div><div class="sc-title" style="color:#ff8080;">EXPIRED</div><div class="sc-desc">Card already expired.<br>Immediate action required!</div></div>
+          </div>
+          <div class="slide-card" style="border-color:rgba(255,140,0,.5);background:rgba(255,140,0,.1);">
+            <div class="sc-icon">🟠</div>
+            <div><div class="sc-title" style="color:#ffb347;">WITHIN 30 DAYS</div><div class="sc-desc">Expiring very soon.<br>Renew urgently!</div></div>
+          </div>
+          <div class="slide-card" style="border-color:rgba(255,205,0,.5);background:rgba(255,205,0,.08);">
+            <div class="sc-icon">🟡</div>
+            <div><div class="sc-title" style="color:#ffe066;">WITHIN 90 DAYS</div><div class="sc-desc">Expiring soon.<br>Plan renewal in advance.</div></div>
+          </div>
+          <div class="slide-card" style="border-color:rgba(40,167,69,.5);background:rgba(40,167,69,.08);">
+            <div class="sc-icon">🟢</div>
+            <div><div class="sc-title" style="color:#66dd88;">VALID</div><div class="sc-desc">Card is valid.<br>No action needed.</div></div>
+          </div>
+        </div>
+        <div class="slide-tip">💡 &nbsp; Check the <strong>Expiry Date</strong> column in the table — colors update automatically based on today's date!</div>
+      </div>
+      <div class="slide" id="slide6">
+        <div class="slide-badge">Step 5</div>
+        <div class="slide-title">EXPORT YOUR DATA</div>
+        <div class="slide-grid">
+          <div class="slide-card"><div class="sc-icon">📥</div><div><div class="sc-title">Excel (.xlsx)</div><div class="sc-desc">Best for analysis. Works with Microsoft Excel & Google Sheets with full formatting.</div></div></div>
+        </div>
+        <div class="slide-tip">🗑️ &nbsp; Use the <strong>Clear</strong> button to reset and start fresh extraction.</div>
+      </div>
+      <div class="slide" id="slide7">
+        <div class="slide-badge">Step 6</div>
+        <div class="slide-title">📂 HISTORY <span>FEATURE</span></div>
+        <div class="slide-sub">Every extraction is automatically saved — no manual action needed!</div>
+        <div class="slide-grid">
+          <div class="slide-card"><div class="sc-icon">🕓</div><div><div class="sc-title">Employee History</div><div class="sc-desc">All previous PDF extractions saved. Click any session to reload data instantly without re-uploading!</div></div></div>
+          <div class="slide-card"><div class="sc-icon">💰</div><div><div class="sc-title">WPS Salary History</div><div class="sc-desc">All WPS salary sessions saved. Review past salary runs anytime without re-uploading files!</div></div></div>
+          <div class="slide-card"><div class="sc-icon">💾</div><div><div class="sc-title">Saved Locally</div><div class="sc-desc">History is stored in your browser's localStorage — survives tab close & PC restart automatically!</div></div></div>
+          <div class="slide-card"><div class="sc-icon">📥</div><div><div class="sc-title">Export from History</div><div class="sc-desc">Download Excel directly from any history entry — no need to re-extract the PDF again!</div></div></div>
+        </div>
+        <div class="slide-tip">⚠️ &nbsp; History is saved on <strong>this browser only</strong>. Clearing browser cache will delete history.</div>
+      </div>
+      <div class="slide" id="slide8">
+        <div class="slide-badge">Summary</div>
+        <div class="slide-title">COMPLETE WORKFLOW</div>
+        <div class="slide-flow">
+          <div class="sf-step"><div class="sf-num">1</div><div class="sf-icon">🌐</div><div class="sf-lbl">Open</div><div class="sf-sub">Website</div></div>
+          <div class="sf-arr">→</div>
+          <div class="sf-step"><div class="sf-num">2</div><div class="sf-icon">📂</div><div class="sf-lbl">Upload</div><div class="sf-sub">PDF files</div></div>
+          <div class="sf-arr">→</div>
+          <div class="sf-step"><div class="sf-num">3</div><div class="sf-icon">⚡</div><div class="sf-lbl">Extract</div><div class="sf-sub">Click button</div></div>
+          <div class="sf-arr">→</div>
+          <div class="sf-step"><div class="sf-num">4</div><div class="sf-icon">🔍</div><div class="sf-lbl">Filter</div><div class="sf-sub">Sort data</div></div>
+          <div class="sf-arr">→</div>
+          <div class="sf-step"><div class="sf-num">5</div><div class="sf-icon">📥</div><div class="sf-lbl">Export</div><div class="sf-sub">Excel</div></div>
+        </div>
+        <div class="slide-tip">✅ &nbsp; That's it! EMPWPSCTR makes HR data extraction <strong>fast, easy and accurate.</strong></div>
+      </div>
+      <div class="slide slide-ty" id="slide9">
+        <div class="ty-icon">🙏</div>
+        <div class="ty-title">THANK YOU!</div>
+        <div class="ty-sub">for using EMPWPSCTR</div>
+        <div class="ty-author">✨ &nbsp; Created by Irshadkarakkoth &nbsp; ✨</div>
+      </div>
+    </div>
+    <div class="sshow-footer">
+      <div class="sshow-dots" id="sshowDots"></div>
+      <div class="sshow-counter" id="sshowCounter">1 / 9</div>
+      <div class="sshow-nav">
+        <button class="snav" id="btnPrev" onclick="slideNav(-1)" style="display:none">◀ Prev</button>
+        <button class="snav" id="btnNext" onclick="slideNav(1)">Next ▶</button>
+        <button class="snav enter" id="btnEnter" onclick="closeTutorial()" style="display:none">🔐 Login</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- LOGIN PAGE -->
+<div class="login-ovl" id="loginOvl">
+  <div class="login-bg" id="loginBg"></div>
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="login-logo-icon">📋</div>
+      <div class="login-logo-title">EMPWPSCTR</div>
+      <div class="login-logo-sub">HR &amp; Payroll Management System</div>
+    </div>
+    <div class="login-field">
+      <label>Username</label>
+      <input type="text" id="loginUser" placeholder="Enter username" autocomplete="off" onkeydown="if(event.key==='Enter')document.getElementById('loginPass').focus()">
+    </div>
+    <div class="login-field">
+      <label>Password</label>
+      <div class="login-pass-wrap">
+        <input type="password" id="loginPass" placeholder="Enter password" autocomplete="off" onkeydown="if(event.key==='Enter')doLogin()">
+        <button class="eye-btn" onclick="toggleEye()" id="eyeBtn" type="button">👁️</button>
+      </div>
+    </div>
+    <button class="login-btn" onclick="doLogin()">🔐 LOGIN</button>
+    <div class="login-err" id="loginErr">❌ Invalid username or password. Please try again.</div>
+    <div class="login-footer">Created by <strong style="color:#4a7adc;">Irshadkarakkoth</strong> &nbsp;<span style="color:#6080b0;font-size:11px;">v2.0.1</span></div>
+  </div>
+</div>
+<!-- ══ FIREBASE SDK ══ -->
+<script type="module" src="firebase.js"></script>
+
+<div id="appWrap" style="display:none;position:fixed;inset:0;flex-direction:column;overflow:hidden;">
+<div class="titlebar">
+  <div class="tbl">
+    <span style="font-size:13px;font-weight:700;">📋 EMPWPSCTR</span>
+  </div>
+  <div style="display:flex;gap:0;margin:0 auto;">
+    <button id="tabEmp" onclick="switchMode('emp')" style="background:#2e5aac;color:#fff;border:none;padding:0 22px;height:34px;font-size:12px;font-weight:700;cursor:pointer;border-right:1px solid rgba(255,255,255,.2);">📋 EMPLOYEE LIST</button>
+    <button id="tabWps" onclick="switchMode('wps')" style="background:transparent;color:#b8ccef;border:none;padding:0 22px;height:34px;font-size:12px;font-weight:700;cursor:pointer;">💰 WPS SALARY</button>
+  </div>
+  <div class="wbtns" style="align-items:center;gap:6px;">
+    <div id="testTimerBadge" style="display:none;align-items:center;gap:6px;background:rgba(255,180,0,.15);border:1px solid rgba(255,180,0,.5);border-radius:4px;padding:0 10px;height:24px;">
+      <span style="font-size:10px;color:#ffcc44;font-weight:700;">⏱ TEST SESSION</span>
+      <span id="testTimerCount" style="font-size:13px;color:#ffe066;font-weight:800;font-family:monospace;min-width:38px;text-align:center;">2:00</span>
+    </div>
+    <button onclick="doLogout()" style="background:rgba(232,80,50,.25);border:1px solid rgba(232,80,50,.5);color:#ffaa99;padding:0 12px;height:24px;border-radius:4px;font-size:11px;font-weight:700;cursor:pointer;transition:all .2s;" onmouseover="this.style.background='rgba(232,80,50,.5)'" onmouseout="this.style.background='rgba(232,80,50,.25)'">🚪 Logout</button>
+  </div>
+</div>
+
+<div id="empSection" style="display:flex;flex-direction:column;flex:1;overflow:hidden;min-height:0;">
+  <div class="ribbon" id="empRibbon" style="border-top:1px solid #eee;">
+    <div class="rg">
+      <button class="rb big" onclick="document.getElementById('fi').click()">
+        <span class="ri">📂</span><span>Open PDF</span>
+      </button>
+      <input type="file" id="fi" multiple accept=".pdf" style="display:none">
+    </div>
+    <div class="rg">
+      <button class="rb big" id="btnEx" onclick="extractAll()" disabled>
+        <span class="ri">⚡</span><span>Extract</span>
+      </button>
+      <button class="rb" id="btnCl" onclick="clearAll()" disabled>
+        <span class="ri">🗑️</span><span>Clear</span>
+      </button>
+    </div>
+    <div class="rg">
+      <button class="rb" id="btnXl" onclick="exportExcel()" disabled>
+        <span class="ri">📥</span><span>Excel</span>
+      </button>
+      <button class="rb" disabled title="Coming Soon!" style="opacity:.6;cursor:not-allowed;position:relative;" onclick="toast('📄 CSV export — Coming Soon!','')">
+        <span class="ri">📄</span><span>CSV</span>
+        <span style="position:absolute;top:2px;right:3px;background:#e8a020;color:#fff;font-size:8px;font-weight:800;padding:1px 4px;border-radius:6px;line-height:1.4;">SOON</span>
+      </button>
+    </div>
+    <div class="rg">
+      <button class="rb" onclick="openHistory()" id="btnHist">
+        <span class="ri">🕓</span><span>History</span>
+      </button>
+    </div>
+    <div style="margin-left:auto;padding-right:16px;display:flex;align-items:center;">
+      <span style="font-size:11px;color:#999;font-style:italic;white-space:nowrap;">Created by <strong style="color:#1f3864;font-style:normal;">Irshadkarakkoth</strong></span>
+    </div>
+  </div>
+  <!-- PILLS SCROLLABLE BAR -->
+  <div id="pillsBar" style="display:none;background:#f0f4fb;border-bottom:1px solid #c8d4e8;padding:6px 10px;overflow-x:auto;overflow-y:hidden;flex-shrink:0;">
+    <div class="pills" id="pills" style="flex-wrap:nowrap;white-space:nowrap;min-width:max-content;"></div>
+  </div>
+
+  <div id="empWelcome" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:#f5f7fb;padding:40px;">
+    <div style="font-size:60px;">📋</div>
+    <div style="font-size:22px;font-weight:700;color:#1f3864;">Employee List Extractor</div>
+    <div style="font-size:13px;color:#666;max-width:460px;text-align:center;line-height:1.6;">Upload UAE Ministry of Human Resources <strong>Employment List</strong> PDFs — employee data is automatically extracted and displayed in a spreadsheet.</div>
+    <div class="dropzone" id="dz">
+      <div class="dz-icon">📄</div>
+      <div class="dz-title">Drag &amp; Drop PDF files here</div>
+      <div class="dz-hint">Supports all UAE Ministry of HR employment list formats</div>
+      <button class="browse-btn" onclick="document.getElementById('fi').click()">📂 Browse Files</button>
+    </div>
+  </div>
+
+<div class="sheet-hdr" id="shHdr">
+  <div style="display:flex;align-items:center;justify-content:center;gap:24px;font-size:12px;font-weight:500;opacity:.92;">
+    <span>📂 Files: <strong id="shTotal">0</strong></span>
+    <span style="opacity:.5">|</span>
+    <span>📄 Extracted: <strong id="shExtracted">0</strong></span>
+  </div>
+</div>
+<div id="empPdfMeta" style="display:none;background:#fff7e6;border-bottom:1px solid #e8c84a;padding:5px 10px;font-size:11px;color:#7d5a00;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
+<div class="fbar" id="fbar">
+  <label>🔍</label>
+  <input type="text" id="gs" placeholder="Search anything…" oninput="applyF()">
+  <label>Nationality:</label>
+  <select id="fNat" onchange="applyF()"><option value="">All</option></select>
+  <label>Job:</label>
+  <select id="fJob" onchange="applyF()"><option value="">All</option></select>
+  <label>File:</label>
+  <select id="fSrc" onchange="applyF()"><option value="">All Files</option></select>
+  <!-- Expiry Color Legend -->
+  <div style="display:flex;align-items:center;gap:6px;margin-left:6px;padding:3px 10px;background:#fff;border:1px solid #c8d4e8;border-radius:4px;flex-wrap:wrap;">
+    <span style="font-size:10px;color:#888;font-weight:700;margin-right:2px;">EXPIRY:</span>
+    <span style="display:flex;align-items:center;gap:3px;font-size:10px;font-weight:700;color:#c00;"><span style="width:10px;height:10px;background:#ffc7c7;border:1px solid #e88;border-radius:2px;display:inline-block;"></span>Expired</span>
+    <span style="display:flex;align-items:center;gap:3px;font-size:10px;font-weight:700;color:#c05000;"><span style="width:10px;height:10px;background:#ffe0b2;border:1px solid #e8a020;border-radius:2px;display:inline-block;"></span>&lt;30d</span>
+    <span style="display:flex;align-items:center;gap:3px;font-size:10px;font-weight:700;color:#7a6000;"><span style="width:10px;height:10px;background:#fff9c4;border:1px solid #e8d800;border-radius:2px;display:inline-block;"></span>&lt;90d</span>
+    <span style="display:flex;align-items:center;gap:3px;font-size:10px;font-weight:700;color:#276221;"><span style="width:10px;height:10px;background:#c6efce;border:1px solid #5cb870;border-radius:2px;display:inline-block;"></span>Valid</span>
+  </div>
+  <span class="rinfo" id="rinfo">0 records</span>
+</div>
+
+<div class="sheet-wrap" id="sw">
+  <table>
+    <colgroup>
+      <col style="width:38px"><col style="width:42px"><col style="width:152px">
+      <col style="width:270px"><col style="width:155px"><col style="width:110px">
+      <col style="width:100px"><col style="width:108px"><col style="width:108px">
+      <col style="width:100px"><col style="width:140px">
+    </colgroup>
+    <thead>
+      <tr class="hdr">
+        <th class="rn">#</th>
+        <th onclick="srt('no')" id="h-no">No</th>
+        <th onclick="srt('personCode')" id="h-personCode">Person Code</th>
+        <th onclick="srt('name')" id="h-name">Name</th>
+        <th onclick="srt('job')" id="h-job">Job Title</th>
+        <th onclick="srt('passport')" id="h-passport">Passport No.</th>
+        <th onclick="srt('nationality')" id="h-nationality">Nationality</th>
+        <th onclick="srt('cardNo')" id="h-cardNo">Card Number</th>
+        <th onclick="srt('expiry')" id="h-expiry">Expiry Date</th>
+        <th onclick="srt('companyCode')" id="h-companyCode">Company Code</th>
+        <th onclick="srt('source')" id="h-source">Source File</th>
+      </tr>
+      <tr class="cfr">
+        <th></th>
+        <th><input id="cf0" oninput="applyF()" placeholder="#"></th>
+        <th><input id="cf1" oninput="applyF()" placeholder="Search…"></th>
+        <th><input id="cf2" oninput="applyF()" placeholder="Search name…"></th>
+        <th><input id="cf3" oninput="applyF()" placeholder="Search job…"></th>
+        <th><input id="cf4" oninput="applyF()" placeholder="Search…"></th>
+        <th><input id="cf5" oninput="applyF()" placeholder="Search…"></th>
+        <th><input id="cf6" oninput="applyF()" placeholder="Search…"></th>
+        <th><input id="cf7" oninput="applyF()" placeholder="DD/MM/YYYY"></th>
+        <th><input id="cf9" oninput="applyF()" placeholder="Code…"></th>
+        <th><input id="cf8" oninput="applyF()" placeholder="Filename…"></th>
+      </tr>
+    </thead>
+    <tbody id="tbody"></tbody>
+  </table>
+</div>
+
+<div class="sbar">
+  <span id="sb0">🟢 Ready</span><span class="sp">|</span>
+  <span id="sb1">No files loaded</span><span class="sp">|</span>
+  <span id="sb2">0 records</span><span class="sp">|</span>
+  <span id="sb3">—</span>
+  <span class="sp" style="margin-left:auto">|</span><span id="sbt"></span>
+</div>
+</div><!-- end empSection -->
+
+<div id="wpsSection" style="display:none;flex-direction:column;flex:1;overflow:hidden;min-height:0;"></div>
+
+<!-- WPS HISTORY PANEL -->
+<div class="hist-ovl" id="wpsHistOvl" onclick="wpsCloseHistoryOutside(event)">
+  <div class="hist-panel" id="wpsHistPanel">
+    <div class="hist-head">
+      <h3>🕓 WPS Salary History</h3>
+      <button class="hist-close" onclick="wpsCloseHistory()">✕</button>
+    </div>
+    <div class="hist-actions">
+      <button class="hist-clear-btn" onclick="wpsClearHistory()">🗑️ Clear All</button>
+      <span class="hist-count" id="wpsHistCount">0 sessions</span>
+    </div>
+    <div class="hist-list" id="wpsHistList"></div>
+  </div>
+</div>
+<div class="hist-ovl" id="histOvl" onclick="closeHistoryOutside(event)">
+  <div class="hist-panel" id="histPanel">
+    <div class="hist-head">
+      <h3>🕓 Extraction History</h3>
+      <button class="hist-close" onclick="closeHistory()">✕</button>
+    </div>
+    <div class="hist-actions">
+      <button class="hist-clear-btn" onclick="clearHistory()">🗑️ Clear All</button>
+      <span class="hist-count" id="histCount">0 sessions</span>
+    </div>
+    <div class="hist-list" id="histList"></div>
+  </div>
+</div>
+
+<div class="povl" id="povl">
+  <div class="pbox">
+    <h3>⚡ Extracting Data…</h3>
+    <p id="plbl">Processing…</p>
+    <div class="ptrack"><div class="pfill" id="pfill"></div></div>
+    <div class="ppct" id="ppct">0%</div>
+  </div>
+</div>
+<div class="toast" id="tst"></div>
+
+<!-- EXCEL COLOR CHOICE MODAL -->
+<div id="xlColorModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9500;align-items:center;justify-content:center;">
+  <div style="background:#1a2540;border:1px solid rgba(46,90,172,.5);border-radius:14px;padding:32px 36px;width:360px;box-shadow:0 20px 60px rgba(0,0,0,.7);">
+    <div style="font-size:16px;font-weight:800;color:#fff;margin-bottom:6px;">📊 Export Excel</div>
+    <div style="font-size:12px;color:#6080b0;margin-bottom:24px;">Choose export format:</div>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <button onclick="xlExportChoice(true)" style="background:linear-gradient(135deg,#1f6e2e,#28a745);border:none;border-radius:10px;padding:16px;color:#fff;cursor:pointer;text-align:left;transition:all .2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
+        <div style="font-size:15px;font-weight:800;margin-bottom:4px;">🎨 With Colors</div>
+        <div style="font-size:11px;opacity:.8;">Expiry dates highlighted in Red / Orange / Yellow / Green based on status</div>
+      </button>
+      <button onclick="xlExportChoice(false)" style="background:linear-gradient(135deg,#1f3864,#2e5aac);border:none;border-radius:10px;padding:16px;color:#fff;cursor:pointer;text-align:left;transition:all .2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
+        <div style="font-size:15px;font-weight:800;margin-bottom:4px;">⬜ Without Colors</div>
+        <div style="font-size:11px;opacity:.8;">Plain Excel file — clean data without any color formatting</div>
+      </button>
+      <button onclick="document.getElementById('xlColorModal').style.display='none'" style="background:transparent;border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:10px;color:#6080b0;cursor:pointer;font-size:12px;">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- DOWNLOAD CONFIRM DIALOG -->
+<div class="dl-ovl" id="dlOvl">
+  <div class="dl-box">
+    <h3>Download file</h3>
+    <p>Are you sure you want to download this file?</p>
+    <div style="display:flex;align-items:center;background:#1a1a1a;border:1px solid #444;border-radius:5px;overflow:hidden;margin-bottom:22px;">
+      <input class="dl-filename" id="dlFilename" type="text" value="file" spellcheck="false" style="flex:1;background:transparent;border:none;padding:10px 6px 10px 14px;font-size:13px;color:#eee;font-family:monospace;outline:none;min-width:0;">
+      <span id="dlExt" style="padding:10px 14px 10px 0;font-size:13px;color:#aaa;font-family:monospace;white-space:nowrap;flex-shrink:0;"></span>
+    </div>
+    <div class="dl-actions">
+      <button class="dl-cancel" onclick="dlCancel()">Cancel</button>
+      <button class="dl-confirm" onclick="dlConfirm()">Download file</button>
+    </div>
+  </div>
+</div>
+</div><!-- end appWrap -->
 
 </div>
 
-<script>var a0_0x147837=a0_0x2c9e;function a0_0x2c9e(_0x7b18a0,_0x279775){_0x7b18a0=_0x7b18a0-(0x1*0x26d+-0x1*-0x2395+-0x2501);var _0x403e7a=a0_0x2788();var _0x18b693=_0x403e7a[_0x7b18a0];if(a0_0x2c9e['\x6b\x55\x44\x75\x72\x61']===undefined){var _0x51563b=function(_0x196710){var _0x2ebdca='\x61\x62\x63\x64\x65\x66\x67\x68\x69\x6a\x6b\x6c\x6d\x6e\x6f\x70\x71\x72\x73\x74\x75\x76\x77\x78\x79\x7a\x41\x42\x43\x44\x45\x46\x47\x48\x49\x4a\x4b\x4c\x4d\x4e\x4f\x50\x51\x52\x53\x54\x55\x56\x57\x58\x59\x5a\x30\x31\x32\x33\x34\x35\x36\x37\x38\x39\x2b\x2f\x3d';var _0x1851cf='',_0x4872a1='',_0x1b1e99=_0x1851cf+_0x51563b,_0x25e8ae=(''+function(){return 0x6*-0x141+-0x1*-0x1453+-0x1d*0x71;})['\x69\x6e\x64\x65\x78\x4f\x66']('\x0a')!==-(0xe9*-0x3+0x1983+0x11*-0x157);for(var _0x50c2c9=0x950+0x974*-0x1+0x12*0x2,_0x13f289,_0x545c85,_0x23360f=0x26f9*-0x1+-0x17f7+0x3ef0;_0x545c85=_0x196710['\x63\x68\x61\x72\x41\x74'](_0x23360f++);~_0x545c85&&(_0x13f289=_0x50c2c9%(0x1bbe*-0x1+-0x30b*-0x9+0x5f)?_0x13f289*(0x1*0x22+0x21a5+-0x2187)+_0x545c85:_0x545c85,_0x50c2c9++%(-0x24fd+0x2*-0x950+0x3*0x128b))?_0x1851cf+=_0x25e8ae||_0x1b1e99['\x63\x68\x61\x72\x43\x6f\x64\x65\x41\x74'](_0x23360f+(0x2033+0x73f+-0x2768))-(0x1b57+-0x8f*0x11+-0x11ce)!==-0x4d*0x5e+0xe53+-0xdf3*-0x1?String['\x66\x72\x6f\x6d\x43\x68\x61\x72\x43\x6f\x64\x65'](0x19cb+0xa21+-0x1*0x22ed&_0x13f289>>(-(0xac6+0x2*0x260+-0xf84)*_0x50c2c9&-0x19e7+-0x1*0x22d5+0x3cc2)):_0x50c2c9:0x1bb*-0xf+0x1996+0x5f*0x1){_0x545c85=_0x2ebdca['\x69\x6e\x64\x65\x78\x4f\x66'](_0x545c85);}for(var _0x8d5027=-0x9a6+0x1b0f+-0x1169,_0x5e613a=_0x1851cf['\x6c\x65\x6e\x67\x74\x68'];_0x8d5027<_0x5e613a;_0x8d5027++){_0x4872a1+='\x25'+('\x30\x30'+_0x1851cf['\x63\x68\x61\x72\x43\x6f\x64\x65\x41\x74'](_0x8d5027)['\x74\x6f\x53\x74\x72\x69\x6e\x67'](0x93c+0x995+0x12c1*-0x1))['\x73\x6c\x69\x63\x65'](-(-0x1*-0x1e1d+-0x3*0x2c2+-0x15d5));}return decodeURIComponent(_0x4872a1);};var _0x1001b6=function(_0x1417ce,_0x304bca){var _0x2ffeae=[],_0xc9ba0e=0x1422+-0x12bb+-0x167,_0x295e60,_0x32cbb6='';_0x1417ce=_0x51563b(_0x1417ce);var _0x31e391;for(_0x31e391=0x1a9d+-0x2a5*-0x7+-0x2d20;_0x31e391<-0x1*0x15aa+-0x5ea+-0x1c94*-0x1;_0x31e391++){_0x2ffeae[_0x31e391]=_0x31e391;}for(_0x31e391=-0xc51*-0x1+-0xb93+0x26*-0x5;_0x31e391<0x3d*0x89+-0xacf*0x1+-0x2*0xa6b;_0x31e391++){_0xc9ba0e=(_0xc9ba0e+_0x2ffeae[_0x31e391]+_0x304bca['\x63\x68\x61\x72\x43\x6f\x64\x65\x41\x74'](_0x31e391%_0x304bca['\x6c\x65\x6e\x67\x74\x68']))%(0x6d*0x4c+0x6b*0x3b+-0x3805),_0x295e60=_0x2ffeae[_0x31e391],_0x2ffeae[_0x31e391]=_0x2ffeae[_0xc9ba0e],_0x2ffeae[_0xc9ba0e]=_0x295e60;}_0x31e391=0xec*0x1+-0xa*0x29f+0x2*0xca5,_0xc9ba0e=0x2582+-0x14e7+0x1*-0x109b;for(var _0x3117cf=-0x2*-0xc8f+-0xbe6+0x234*-0x6;_0x3117cf<_0x1417ce['\x6c\x65\x6e\x67\x74\x68'];_0x3117cf++){_0x31e391=(_0x31e391+(0x80*0xd+0x2534+-0x2bb3))%(-0x960+0x190d+-0xead),_0xc9ba0e=(_0xc9ba0e+_0x2ffeae[_0x31e391])%(0x1f*0x3b+0x1e34+0x1*-0x2459),_0x295e60=_0x2ffeae[_0x31e391],_0x2ffeae[_0x31e391]=_0x2ffeae[_0xc9ba0e],_0x2ffeae[_0xc9ba0e]=_0x295e60,_0x32cbb6+=String['\x66\x72\x6f\x6d\x43\x68\x61\x72\x43\x6f\x64\x65'](_0x1417ce['\x63\x68\x61\x72\x43\x6f\x64\x65\x41\x74'](_0x3117cf)^_0x2ffeae[(_0x2ffeae[_0x31e391]+_0x2ffeae[_0xc9ba0e])%(-0x17*0x79+-0xe03+0x19e2)]);}return _0x32cbb6;};a0_0x2c9e['\x43\x4b\x75\x74\x5a\x63']=_0x1001b6,a0_0x2c9e['\x6d\x45\x57\x57\x65\x64']={},a0_0x2c9e['\x6b\x55\x44\x75\x72\x61']=!![];}var _0x207138=_0x403e7a[0x1253*0x2+0x14a8+-0x394e],_0x278add=_0x7b18a0+_0x207138,_0x50df06=a0_0x2c9e['\x6d\x45\x57\x57\x65\x64'][_0x278add];if(!_0x50df06){if(a0_0x2c9e['\x53\x53\x47\x72\x70\x7a']===undefined){var _0x4a5b02=function(_0x84c1a7){this['\x45\x6b\x69\x47\x59\x4b']=_0x84c1a7,this['\x49\x43\x6e\x45\x50\x5a']=[-0x1*-0x11f5+0x1c82+-0x2e76,0x3*-0xa37+0x1*-0x135d+-0x3202*-0x1,0x4*0x4d0+-0x61*-0x2b+-0x238b],this['\x58\x6b\x46\x79\x78\x4a']=function(){return'\x6e\x65\x77\x53\x74\x61\x74\x65';},this['\x53\x6e\x57\x47\x42\x42']='\x5c\x77\x2b\x20\x2a\x5c\x28\x5c\x29\x20\x2a\x7b\x5c\x77\x2b\x20\x2a',this['\x76\x4c\x77\x5a\x75\x6f']='\x5b\x27\x7c\x22\x5d\x2e\x2b\x5b\x27\x7c\x22\x5d\x3b\x3f\x20\x2a\x7d';};_0x4a5b02['\x70\x72\x6f\x74\x6f\x74\x79\x70\x65']['\x45\x6c\x62\x46\x75\x6a']=function(){var _0x3dffeb=new RegExp(this['\x53\x6e\x57\x47\x42\x42']+this['\x76\x4c\x77\x5a\x75\x6f']),_0x3b3d06=_0x3dffeb['\x74\x65\x73\x74'](this['\x58\x6b\x46\x79\x78\x4a']['\x74\x6f\x53\x74\x72\x69\x6e\x67']())?--this['\x49\x43\x6e\x45\x50\x5a'][-0x1*0x1c79+-0x160a+-0x3d*-0xd4]:--this['\x49\x43\x6e\x45\x50\x5a'][0x206*0x1+-0x1a80+0x187a];return this['\x6f\x71\x6d\x72\x65\x4c'](_0x3b3d06);},_0x4a5b02['\x70\x72\x6f\x74\x6f\x74\x79\x70\x65']['\x6f\x71\x6d\x72\x65\x4c']=function(_0x1494c0){if(!Boolean(~_0x1494c0))return _0x1494c0;return this['\x54\x58\x45\x65\x4d\x7a'](this['\x45\x6b\x69\x47\x59\x4b']);},_0x4a5b02['\x70\x72\x6f\x74\x6f\x74\x79\x70\x65']['\x54\x58\x45\x65\x4d\x7a']=function(_0x31239c){for(var _0xe22ccd=-0x1*0x9e8+0x4e7*0x1+0x501,_0x2eccd8=this['\x49\x43\x6e\x45\x50\x5a']['\x6c\x65\x6e\x67\x74\x68'];_0xe22ccd<_0x2eccd8;_0xe22ccd++){this['\x49\x43\x6e\x45\x50\x5a']['\x70\x75\x73\x68'](Math['\x72\x6f\x75\x6e\x64'](Math['\x72\x61\x6e\x64\x6f\x6d']())),_0x2eccd8=this['\x49\x43\x6e\x45\x50\x5a']['\x6c\x65\x6e\x67\x74\x68'];}return _0x31239c(this['\x49\x43\x6e\x45\x50\x5a'][0x22bf+-0x485*-0x3+-0x304e]);},(''+function(){return 0x14b*-0x4+-0x151c+-0x3a*-0x74;})['\x69\x6e\x64\x65\x78\x4f\x66']('\x0a')===-(-0x243*0xe+-0x1*-0x100f+0xf9c)&&new _0x4a5b02(a0_0x2c9e)['\x45\x6c\x62\x46\x75\x6a'](),a0_0x2c9e['\x53\x53\x47\x72\x70\x7a']=!![];}_0x18b693=a0_0x2c9e['\x43\x4b\x75\x74\x5a\x63'](_0x18b693,_0x279775),a0_0x2c9e['\x6d\x45\x57\x57\x65\x64'][_0x278add]=_0x18b693;}else _0x18b693=_0x50df06;return _0x18b693;}(function(_0x4c31c3,_0x170abc){var a0_0x3f833e={_0x4f8c30:0x184,_0xd81794:'\x56\x54\x72\x6e',_0x366294:0x165,_0x437b1a:'\x55\x50\x32\x2a',_0x5d4213:0x147,_0x3a1d86:'\x63\x21\x64\x4e',_0x189e0f:0x149,_0x572146:0x13a,_0x5660a4:0x168,_0x432c39:'\x34\x75\x55\x38',_0x295a2e:0x192},_0x12463e=a0_0x2c9e,_0x3bd432=_0x4c31c3();while(!![]){try{var _0x533c22=parseInt(_0x12463e(a0_0x3f833e._0x4f8c30,a0_0x3f833e._0xd81794))/(-0x3*0x116+0x22a4+0x1*-0x1f61)*(-parseInt(_0x12463e(a0_0x3f833e._0x366294,'\x5d\x6e\x5e\x21'))/(0x8*0x472+0x1fa6*0x1+-0x4334))+parseInt(_0x12463e(0x12c,a0_0x3f833e._0x437b1a))/(0x4*0x653+-0x142d+-0x6*0xda)+-parseInt(_0x12463e(a0_0x3f833e._0x5d4213,'\x53\x23\x70\x5e'))/(0x25*0x83+0xf*0xb5+-0x1d86)*(parseInt(_0x12463e(0x17c,a0_0x3f833e._0x3a1d86))/(0xbea*-0x1+0x11a+0xad5))+parseInt(_0x12463e(0x14b,'\x66\x39\x6b\x64'))/(0x1*-0x1a9e+0x90d+-0x3*-0x5dd)+parseInt(_0x12463e(0x155,'\x26\x44\x2a\x74'))/(0x147*0xd+0x154d+0x25e1*-0x1)*(-parseInt(_0x12463e(a0_0x3f833e._0x189e0f,'\x50\x6b\x36\x57'))/(0xd64+-0xbdd*0x2+-0xa5e*-0x1))+-parseInt(_0x12463e(a0_0x3f833e._0x572146,'\x6a\x37\x32\x5d'))/(0x181d+-0x16be*-0x1+-0x2ed2)*(-parseInt(_0x12463e(a0_0x3f833e._0x5660a4,a0_0x3f833e._0x432c39))/(-0x779*0x1+-0x1*0x16ba+-0x1*-0x1e3d))+parseInt(_0x12463e(a0_0x3f833e._0x295a2e,'\x34\x75\x55\x38'))/(0xaed+0x1*-0xf7f+0x1*0x49d)*(-parseInt(_0x12463e(0x166,'\x34\x75\x55\x38'))/(0xa18+0x704+-0x1110));if(_0x533c22===_0x170abc)break;else _0x3bd432['push'](_0x3bd432['shift']());}catch(_0x268db0){_0x3bd432['push'](_0x3bd432['shift']());}}}(a0_0x2788,-0x1*0x1adeaf+-0x1464a2+-0x56*-0xb8b3));var a0_0x3eeb88=(function(){var a0_0x4cac45={_0x4964a4:0x14c},_0x2a5de5=!![];return function(_0x2eeccc,_0x2c21f6){var _0x5d60ff=_0x2a5de5?function(){var _0x3e0663=a0_0x2c9e;if(_0x2c21f6){var _0x45acd2=_0x2c21f6[_0x3e0663(a0_0x4cac45._0x4964a4,'\x69\x69\x6a\x74')+'\x6c\x79'](_0x2eeccc,arguments);return _0x2c21f6=null,_0x45acd2;}}:function(){};return _0x2a5de5=![],_0x5d60ff;};}()),a0_0x30754d=a0_0x3eeb88(this,function(){var a0_0x5d42b5={_0x5e9e38:0x11a,_0x14a2b8:0x110,_0x878f5a:'\x34\x75\x55\x38',_0x5150a6:0x134,_0x40cf55:0x150,_0x350dd7:0x167,_0x5b23cb:'\x6d\x79\x54\x23',_0x588b94:0x185,_0x462245:'\x36\x62\x70\x5e',_0x1199a4:0x11e,_0x1f7ae7:'\x26\x4b\x79\x37',_0x42ef38:0x164,_0x4438aa:'\x37\x67\x39\x70',_0x4dd629:0x119,_0x382a7b:'\x29\x75\x66\x5d',_0x4e06fd:0x1a4,_0x410722:0x18c,_0x2648b2:0x178,_0xb2128a:0x12d,_0x1333de:'\x59\x50\x24\x68'},_0x578a52=a0_0x2c9e,_0x5b2aa1={'\x52\x56\x73\x5a\x4c':_0x578a52(a0_0x5d42b5._0x5e9e38,'\x29\x75\x66\x5d')+_0x578a52(0x125,'\x71\x70\x50\x54')+_0x578a52(a0_0x5d42b5._0x14a2b8,'\x59\x50\x24\x68')+_0x578a52(0x170,a0_0x5d42b5._0x878f5a)};return a0_0x30754d[_0x578a52(a0_0x5d42b5._0x5150a6,'\x56\x54\x72\x6e')+_0x578a52(a0_0x5d42b5._0x40cf55,'\x55\x50\x32\x2a')+'\x6e\x67']()[_0x578a52(0x124,'\x29\x75\x66\x5d')+_0x578a52(a0_0x5d42b5._0x350dd7,a0_0x5d42b5._0x5b23cb)](_0x5b2aa1[_0x578a52(a0_0x5d42b5._0x588b94,a0_0x5d42b5._0x462245)+'\x5a\x4c'])[_0x578a52(a0_0x5d42b5._0x1199a4,a0_0x5d42b5._0x1f7ae7)+_0x578a52(a0_0x5d42b5._0x42ef38,a0_0x5d42b5._0x4438aa)+'\x6e\x67']()[_0x578a52(a0_0x5d42b5._0x4dd629,a0_0x5d42b5._0x382a7b)+_0x578a52(a0_0x5d42b5._0x4e06fd,'\x5d\x59\x41\x49')+_0x578a52(0x135,'\x45\x4c\x61\x47')+'\x6f\x72'](a0_0x30754d)[_0x578a52(a0_0x5d42b5._0x410722,'\x71\x70\x50\x54')+_0x578a52(a0_0x5d42b5._0x2648b2,'\x36\x62\x70\x5e')](_0x5b2aa1[_0x578a52(a0_0x5d42b5._0xb2128a,a0_0x5d42b5._0x1333de)+'\x5a\x4c']);});function a0_0x2788(){var _0x42d019=['\x57\x36\x58\x47\x61\x47','\x57\x50\x37\x63\x4c\x71\x69','\x57\x35\x6c\x64\x52\x67\x69','\x57\x34\x6e\x42\x67\x75\x37\x64\x4c\x6d\x6f\x35\x57\x37\x53\x43\x41\x53\x6b\x35\x57\x51\x79\x30\x78\x61','\x57\x51\x33\x63\x4a\x53\x6b\x59','\x57\x34\x78\x63\x4e\x32\x65','\x57\x52\x68\x63\x51\x43\x6b\x39\x44\x43\x6f\x53\x46\x43\x6b\x7a\x57\x4f\x37\x64\x56\x33\x38','\x57\x4f\x65\x49\x57\x34\x65','\x57\x34\x68\x64\x53\x53\x6f\x4f','\x43\x53\x6f\x39\x57\x36\x69','\x6c\x30\x76\x2f','\x6e\x53\x6b\x6d\x74\x71','\x57\x4f\x2f\x64\x55\x6d\x6b\x55','\x57\x51\x52\x63\x4c\x38\x6b\x36','\x57\x52\x38\x4a\x57\x36\x38','\x6f\x31\x31\x39','\x57\x34\x4e\x63\x4e\x33\x61','\x66\x59\x42\x64\x49\x57','\x67\x75\x50\x4f','\x63\x6d\x6b\x77\x6e\x47','\x77\x77\x4c\x58','\x65\x49\x34\x33','\x78\x32\x62\x32','\x57\x37\x48\x54\x66\x47','\x57\x35\x78\x63\x50\x43\x6b\x49','\x6a\x43\x6b\x66\x57\x37\x4b','\x57\x52\x56\x64\x51\x38\x6b\x35','\x57\x37\x64\x64\x4d\x6d\x6b\x41','\x42\x38\x6f\x76\x44\x57','\x6f\x48\x68\x63\x47\x71','\x73\x59\x42\x64\x47\x57','\x73\x77\x6e\x2b','\x64\x6d\x6b\x46\x74\x61','\x41\x75\x62\x51','\x57\x36\x37\x63\x4a\x72\x34','\x57\x4f\x65\x34\x57\x36\x57','\x57\x50\x43\x45\x70\x57','\x57\x4f\x71\x47\x61\x71','\x57\x37\x68\x63\x4c\x77\x4f','\x57\x34\x6e\x7a\x67\x30\x42\x64\x4b\x6d\x6f\x36\x57\x37\x47\x38\x79\x53\x6b\x4d\x57\x52\x69\x6d\x75\x71','\x74\x38\x6f\x5a\x66\x71','\x6d\x68\x5a\x64\x51\x61','\x57\x36\x42\x64\x53\x38\x6f\x2f','\x45\x53\x6f\x37\x57\x51\x57','\x68\x30\x44\x2b','\x74\x53\x6b\x34\x79\x71','\x57\x4f\x61\x2f\x57\x37\x53','\x7a\x53\x6b\x7a\x57\x50\x38','\x57\x52\x4a\x64\x52\x43\x6b\x4a','\x71\x5a\x78\x64\x55\x71','\x57\x50\x34\x56\x68\x47','\x76\x6d\x6b\x64\x43\x57','\x74\x43\x6f\x6f\x7a\x48\x61\x68\x57\x34\x57\x62\x57\x37\x2f\x64\x56\x4a\x6e\x59\x46\x43\x6f\x62','\x57\x36\x66\x45\x57\x52\x5a\x64\x56\x64\x7a\x48\x6b\x65\x64\x64\x50\x72\x53\x59\x64\x59\x65','\x57\x4f\x47\x36\x57\x52\x71','\x57\x4f\x4e\x63\x49\x6d\x6b\x4e','\x65\x6d\x6b\x6d\x6a\x47','\x6c\x53\x6b\x55\x57\x37\x4f','\x57\x35\x39\x4e\x57\x52\x52\x64\x49\x65\x4e\x63\x48\x38\x6f\x71\x57\x35\x35\x6e\x57\x51\x4e\x63\x4d\x47','\x6f\x6d\x6b\x70\x57\x37\x71','\x57\x34\x4e\x63\x48\x48\x75','\x61\x49\x74\x64\x4d\x57','\x57\x51\x43\x2b\x66\x71','\x57\x50\x43\x61\x70\x47','\x72\x53\x6f\x74\x6b\x57','\x72\x43\x6b\x34\x7a\x61','\x57\x37\x48\x49\x73\x71\x37\x63\x51\x43\x6f\x67\x75\x66\x2f\x63\x53\x53\x6f\x30\x70\x67\x74\x64\x47\x71','\x6c\x38\x6b\x78\x6e\x49\x6d\x41\x57\x37\x46\x63\x52\x38\x6f\x56','\x57\x34\x62\x31\x57\x51\x64\x63\x53\x43\x6b\x6a\x57\x35\x31\x44\x6f\x58\x50\x35\x57\x50\x6d','\x45\x43\x6b\x32\x45\x47','\x67\x53\x6f\x58\x68\x78\x66\x2f\x57\x37\x79\x33\x71\x59\x64\x63\x4f\x53\x6b\x62\x6f\x43\x6b\x57\x57\x37\x4f','\x6d\x30\x6e\x50','\x61\x43\x6b\x77\x6c\x71','\x74\x53\x6b\x55\x77\x47','\x41\x64\x5a\x63\x55\x47','\x57\x4f\x75\x41\x72\x47','\x42\x6d\x6b\x61\x78\x57','\x57\x4f\x2f\x64\x56\x64\x53','\x79\x58\x64\x63\x47\x71','\x57\x34\x74\x63\x4f\x74\x38','\x57\x50\x38\x62\x6d\x53\x6b\x2f\x71\x53\x6b\x71\x6a\x4a\x6d\x45','\x46\x6d\x6f\x52\x57\x37\x70\x63\x52\x6d\x6f\x39\x7a\x73\x4a\x63\x56\x61','\x42\x78\x37\x64\x47\x59\x53\x65\x57\x4f\x6e\x31','\x57\x52\x70\x63\x52\x6d\x6f\x38\x66\x6d\x6f\x6c\x76\x43\x6b\x48\x57\x52\x79','\x6f\x33\x5a\x64\x54\x57','\x57\x35\x6a\x46\x66\x61','\x62\x65\x57\x48','\x71\x6d\x6b\x38\x46\x61','\x57\x35\x74\x64\x54\x4d\x53','\x63\x43\x6b\x41\x6c\x71','\x74\x38\x6b\x4c\x78\x61','\x65\x38\x6b\x43\x57\x35\x6d','\x57\x35\x68\x63\x51\x4a\x47','\x57\x34\x48\x76\x41\x57','\x57\x51\x4a\x64\x51\x38\x6b\x35','\x6c\x67\x56\x64\x51\x61','\x6c\x43\x6f\x30\x63\x61\x74\x63\x47\x4b\x6c\x63\x49\x4b\x79\x4a\x62\x71','\x76\x38\x6f\x6d\x44\x43\x6b\x70\x57\x34\x54\x59\x57\x35\x2f\x63\x4d\x43\x6f\x46\x76\x76\x4b\x51\x44\x57','\x57\x37\x4a\x63\x4a\x72\x71','\x76\x6d\x6f\x70\x6d\x53\x6f\x4c\x57\x52\x43\x78\x57\x50\x52\x63\x51\x57','\x57\x37\x48\x58\x64\x61','\x43\x43\x6f\x61\x61\x61','\x70\x6d\x6b\x6c\x57\x35\x47','\x57\x4f\x74\x63\x49\x57\x43','\x57\x51\x30\x4a\x63\x61','\x57\x51\x4a\x63\x4e\x58\x34','\x72\x63\x4a\x64\x4c\x71','\x74\x6d\x6f\x75\x7a\x57','\x57\x50\x4b\x73\x57\x36\x61','\x57\x4f\x34\x4d\x66\x47','\x77\x33\x6a\x36','\x70\x75\x53\x6a','\x73\x6d\x6b\x6a\x46\x61','\x67\x76\x54\x35','\x6b\x32\x33\x64\x55\x61','\x6b\x66\x57\x6a','\x57\x52\x4e\x64\x55\x53\x6b\x36','\x57\x51\x65\x54\x7a\x47','\x57\x4f\x75\x39\x67\x57','\x75\x43\x6b\x2f\x77\x38\x6f\x6e\x57\x34\x43\x67\x70\x71','\x57\x4f\x37\x63\x4b\x78\x79','\x57\x51\x38\x4d\x68\x61','\x71\x6d\x6f\x7a\x69\x71','\x45\x6d\x6b\x67\x77\x57','\x57\x34\x54\x79\x66\x61','\x57\x51\x37\x63\x4b\x43\x6b\x4d','\x57\x52\x37\x64\x49\x4b\x4f','\x69\x38\x6f\x62\x57\x51\x62\x54\x71\x43\x6b\x44\x41\x74\x43','\x63\x67\x4b\x73','\x65\x6d\x6f\x69\x75\x47','\x57\x36\x74\x63\x4d\x67\x6d','\x57\x51\x57\x2f\x63\x71','\x57\x34\x76\x7a\x68\x4b\x64\x64\x4e\x43\x6f\x34\x57\x37\x75\x2f\x42\x6d\x6b\x32\x57\x50\x65\x4d\x71\x57','\x57\x52\x71\x6c\x57\x36\x47','\x57\x36\x76\x6b\x57\x52\x79','\x75\x43\x6f\x72\x62\x61','\x57\x34\x6e\x76\x79\x71','\x66\x53\x6b\x70\x6c\x57','\x74\x6d\x6f\x63\x63\x71','\x57\x35\x66\x46\x66\x61','\x74\x43\x6f\x47\x6c\x57','\x76\x38\x6f\x6e\x65\x38\x6f\x65\x57\x4f\x4f\x78\x57\x52\x33\x63\x4c\x61','\x6a\x6d\x6f\x57\x63\x61','\x57\x34\x4e\x64\x52\x66\x53','\x57\x37\x68\x64\x51\x6d\x6f\x30','\x66\x43\x6b\x45\x6a\x57','\x41\x43\x6f\x6b\x66\x61','\x76\x57\x33\x64\x49\x61','\x6a\x53\x6b\x31\x57\x37\x4f','\x57\x36\x33\x63\x48\x53\x6b\x64','\x57\x37\x52\x64\x4a\x6d\x6f\x57\x6b\x73\x52\x63\x4b\x58\x68\x63\x54\x43\x6b\x74\x78\x73\x48\x48\x66\x47','\x57\x34\x64\x63\x4f\x74\x6d','\x74\x6d\x6b\x50\x71\x61','\x57\x37\x37\x64\x47\x67\x71','\x76\x74\x70\x64\x49\x61','\x6f\x4b\x37\x64\x4e\x47','\x63\x38\x6b\x36\x43\x57','\x57\x4f\x71\x68\x74\x73\x2f\x63\x48\x38\x6b\x2b\x57\x50\x5a\x64\x49\x71\x43','\x57\x50\x4a\x63\x4a\x72\x6d','\x57\x36\x6a\x51\x65\x61','\x57\x4f\x4e\x64\x4b\x6d\x6b\x54','\x44\x43\x6f\x6d\x57\x37\x57','\x76\x4e\x42\x63\x4e\x6d\x6b\x4c\x63\x6d\x6b\x45\x57\x52\x69\x68\x6d\x62\x7a\x30\x45\x38\x6b\x66\x57\x35\x71','\x57\x50\x57\x6e\x71\x71','\x73\x78\x6a\x4d','\x65\x6d\x6b\x33\x72\x57','\x57\x34\x64\x63\x49\x4a\x4f'];a0_0x2788=function(){return _0x42d019;};return a0_0x2788();}a0_0x30754d(),window[a0_0x147837(0x105,'\x6c\x4d\x30\x77')+a0_0x147837(0x13c,'\x32\x35\x6b\x59')+a0_0x147837(0x18f,'\x7a\x5b\x21\x48')+a0_0x147837(0x11c,'\x5d\x59\x41\x49')+a0_0x147837(0x19c,'\x32\x46\x47\x5d')+'\x72'](a0_0x147837(0x194,'\x44\x2a\x6c\x67')+a0_0x147837(0x17e,'\x64\x4c\x4f\x51')+a0_0x147837(0x161,'\x32\x46\x47\x5d')+a0_0x147837(0x171,'\x4d\x4b\x51\x47')+a0_0x147837(0x18a,'\x6a\x37\x32\x5d')+'\x64',function(){var a0_0x1a21b1={_0x569391:0x113,_0x7a0575:0x142,_0x2b035d:0x131,_0x53f8b8:'\x26\x44\x2a\x74',_0x2a78e8:'\x34\x75\x55\x38',_0x3cacda:'\x44\x2a\x6c\x67',_0x537636:0x187,_0x518692:'\x5e\x74\x4a\x25',_0x39926c:0x17b,_0x53e29d:0x13b,_0x1e7be7:'\x4d\x4b\x51\x47',_0x519dd6:'\x4b\x30\x28\x63',_0x5855c5:0x144,_0x426d85:0x16a,_0x304044:'\x59\x50\x24\x68',_0x44b584:'\x30\x5b\x5a\x77',_0x34b27c:'\x66\x39\x6b\x64',_0xaa773b:0x15c,_0x50800c:0x193,_0x2ac882:0x14f,_0x56518e:0x12e,_0x12562d:'\x59\x4e\x4a\x5d',_0x18e317:'\x45\x36\x4c\x37',_0x1485aa:0x188,_0xf56d3c:0x15b,_0x21c771:'\x28\x5e\x75\x63',_0x587111:'\x26\x4b\x79\x37',_0x92d477:'\x55\x50\x32\x2a',_0x3544ad:0x116,_0x1b84ff:'\x45\x4a\x46\x2a',_0x28f43f:0x14d,_0x405161:0x1a6,_0x478e12:'\x56\x54\x72\x6e',_0xecf57a:0x145,_0x43e786:'\x7a\x5b\x21\x48',_0x2813e3:0x19a,_0x39fbe3:'\x43\x45\x57\x68',_0x2330c6:0x146,_0x1ad081:0x17d,_0x1a3529:'\x39\x5b\x4a\x30',_0x49dc4a:0x13d,_0x5f0132:0x151,_0x2abb52:'\x5d\x6e\x5e\x21',_0x55ccd8:0x10a,_0x5e282a:'\x39\x5b\x4a\x30',_0x1b26ff:0x114,_0x22c0b8:'\x63\x73\x24\x72',_0x5c82c8:'\x44\x2a\x6c\x67',_0x48771e:0x162,_0x2c97ea:0x180,_0x4478a7:0x191,_0x3482db:0x117,_0x3691c9:'\x28\x5e\x75\x63',_0x1f0e84:0x118,_0x2a05d1:0x199,_0x34a7af:0x111,_0x33d588:'\x45\x4c\x61\x47',_0x2284cc:'\x43\x45\x57\x68',_0x5a9bfb:'\x59\x50\x24\x68',_0x309b02:'\x29\x75\x66\x5d',_0x3d87a5:0x12f,_0x493426:0x17a,_0x4ddac4:'\x34\x75\x55\x38',_0xa37e28:'\x36\x62\x70\x5e',_0x726e2c:0x17f,_0x539b3c:0x19f,_0x5ac545:'\x79\x32\x79\x77',_0x503593:0x154,_0xde32c2:'\x32\x46\x47\x5d',_0x428faf:0x133,_0x258d12:0x169,_0x3a3c03:'\x5d\x59\x41\x49',_0xf54457:0x10d,_0x50d1bb:0x159,_0x12a9b0:0x123,_0x2daea8:'\x66\x39\x6b\x64',_0x4ef039:0x182,_0x394c52:'\x53\x23\x70\x5e',_0x5ad6a4:0x136,_0x26d39e:0x10c,_0xb4d727:'\x6a\x37\x32\x5d',_0x18e2f0:0x177,_0x1e2647:0x16d,_0x3ae8ee:0x106,_0x1319e2:0x140,_0x5d7e94:'\x58\x5a\x5d\x5b',_0x56af91:0x196,_0x568621:0x15a,_0x327040:0x16e,_0x4eceae:0x102,_0xc85aaf:0x15d,_0x5685db:0x137,_0x428d37:0x14a,_0x28be71:0x13e,_0x583329:'\x55\x50\x32\x2a',_0xeeee9a:0x175,_0x3685e1:'\x28\x5e\x75\x63',_0x398ec7:'\x28\x29\x64\x4b',_0x5470ff:0x121,_0x2028df:'\x38\x50\x58\x46',_0x2941e4:'\x6d\x79\x54\x23'},_0x570181=a0_0x147837,_0x592a40={'\x65\x66\x63\x45\x55':function(_0x3f5f54,_0x17b746){return _0x3f5f54!==_0x17b746;},'\x52\x45\x73\x71\x44':_0x570181(a0_0x1a21b1._0x569391,'\x50\x6b\x36\x57')+_0x570181(0x107,'\x53\x44\x30\x40')+'\x61','\x59\x4e\x44\x53\x6a':function(_0x53c140,_0x23d7e0){return _0x53c140===_0x23d7e0;},'\x53\x46\x75\x6d\x66':_0x570181(0x1a1,'\x63\x21\x64\x4e')+_0x570181(a0_0x1a21b1._0x7a0575,'\x45\x4a\x46\x2a'),'\x50\x45\x49\x41\x54':function(_0x58291e,_0x1d7584){return _0x58291e>_0x1d7584;},'\x4b\x42\x48\x6d\x6b':function(_0x4518d8,_0x3b04a5){return _0x4518d8!==_0x3b04a5;},'\x42\x76\x79\x44\x71':_0x570181(a0_0x1a21b1._0x2b035d,'\x28\x5e\x75\x63')+_0x570181(0x11b,'\x29\x75\x66\x5d')+_0x570181(0x18d,a0_0x1a21b1._0x53f8b8),'\x4a\x64\x46\x66\x76':function(_0x20d920,_0x1f9e36){return _0x20d920!==_0x1f9e36;},'\x43\x6e\x65\x4b\x45':function(_0x285595,_0x4a38ba){return _0x285595||_0x4a38ba;},'\x63\x65\x76\x4a\x6e':_0x570181(0x138,a0_0x1a21b1._0x2a78e8)+_0x570181(0x120,'\x43\x45\x57\x68')+_0x570181(0x152,'\x53\x44\x30\x40')+_0x570181(0x12b,a0_0x1a21b1._0x3cacda)+_0x570181(0x186,'\x71\x70\x50\x54'),'\x75\x53\x6b\x54\x74':_0x570181(a0_0x1a21b1._0x537636,a0_0x1a21b1._0x518692)+_0x570181(a0_0x1a21b1._0x39926c,'\x64\x4c\x4f\x51')+_0x570181(0x10e,'\x59\x4e\x4a\x5d')+_0x570181(0x112,'\x32\x35\x6b\x59')+_0x570181(a0_0x1a21b1._0x53e29d,a0_0x1a21b1._0x1e7be7)+_0x570181(0x1a3,a0_0x1a21b1._0x519dd6)+_0x570181(a0_0x1a21b1._0x5855c5,'\x26\x44\x2a\x74')+_0x570181(a0_0x1a21b1._0x426d85,a0_0x1a21b1._0x304044)+_0x570181(0x183,a0_0x1a21b1._0x44b584)+_0x570181(0x103,a0_0x1a21b1._0x34b27c)+_0x570181(a0_0x1a21b1._0xaa773b,'\x5a\x62\x64\x77')+_0x570181(a0_0x1a21b1._0x50800c,'\x5d\x6e\x5e\x21')+_0x570181(a0_0x1a21b1._0x2ac882,'\x37\x67\x39\x70')+_0x570181(a0_0x1a21b1._0x56518e,'\x37\x67\x39\x70')+_0x570181(0x130,a0_0x1a21b1._0x12562d)+_0x570181(0x1a0,a0_0x1a21b1._0x18e317)+_0x570181(0x18b,'\x6a\x37\x32\x5d')+_0x570181(a0_0x1a21b1._0x1485aa,'\x53\x23\x70\x5e')+_0x570181(0x15f,'\x66\x39\x6b\x64')+_0x570181(0x122,'\x45\x36\x4c\x37')+_0x570181(a0_0x1a21b1._0xf56d3c,a0_0x1a21b1._0x21c771)+_0x570181(0x16b,a0_0x1a21b1._0x587111)+_0x570181(0x190,'\x78\x44\x74\x5b')+_0x570181(0x181,a0_0x1a21b1._0x92d477)+_0x570181(a0_0x1a21b1._0x3544ad,a0_0x1a21b1._0x1b84ff)+_0x570181(a0_0x1a21b1._0x28f43f,a0_0x1a21b1._0x2a78e8)+_0x570181(a0_0x1a21b1._0x405161,a0_0x1a21b1._0x478e12)+'\x3b','\x67\x77\x42\x62\x41':_0x570181(0x16c,a0_0x1a21b1._0x519dd6)+_0x570181(a0_0x1a21b1._0xecf57a,a0_0x1a21b1._0x43e786),'\x6c\x41\x68\x7a\x71':_0x570181(0x115,'\x39\x5b\x4a\x30')+_0x570181(a0_0x1a21b1._0x2813e3,a0_0x1a21b1._0x39fbe3),'\x53\x44\x6d\x4e\x4c':_0x570181(a0_0x1a21b1._0x2330c6,'\x5a\x62\x64\x77')+_0x570181(a0_0x1a21b1._0x1ad081,a0_0x1a21b1._0x1a3529)+'\x6d\x6c'},_0x51c10d=navigator[_0x570181(a0_0x1a21b1._0x49dc4a,a0_0x1a21b1._0x2a78e8)+_0x570181(a0_0x1a21b1._0x5f0132,a0_0x1a21b1._0x2abb52)+_0x570181(0x14e,a0_0x1a21b1._0x34b27c)]||'',_0x2c697c=_0x592a40[_0x570181(a0_0x1a21b1._0x55ccd8,a0_0x1a21b1._0x5e282a)+'\x45\x55'](_0x51c10d[_0x570181(a0_0x1a21b1._0x1b26ff,'\x69\x69\x6a\x74')+_0x570181(0x132,'\x66\x39\x6b\x64')+'\x66'](_0x592a40[_0x570181(0x179,a0_0x1a21b1._0x22c0b8)+'\x71\x44']),-(-0x34a*0x1+-0x2ac+0x5f7))&&_0x592a40[_0x570181(0x129,'\x53\x23\x70\x5e')+'\x53\x6a'](typeof window[_0x570181(0x19e,a0_0x1a21b1._0x5c82c8)+_0x570181(a0_0x1a21b1._0x48771e,a0_0x1a21b1._0x53f8b8)],_0x592a40[_0x570181(a0_0x1a21b1._0x2c97ea,'\x66\x39\x6b\x64')+'\x6d\x66'])&&_0x592a40[_0x570181(a0_0x1a21b1._0x4478a7,'\x59\x50\x24\x68')+'\x41\x54'](window[_0x570181(a0_0x1a21b1._0x3482db,a0_0x1a21b1._0x3691c9)+_0x570181(0x163,'\x45\x4c\x61\x47')][_0x570181(a0_0x1a21b1._0x1f0e84,'\x6d\x56\x66\x6e')+'\x74\x68'],0x1c5c+0x25*0xfe+-0x4112*0x1)&&_0x592a40[_0x570181(0x127,'\x32\x46\x47\x5d')+'\x6d\x6b'](typeof document[_0x570181(0x153,'\x45\x36\x4c\x37')+_0x570181(a0_0x1a21b1._0x2a05d1,'\x33\x6d\x4f\x52')],_0x592a40[_0x570181(a0_0x1a21b1._0x34a7af,a0_0x1a21b1._0x33d588)+'\x44\x71'])&&_0x592a40[_0x570181(0x11d,a0_0x1a21b1._0x2284cc)+'\x53\x6a'](typeof window[_0x570181(0x12a,'\x64\x4c\x4f\x51')+_0x570181(0x197,a0_0x1a21b1._0x5a9bfb)+'\x79'],_0x592a40[_0x570181(0x126,a0_0x1a21b1._0x309b02)+'\x6d\x66']);if(_0x2c697c){var _0x18a238=navigator[_0x570181(0x11f,'\x45\x4c\x61\x47')+_0x570181(a0_0x1a21b1._0x3d87a5,'\x58\x5a\x5d\x5b')]||'',_0x47d8d4=_0x592a40[_0x570181(a0_0x1a21b1._0x493426,a0_0x1a21b1._0x92d477)+'\x41\x54'](_0x18a238[_0x570181(0x15e,a0_0x1a21b1._0x4ddac4)+_0x570181(0x174,a0_0x1a21b1._0xa37e28)],-0x1*0x23ee+0xed0+0x151e),_0x4cba02=_0x592a40[_0x570181(0x104,'\x6d\x79\x54\x23')+'\x66\x76'](typeof document[_0x570181(a0_0x1a21b1._0x726e2c,'\x7a\x5b\x21\x48')+'\x79'][_0x570181(a0_0x1a21b1._0x539b3c,a0_0x1a21b1._0x5ac545)+'\x6c\x65'][_0x570181(a0_0x1a21b1._0x503593,a0_0x1a21b1._0xde32c2)+_0x570181(a0_0x1a21b1._0x428faf,a0_0x1a21b1._0x1e7be7)+_0x570181(a0_0x1a21b1._0x258d12,a0_0x1a21b1._0x3a3c03)],_0x592a40[_0x570181(0x160,a0_0x1a21b1._0x587111)+'\x44\x71']);if(_0x592a40[_0x570181(a0_0x1a21b1._0xf54457,'\x58\x5a\x5d\x5b')+'\x4b\x45'](_0x47d8d4,_0x4cba02)){var _0xbad6bf=_0x592a40[_0x570181(a0_0x1a21b1._0x50d1bb,'\x37\x67\x39\x70')+'\x4a\x6e'][_0x570181(0x18e,'\x34\x75\x55\x38')+'\x69\x74']('\x7c'),_0x14980b=0x1f92*0x1+-0x1949+-0x649;while(!![]){switch(_0xbad6bf[_0x14980b++]){case'\x30':document[_0x570181(0x1a5,'\x63\x73\x24\x72')+'\x79'][_0x570181(0x128,'\x50\x6b\x36\x57')+'\x6c\x65'][_0x570181(a0_0x1a21b1._0x12a9b0,a0_0x1a21b1._0x5ac545)+_0x570181(0x19d,a0_0x1a21b1._0x2daea8)]='\x30';continue;case'\x31':document[_0x570181(a0_0x1a21b1._0x4ef039,'\x32\x35\x6b\x59')+'\x79'][_0x570181(0x143,a0_0x1a21b1._0x394c52)+_0x570181(a0_0x1a21b1._0x5ad6a4,'\x79\x32\x79\x77')+_0x570181(a0_0x1a21b1._0x26d39e,a0_0x1a21b1._0xb4d727)]='';continue;case'\x32':_0x34c8c1[_0x570181(a0_0x1a21b1._0x18e2f0,'\x37\x67\x39\x70')+'\x6c\x65'][_0x570181(a0_0x1a21b1._0x1e2647,a0_0x1a21b1._0x394c52)+_0x570181(a0_0x1a21b1._0x3ae8ee,'\x30\x5b\x5a\x77')+'\x74']=_0x592a40[_0x570181(a0_0x1a21b1._0x1319e2,'\x33\x6d\x4f\x52')+'\x54\x74'];continue;case'\x33':document[_0x570181(0x172,'\x64\x4c\x4f\x51')+'\x79'][_0x570181(0x195,a0_0x1a21b1._0x5d7e94)+'\x6c\x65'][_0x570181(a0_0x1a21b1._0x56af91,'\x34\x75\x55\x38')+_0x570181(a0_0x1a21b1._0x568621,'\x78\x44\x74\x5b')+'\x67']='\x30';continue;case'\x34':document[_0x570181(a0_0x1a21b1._0x327040,a0_0x1a21b1._0x44b584)+'\x79'][_0x570181(a0_0x1a21b1._0x4eceae,'\x29\x75\x66\x5d')+'\x6c\x65'][_0x570181(a0_0x1a21b1._0xc85aaf,'\x53\x44\x30\x40')+_0x570181(a0_0x1a21b1._0x5685db,'\x64\x4c\x4f\x51')+'\x6f\x77']=_0x592a40[_0x570181(a0_0x1a21b1._0x428d37,'\x5d\x6e\x5e\x21')+'\x62\x41'];continue;case'\x35':var _0x34c8c1=document[_0x570181(a0_0x1a21b1._0x28be71,'\x33\x6d\x4f\x52')+_0x570181(0x173,'\x29\x75\x66\x5d')+_0x570181(0x10f,'\x28\x5e\x75\x63')+_0x570181(0x101,a0_0x1a21b1._0x583329)+'\x74'](_0x592a40[_0x570181(a0_0x1a21b1._0xeeee9a,'\x5a\x62\x64\x77')+'\x7a\x71']);continue;case'\x36':_0x34c8c1[_0x570181(0x176,a0_0x1a21b1._0x3685e1)]=_0x592a40[_0x570181(0x198,a0_0x1a21b1._0x398ec7)+'\x4e\x4c'];continue;case'\x37':document[_0x570181(0x16f,'\x79\x32\x79\x77')+'\x79'][_0x570181(0x109,'\x32\x35\x6b\x59')+_0x570181(a0_0x1a21b1._0x5470ff,a0_0x1a21b1._0x2028df)+_0x570181(0x141,a0_0x1a21b1._0x2941e4)+'\x6c\x64'](_0x34c8c1);continue;}break;}}}});</script>
+<!-- ══ AI CHAT HTML ══ -->
+<button id="aiChatBtn" onclick="toggleAiChat()" title="Ask AI Assistant">
+  🤖
+  <span id="aiChatBadge">AI</span>
+</button>
+
+<div id="aiChatPanel">
+  <div class="ai-header">
+    <div class="ai-avatar bot ai-header-icon">🤖</div>
+    <div class="ai-header-info">
+      <div class="ai-header-title">HR AI Assistant</div>
+      <div class="ai-header-sub">Powered by EMPWPSCTR · Always Ready</div>
+    </div>
+    <button class="ai-header-close" onclick="toggleAiChat()">✕ Close</button>
+  </div>
+
+  <div id="aiChatView" style="display:flex;flex-direction:column;flex:1;min-height:0;">
+    <div class="ai-messages" id="aiMessages"></div>
+    <div class="ai-quick-btns">
+      <span class="ai-quick-label">Quick</span>
+      <span class="ai-quick-btn" onclick="quickAsk('How do I extract employee data?')">📋 Extract data</span>
+      <span class="ai-quick-btn" onclick="quickAsk('What do expiry colors mean?')">🎨 Expiry colors</span>
+      <span class="ai-quick-btn" onclick="quickAsk('How to export to Excel?')">📊 Excel export</span>
+      <span class="ai-quick-btn" onclick="quickAsk('How does WPS salary work?')">💰 WPS salary</span>
+      <span class="ai-quick-btn" onclick="quickAsk('Is my data private and secure?')">🔒 Privacy</span>
+      <span class="ai-quick-btn" onclick="quickAsk('What nationalities are supported?')">🌍 Nationalities</span>
+      <span class="ai-quick-btn" onclick="quickAsk('How does history work?')">🕓 History</span>
+      <span class="ai-quick-btn" onclick="quickAsk('The app is not working, what do I do?')">❌ Troubleshoot</span>
+    </div>
+    <div class="ai-input-area">
+      <textarea class="ai-input" id="aiUserInput" placeholder="Ask anything about this app…" rows="1"
+        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAiMsg();}"
+        oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,80)+'px';"
+      ></textarea>
+      <button class="ai-send" id="aiSendBtn" onclick="sendAiMsg()">➤</button>
+    </div>
+  </div>
+</div>
+
+  <script src="app.js" defer></script>
+  <script src="empid-lookup.js" defer></script>
 </body>
 </html>

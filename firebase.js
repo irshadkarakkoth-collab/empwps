@@ -64,6 +64,55 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
     }
   };
 
+  // ── Save EMP ID mapping to Firestore (admin only) ──
+  window._firestoreSaveEmpMapping = async function(mapping){
+    try{
+      var apiKey  = 'AIzaSyD2cHjy5-MQuD85S_FegWA0PNG3aXdBJxs';
+      var project = 'empwppconvert';
+      var url = 'https://firestore.googleapis.com/v1/projects/' + project
+              + '/databases/(default)/documents/config/empid_mapping'
+              + '?key=' + apiKey
+              + '&updateMask.fieldPaths=data&updateMask.fieldPaths=updatedAt&updateMask.fieldPaths=count';
+      var count = Object.keys(mapping).length;
+      var res = await fetch(url, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fields: {
+            data:      { stringValue: JSON.stringify(mapping) },
+            updatedAt: { stringValue: new Date().toISOString() },
+            count:     { integerValue: String(count) }
+          }
+        })
+      });
+      if(!res.ok){ var err = await res.text(); throw new Error(err); }
+      return { ok: true, count: count };
+    } catch(e){
+      return { ok: false, error: e.message || String(e) };
+    }
+  };
+
+  // ── Load EMP ID mapping from Firestore (all users) ──
+  window._firestoreLoadEmpMapping = async function(){
+    try{
+      var apiKey  = 'AIzaSyD2cHjy5-MQuD85S_FegWA0PNG3aXdBJxs';
+      var project = 'empwppconvert';
+      var url = 'https://firestore.googleapis.com/v1/projects/' + project
+              + '/databases/(default)/documents/config/empid_mapping'
+              + '?key=' + apiKey;
+      var res = await fetch(url);
+      if(res.status === 404) return { ok: true, mapping: {}, count: 0 };
+      if(!res.ok) throw new Error('HTTP ' + res.status);
+      var data = await res.json();
+      var raw = (data.fields && data.fields.data && data.fields.data.stringValue) || '{}';
+      var mapping = JSON.parse(raw);
+      var count = Object.keys(mapping).length;
+      return { ok: true, mapping: mapping, count: count };
+    } catch(e){
+      return { ok: false, mapping: {}, error: e.message || String(e) };
+    }
+  };
+
   // _firestoreSetCooldown is defined below in a regular script (not module) for reliable window attachment
 
   // ── Write session token to Firestore ──
