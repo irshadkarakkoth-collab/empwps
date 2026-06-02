@@ -1036,3 +1036,155 @@ window.addEventListener('DOMContentLoaded', function() {
     setTimeout(hookExtractButton, 800);
   });
 })();
+
+/* ─────────────────────────────────────────────────────── */
+
+(function(){
+
+  /* ── helpers ─────────────────────────────────────────── */
+  function getHeaders(){
+    var hdr = document.querySelector('#empSection table thead tr.hdr');
+    if(!hdr) return [];
+    return Array.prototype.slice.call(hdr.querySelectorAll('th'))
+      .map(function(th){ return (th.textContent||'').trim(); })
+      .filter(function(h){ return h !== '#'; });
+  }
+
+  function rowToArr(tr){
+    return Array.prototype.slice.call(tr.querySelectorAll('td'))
+      .slice(1)                                        // skip # col
+      .map(function(td){ return (td.textContent||'').trim(); });
+  }
+
+  /* expiry date coloring — DD/MM/YYYY */
+  function expiryFill(dateStr){
+    var p = (dateStr||'').split('/');
+    if(p.length !== 3) return null;
+    var d = new Date(+p[2], +p[1]-1, +p[0]);
+    var today = new Date(); today.setHours(0,0,0,0);
+    var diff = Math.floor((d - today) / 86400000);
+    if(diff <  0)  return 'FFC7C7'; // red
+    if(diff < 30)  return 'FFE0B2'; // orange
+    if(diff < 90)  return 'FFF9C4'; // yellow
+    return 'C6EFCE';                // green
+  }
+
+  /* build one XLSX worksheet from an array of <tr> elements */
+  function buildSheet(headers, rows, withColors){
+    var expiryIdx = headers.indexOf('Expiry Date'); // 0-based in data
+    var data = [headers].concat(rows.map(rowToArr));
+    var ws = XLSX.utils.aoa_to_sheet(data);
+
+    /* column widths */
+    ws['!cols'] = headers.map(function(h){
+      return { wch: Math.max(h.length + 4, 14) };
+    });
+
+    /* header row style */
+    headers.forEach(function(_, ci){
+      var ref = XLSX.utils.encode_cell({r:0, c:ci});
+      if(ws[ref]) ws[ref].s = {
+        fill:{ fgColor:{rgb:'1F3864'} },
+        font:{ color:{rgb:'FFFFFF'}, bold:true },
+        alignment:{ horizontal:'center' }
+      };
+    });
+
+    /* expiry colour per data row */
+    if(withColors && expiryIdx >= 0){
+      rows.forEach(function(_, ri){
+        var ref = XLSX.utils.encode_cell({r: ri+1, c: expiryIdx});
+        var cell = ws[ref];
+        if(!cell) return;
+        var fill = expiryFill(String(cell.v||''));
+        if(fill) cell.s = {
+          fill:{ fgColor:{rgb:fill} },
+          font:{ bold:true },
+          alignment:{ horizontal:'center' }
+        };
+      });
+    }
+
+    return ws;
+  }
+
+  /* sanitise an Excel sheet name */
+  function safeName(s, used){
+    var n = s.replace(/[\\\/\?\*\[\]:]/g,'').replace(/\.pdf$/i,'').trim().slice(0,31) || 'Sheet';
+    var base = n, i = 2;
+    while(used[n]){ n = base.slice(0, 28) + '_' + i++; }
+    used[n] = true;
+    return n;
+  }
+
+  /* ── main export function ────────────────────────────── */
+  function multiSheetExport(withColors){
+    var tbody = document.getElementById('tbody');
+    if(!tbody) return false;
+
+    var allTrs = Array.prototype.slice.call(tbody.querySelectorAll('tr'));
+    if(!allTrs.length) return false;
+
+    var headers = getHeaders();
+    if(!headers.length) return false;
+
+    /* group rows by source file (last column in data) */
+    var groups = {}, order = [];
+    var srcIdx = headers.length - 1;          // "Source File" is last header
+
+    allTrs.forEach(function(tr){
+      var cells = tr.querySelectorAll('td');
+      var src = cells[cells.length - 1] ? (cells[cells.length-1].textContent||'').trim() : '';
+      if(!src) src = 'Unknown';
+      if(!groups[src]){ groups[src] = []; order.push(src); }
+      groups[src].push(tr);
+    });
+
+    /* single-file → fall through to original handler */
+    if(order.length < 2) return false;
+
+    var WB   = XLSX.utils.book_new();
+    var used = {};
+
+    /* ① "All Files" sheet */
+    XLSX.utils.book_append_sheet(WB, buildSheet(headers, allTrs, withColors), 'All Files');
+    used['All Files'] = true;
+
+    /* ② one sheet per source file */
+    order.forEach(function(src){
+      var name = safeName(src, used);
+      XLSX.utils.book_append_sheet(WB, buildSheet(headers, groups[src], withColors), name);
+    });
+
+    /* download */
+    var ts = new Date().toISOString().slice(0,10);
+    XLSX.writeFile(WB, 'EMPWPSCTR_' + ts + (withColors ? '_colored' : '') + '.xlsx');
+
+    /* close the colour-choice modal */
+    var modal = document.getElementById('xlColorModal');
+    if(modal) modal.style.display = 'none';
+
+    return true;
+  }
+
+  /* ── hook xlExportChoice ─────────────────────────────── */
+  function hookExport(){
+    if(typeof window.xlExportChoice !== 'function') return false;
+    var _orig = window.xlExportChoice;
+    window.xlExportChoice = function(withColors){
+      var done = false;
+      try{ done = multiSheetExport(withColors); }
+      catch(e){ console.warn('[multi-sheet] error:', e); }
+      if(!done) _orig.apply(this, arguments);   // single-file: original path
+    };
+    return true;
+  }
+
+  window.addEventListener('DOMContentLoaded', function(){
+    var tries = 0;
+    var iv = setInterval(function(){
+      if(hookExport() || ++tries > 60) clearInterval(iv);
+    }, 200);
+  });
+
+})();
