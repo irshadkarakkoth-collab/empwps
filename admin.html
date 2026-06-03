@@ -179,9 +179,28 @@ tr:hover td{background:rgba(14,165,233,0.03);}
         </table>
       </div>
 
-      <div class="action-bar">
+      <!-- SKIPPED DATA VIEWER — shows immediately after file load -->
+      <div id="skippedSection" style="display:none;margin-top:24px;background:#0d1626;border:1px solid rgba(245,158,11,0.35);border-radius:14px;padding:22px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
+          <div>
+            <div style="font-size:14px;font-weight:700;color:var(--orange);">⚠️ Skipped Rows — <span id="skippedCountLbl">0</span></div>
+            <div style="font-size:11px;color:var(--muted);margin-top:3px;">These rows have no Emp. ID or no Person Code — they will NOT be saved. Download to review &amp; fix.</div>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+            <select id="skippedFilter" onchange="renderSkippedTable()" style="background:#0a0f1e;border:1px solid var(--border);border-radius:8px;padding:7px 12px;color:var(--text);font-size:12px;font-family:'Space Grotesk',sans-serif;outline:none;">
+              <option value="all">All reasons</option>
+              <option value="no_eid">No Emp. ID</option>
+              <option value="no_pc">No Person Code</option>
+            </select>
+            <button onclick="downloadSkipped()" style="padding:8px 20px;background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.5);border-radius:8px;color:var(--orange);font-size:13px;font-weight:700;cursor:pointer;">📥 Export to Excel</button>
+          </div>
+        </div>
+        <div id="skippedTableWrap" class="tbl-wrap" style="max-height:400px;overflow-y:auto;border-radius:10px;"></div>
+      </div>
+
+      <div class="action-bar" style="margin-top:24px;">
         <button class="btn-save" id="btnSave">
-          <span>☁️</span> Save to Firebase
+          <span>☁️</span> Save Valid Rows to Firebase
         </button>
         <button class="btn-clear" id="btnClear">Clear</button>
       </div>
@@ -193,32 +212,14 @@ tr:hover td{background:rgba(14,165,233,0.03);}
       </div>
     </div>
 
-    <!-- STATS -->
+    <!-- STATS (after save) -->
     <div class="stats-row" id="statsRow" style="display:none;">
       <div class="stat-card"><div class="stat-val" id="statSaved">0</div><div class="stat-lbl">Records Saved</div></div>
-      <div class="stat-card" style="cursor:pointer;" id="statSkippedCard" onclick="toggleSkippedView()" title="Click to view skipped rows">
+      <div class="stat-card">
         <div class="stat-val" id="statSkipped" style="color:var(--orange);">0</div>
-        <div class="stat-lbl">Skipped ⓘ click to view</div>
+        <div class="stat-lbl">Skipped (see above)</div>
       </div>
       <div class="stat-card"><div class="stat-val" id="statTotal">0</div><div class="stat-lbl">Total in Firebase</div></div>
-    </div>
-
-    <!-- SKIPPED DATA VIEWER -->
-    <div id="skippedSection" style="display:none;margin-top:24px;background:var(--card);border:1px solid rgba(245,158,11,0.35);border-radius:14px;padding:24px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
-        <div style="font-size:14px;font-weight:700;color:var(--orange);">⚠️ Skipped Rows — <span id="skippedCountLbl">0</span></div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;">
-          <select id="skippedFilter" onchange="renderSkippedTable()" style="background:#0d1626;border:1px solid var(--border);border-radius:8px;padding:7px 12px;color:var(--text);font-size:12px;font-family:'Space Grotesk',sans-serif;outline:none;">
-            <option value="all">All reasons</option>
-            <option value="no_eid">No Emp. ID</option>
-            <option value="no_pc">No Person Code</option>
-          </select>
-          <button onclick="downloadSkipped()" style="padding:8px 18px;background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.4);border-radius:8px;color:var(--orange);font-size:13px;font-weight:600;cursor:pointer;">📥 Download Excel</button>
-          <button onclick="document.getElementById('skippedSection').style.display='none'" style="padding:8px 14px;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--muted);font-size:13px;cursor:pointer;">✕ Close</button>
-        </div>
-      </div>
-      <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">These rows were NOT saved to Firebase. Download the Excel to review and fix them, then re-upload.</div>
-      <div id="skippedTableWrap" class="tbl-wrap" style="max-height:380px;overflow-y:auto;"></div>
     </div>
 
     <!-- EXISTING DATA -->
@@ -416,6 +417,7 @@ function handleFile(file) {
 
       populateColumnSelects(allHeaders);
       renderPreview(parsedRows, allHeaders);
+      updateSkippedPreview();   /* ← show skipped rows immediately */
       mappingSection.style.display = 'block';
       previewSection.style.display = 'block';
       totalCount.textContent = parsedRows.length + ' records (all sheets)';
@@ -472,8 +474,36 @@ function renderPreview(rows, headers) {
   });
 }
 
-// ── COLUMN MAPPING CHANGE → re-render ──
-[colPersonCode, colEmpId].forEach(sel => sel.addEventListener('change', () => renderPreview(parsedRows, allHeaders)));
+// ── COLUMN MAPPING CHANGE → re-render + recalculate skipped ──
+[colPersonCode, colEmpId].forEach(sel => sel.addEventListener('change', () => {
+  renderPreview(parsedRows, allHeaders);
+  updateSkippedPreview();
+}));
+
+// ── CALCULATE SKIPPED IMMEDIATELY AFTER FILE LOAD ──
+function updateSkippedPreview() {
+  if (!parsedRows.length) return;
+  const pcIdx  = parseInt(colPersonCode.value);
+  const empIdx = parseInt(colEmpId.value);
+
+  skippedRows = [];
+  parsedRows.forEach(row => {
+    const pc  = String(row[pcIdx]  ?? '').trim();
+    const eid = String(row[empIdx] ?? '').trim();
+    if (!eid) { skippedRows.push({ row, reason: 'no_eid' }); return; }
+    if (!pc)  { skippedRows.push({ row, reason: 'no_pc'  }); return; }
+  });
+
+  const sec = document.getElementById('skippedSection');
+  if (skippedRows.length > 0) {
+    document.getElementById('skippedCountLbl').textContent = skippedRows.length + ' rows';
+    document.getElementById('skippedFilter').value = 'all';
+    renderSkippedTable();
+    sec.style.display = 'block';
+  } else {
+    sec.style.display = 'none';
+  }
+}
 
 // ── SAVE TO FIREBASE ──
 btnSave.addEventListener('click', saveToFirebase);
@@ -532,28 +562,18 @@ async function saveToFirebase() {
     document.getElementById('statTotal').textContent   = total;
     statsRow.style.display = 'flex';
 
-    const skipMsg = skipped
-      ? skipped + ' rows skipped — <strong style="cursor:pointer;text-decoration:underline;" onclick="toggleSkippedView()">click to view</strong>'
-      : '';
-    showStatus('success', '✅ Saved ' + saved + ' records to Firebase! ' + (skipped ? skipped + ' skipped.' : 'All rows saved!'));
-    if (skipped) {
-      document.getElementById('skippedCountLbl').textContent = skipped + ' rows';
-      renderSkippedTable();
-    }
-    document.getElementById('skippedSection').style.display = skipped ? 'block' : 'none';
+    showStatus('success', '✅ Saved ' + saved + ' records to Firebase!' + (skipped ? ' ' + skipped + ' rows skipped (see above).' : ' All rows saved!'));
     progressWrap.style.display = 'none';
   } catch(err) {
-    showStatus('error', '❌ Error saving data: ' + err.message);
     progressWrap.style.display = 'none';
+    const msg = err.message || '';
+    if (/quota/i.test(msg) || /resource-exhausted/i.test(msg)) {
+      showStatus('error', '❌ Firebase free-tier quota exceeded. Your daily Firestore write limit has been reached. Wait until tomorrow (quota resets at midnight) or upgrade your Firebase plan at console.firebase.google.com.');
+    } else {
+      showStatus('error', '❌ Error saving data: ' + msg);
+    }
   }
   btnSave.disabled = false;
-}
-
-// ── SKIPPED VIEWER ──
-function toggleSkippedView() {
-  const sec = document.getElementById('skippedSection');
-  sec.style.display = sec.style.display === 'none' ? 'block' : 'none';
-  if (sec.style.display === 'block') renderSkippedTable();
 }
 
 function renderSkippedTable() {
