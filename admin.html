@@ -150,6 +150,9 @@ tr:hover td{background:rgba(14,165,233,0.03);}
       <div class="upload-hint">or click to browse — <span>.xlsx / .xls / .csv</span> supported</div>
     </div>
 
+    <!-- SHEET INFO -->
+    <div id="sheetInfo" style="display:none;margin-top:16px;background:rgba(14,165,233,0.07);border:1px solid rgba(14,165,233,0.22);border-radius:10px;padding:12px 18px;font-size:13px;color:#7dd3fc;line-height:1.7;"></div>
+
     <!-- COLUMN MAPPING -->
     <div id="mappingSection">
       <div class="map-title">📋 Map Your Columns</div>
@@ -339,25 +342,61 @@ fileInput.addEventListener('change', () => {
   if (fileInput.files[0]) handleFile(fileInput.files[0]);
 });
 
-// ── PARSE EXCEL ──
+// ── PARSE EXCEL — ALL SHEETS ──
 function handleFile(file) {
   const reader = new FileReader();
   reader.onload = function(e) {
     try {
       const wb = XLSX.read(e.target.result, { type: 'array' });
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      const data = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
-      if (!data || data.length < 2) {
-        alert('The file appears empty or has no data rows.'); return;
+      const sheetNames = wb.SheetNames;
+
+      let combinedRows = [];
+      let detectedHeaders = null;
+      const sheetSummary = [];
+
+      sheetNames.forEach(function(name) {
+        const ws   = wb.Sheets[name];
+        const data = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+        if (!data || data.length < 2) {
+          sheetSummary.push(name + ': 0 rows (skipped — empty)');
+          return;
+        }
+
+        /* Use first non-empty sheet to set headers */
+        const sheetHeaders = data[0].map(h => String(h).trim());
+        if (!detectedHeaders) detectedHeaders = sheetHeaders;
+
+        /* Map this sheet's columns to the detected headers */
+        const headerMap = detectedHeaders.map(h =>
+          sheetHeaders.findIndex(sh => sh.toLowerCase() === h.toLowerCase())
+        );
+
+        const rows = data.slice(1).filter(row => row.some(c => String(c).trim() !== ''));
+        const mapped = rows.map(row =>
+          headerMap.map(ci => ci !== -1 ? row[ci] : '')
+        );
+
+        combinedRows = combinedRows.concat(mapped);
+        sheetSummary.push(name + ': ' + mapped.length + ' rows');
+      });
+
+      if (!detectedHeaders || combinedRows.length === 0) {
+        alert('No data found in any sheet. Please check the file.'); return;
       }
-      allHeaders = data[0].map(h => String(h).trim());
-      parsedRows = data.slice(1).filter(row => row.some(c => String(c).trim() !== ''));
+
+      allHeaders = detectedHeaders;
+      parsedRows = combinedRows;
+
+      /* Show sheet breakdown */
+      const infoEl = document.getElementById('sheetInfo');
+      infoEl.textContent = '📋 ' + sheetNames.length + ' sheet(s) found: ' + sheetSummary.join(' | ');
+      infoEl.style.display = 'block';
 
       populateColumnSelects(allHeaders);
       renderPreview(parsedRows, allHeaders);
       mappingSection.style.display = 'block';
       previewSection.style.display = 'block';
-      totalCount.textContent = parsedRows.length + ' records';
+      totalCount.textContent = parsedRows.length + ' records (all sheets)';
     } catch(err) {
       alert('Could not read file: ' + err.message);
     }
@@ -494,6 +533,8 @@ function clearAll() {
   statusBox.style.display = 'none';
   progressWrap.style.display = 'none';
   statsRow.style.display = 'none';
+  const si = document.getElementById('sheetInfo');
+  if (si) { si.style.display = 'none'; si.textContent = ''; }
 }
 
 // ── LOAD EXISTING DATA ──
