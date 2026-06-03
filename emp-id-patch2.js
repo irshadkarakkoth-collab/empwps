@@ -23,11 +23,10 @@
     } catch (e) {}
 
     try {
-      var r = await fetch('https://f18d820d-cc6b-4d8f-bc63-b4c382def94e-00-1xvxg4vkwk67q.pike.replit.dev/api/emp-mapping');
+      var r = await fetch('https://raw.githubusercontent.com/irshadkarakkoth-collab/emp-data/refs/heads/main/empMapping.json');
       if (!r.ok) { console.warn('[EmpID-Server] ❌ HTTP error:', r.status); return; }
       var j = await r.json();
-      if (!j.ok) { console.warn('[EmpID-Server] ❌ API error'); return; }
-      window.empIdMap = j.data || {};
+      window.empIdMap = j || {};
       var count = Object.keys(window.empIdMap).length;
       console.log('[EmpID-Server] ✅ Loaded ' + count + ' entries from server');
       if (count === 0) {
