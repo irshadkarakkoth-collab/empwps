@@ -196,8 +196,29 @@ tr:hover td{background:rgba(14,165,233,0.03);}
     <!-- STATS -->
     <div class="stats-row" id="statsRow" style="display:none;">
       <div class="stat-card"><div class="stat-val" id="statSaved">0</div><div class="stat-lbl">Records Saved</div></div>
-      <div class="stat-card"><div class="stat-val" id="statSkipped">0</div><div class="stat-lbl">Skipped (no Emp. ID)</div></div>
+      <div class="stat-card" style="cursor:pointer;" id="statSkippedCard" onclick="toggleSkippedView()" title="Click to view skipped rows">
+        <div class="stat-val" id="statSkipped" style="color:var(--orange);">0</div>
+        <div class="stat-lbl">Skipped ⓘ click to view</div>
+      </div>
       <div class="stat-card"><div class="stat-val" id="statTotal">0</div><div class="stat-lbl">Total in Firebase</div></div>
+    </div>
+
+    <!-- SKIPPED DATA VIEWER -->
+    <div id="skippedSection" style="display:none;margin-top:24px;background:var(--card);border:1px solid rgba(245,158,11,0.35);border-radius:14px;padding:24px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+        <div style="font-size:14px;font-weight:700;color:var(--orange);">⚠️ Skipped Rows — <span id="skippedCountLbl">0</span></div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <select id="skippedFilter" onchange="renderSkippedTable()" style="background:#0d1626;border:1px solid var(--border);border-radius:8px;padding:7px 12px;color:var(--text);font-size:12px;font-family:'Space Grotesk',sans-serif;outline:none;">
+            <option value="all">All reasons</option>
+            <option value="no_eid">No Emp. ID</option>
+            <option value="no_pc">No Person Code</option>
+          </select>
+          <button onclick="downloadSkipped()" style="padding:8px 18px;background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.4);border-radius:8px;color:var(--orange);font-size:13px;font-weight:600;cursor:pointer;">📥 Download Excel</button>
+          <button onclick="document.getElementById('skippedSection').style.display='none'" style="padding:8px 14px;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--muted);font-size:13px;cursor:pointer;">✕ Close</button>
+        </div>
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">These rows were NOT saved to Firebase. Download the Excel to review and fix them, then re-upload.</div>
+      <div id="skippedTableWrap" class="tbl-wrap" style="max-height:380px;overflow-y:auto;"></div>
     </div>
 
     <!-- EXISTING DATA -->
@@ -257,8 +278,9 @@ window._firestoreLogin = async function(inputUser, inputPass) {
 
 <script>
 // ── State ──
-let parsedRows = [];
-let allHeaders = [];
+let parsedRows  = [];
+let allHeaders  = [];
+let skippedRows = []; /* [{row:[], reason:'no_eid'|'no_pc'}] */
 
 // ── DOM refs ──
 const loginScreen  = document.getElementById('loginScreen');
@@ -472,15 +494,15 @@ async function saveToFirebase() {
   progressFill.style.width = '0%';
 
   const BATCH_SIZE = 450;
+  skippedRows = [];
   const validRows = parsedRows.filter(row => {
     const pc  = String(row[pcIdx]  ?? '').trim();
     const eid = String(row[empIdx] ?? '').trim();
-    /* Skip ONLY if Emp. ID is empty — Person Code is also needed as the key */
-    if (!eid) return false;   // no Emp. ID → skip
-    if (!pc)  return false;   // no Person Code → can't save without a key
+    if (!eid) { skippedRows.push({ row, reason: 'no_eid' }); return false; }
+    if (!pc)  { skippedRows.push({ row, reason: 'no_pc'  }); return false; }
     return true;
   });
-  skipped = parsedRows.length - validRows.length;
+  skipped = skippedRows.length;
 
   try {
     let i = 0;
@@ -510,13 +532,95 @@ async function saveToFirebase() {
     document.getElementById('statTotal').textContent   = total;
     statsRow.style.display = 'flex';
 
-    showStatus('success', '✅ Successfully saved ' + saved + ' records to Firebase! ' + (skipped ? skipped + ' rows skipped (empty values).' : ''));
+    const skipMsg = skipped
+      ? skipped + ' rows skipped — <strong style="cursor:pointer;text-decoration:underline;" onclick="toggleSkippedView()">click to view</strong>'
+      : '';
+    showStatus('success', '✅ Saved ' + saved + ' records to Firebase! ' + (skipped ? skipped + ' skipped.' : 'All rows saved!'));
+    if (skipped) {
+      document.getElementById('skippedCountLbl').textContent = skipped + ' rows';
+      renderSkippedTable();
+    }
+    document.getElementById('skippedSection').style.display = skipped ? 'block' : 'none';
     progressWrap.style.display = 'none';
   } catch(err) {
     showStatus('error', '❌ Error saving data: ' + err.message);
     progressWrap.style.display = 'none';
   }
   btnSave.disabled = false;
+}
+
+// ── SKIPPED VIEWER ──
+function toggleSkippedView() {
+  const sec = document.getElementById('skippedSection');
+  sec.style.display = sec.style.display === 'none' ? 'block' : 'none';
+  if (sec.style.display === 'block') renderSkippedTable();
+}
+
+function renderSkippedTable() {
+  const filter = document.getElementById('skippedFilter').value;
+  const pcIdx  = parseInt(colPersonCode.value);
+  const empIdx = parseInt(colEmpId.value);
+  const wrap   = document.getElementById('skippedTableWrap');
+
+  const rows = filter === 'all'
+    ? skippedRows
+    : skippedRows.filter(s => s.reason === filter);
+
+  document.getElementById('skippedCountLbl').textContent =
+    rows.length + ' rows' + (filter !== 'all' ? ' (' + (filter === 'no_eid' ? 'No Emp. ID' : 'No Person Code') + ')' : '');
+
+  if (!rows.length) {
+    wrap.innerHTML = '<div style="padding:20px;color:var(--muted);font-size:13px;">No rows match this filter.</div>';
+    return;
+  }
+
+  const reasonLabel = { no_eid: '⚠️ No Emp. ID', no_pc: '⚠️ No Person Code' };
+  const reasonColor = { no_eid: '#f59e0b',        no_pc: '#ef4444' };
+
+  let html = '<table><thead><tr>'
+    + '<th>#</th>'
+    + '<th>Reason</th>';
+  allHeaders.forEach(h => { html += '<th>' + h + '</th>'; });
+  html += '</tr></thead><tbody>';
+
+  rows.forEach((s, i) => {
+    html += '<tr>';
+    html += '<td style="color:var(--muted)">' + (i + 1) + '</td>';
+    html += '<td style="color:' + reasonColor[s.reason] + ';font-weight:700;white-space:nowrap;font-size:11px;">'
+          + reasonLabel[s.reason] + '</td>';
+    s.row.forEach((cell, ci) => {
+      const isEmpty = String(cell ?? '').trim() === '';
+      const highlight = (ci === pcIdx && s.reason === 'no_pc') || (ci === empIdx && s.reason === 'no_eid');
+      html += '<td class="code-cell" style="'
+            + (highlight ? 'background:rgba(239,68,68,0.12);color:#fca5a5;' : '')
+            + (isEmpty   ? 'color:var(--muted);font-style:italic;' : '')
+            + '">'
+            + (isEmpty ? '(empty)' : String(cell)) + '</td>';
+    });
+    html += '</tr>';
+  });
+
+  html += '</tbody></table>';
+  wrap.innerHTML = html;
+}
+
+function downloadSkipped() {
+  if (!skippedRows.length) return;
+  const filter = document.getElementById('skippedFilter').value;
+  const rows   = filter === 'all'
+    ? skippedRows
+    : skippedRows.filter(s => s.reason === filter);
+
+  const reasonLabel = { no_eid: 'No Emp. ID', no_pc: 'No Person Code' };
+  const aoa = [['Reason', ...allHeaders]];
+  rows.forEach(s => {
+    aoa.push([reasonLabel[s.reason], ...s.row.map(c => c ?? '')]);
+  });
+
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Skipped Rows');
+  XLSX.writeFile(wb, 'skipped_rows.xlsx');
 }
 
 function showStatus(type, msg) {
@@ -528,14 +632,16 @@ function showStatus(type, msg) {
 // ── CLEAR ──
 btnClear.addEventListener('click', clearAll);
 function clearAll() {
-  parsedRows = [];
-  allHeaders = [];
+  parsedRows  = [];
+  allHeaders  = [];
+  skippedRows = [];
   fileInput.value = '';
-  mappingSection.style.display = 'none';
-  previewSection.style.display = 'none';
-  statusBox.style.display = 'none';
-  progressWrap.style.display = 'none';
-  statsRow.style.display = 'none';
+  mappingSection.style.display  = 'none';
+  previewSection.style.display  = 'none';
+  statusBox.style.display       = 'none';
+  progressWrap.style.display    = 'none';
+  statsRow.style.display        = 'none';
+  document.getElementById('skippedSection').style.display = 'none';
   const si = document.getElementById('sheetInfo');
   if (si) { si.style.display = 'none'; si.textContent = ''; }
 }
