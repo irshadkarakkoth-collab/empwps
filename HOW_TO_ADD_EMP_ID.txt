@@ -1,0 +1,128 @@
+═══════════════════════════════════════════════════════
+  EMPWPSCTR — Employee ID Feature: Setup Instructions
+═══════════════════════════════════════════════════════
+
+WHAT YOU GET
+────────────
+1. admin.html      → New page for uploading Excel → saves to Firebase
+2. emp-id-patch.js → Script that adds Emp. ID column to your main app
+
+═══════════════════════════════════════════════════════
+STEP 1 — Upload these 2 files to your Firebase Hosting
+═══════════════════════════════════════════════════════
+Upload both files to your Firebase project alongside your
+existing app.html, style.css, etc.
+
+  admin.html        → same folder as your app.html
+  emp-id-patch.js   → same folder as your app.html
+
+
+═══════════════════════════════════════════════════════
+STEP 2 — Update Firebase Security Rules
+═══════════════════════════════════════════════════════
+In Firebase Console → Firestore → Rules, add this rule
+to allow READ on empMapping (for all users) and WRITE
+only via your API key (same as your existing setup):
+
+  rules_version = '2';
+  service cloud.firestore {
+    match /databases/{database}/documents {
+      match /users/{userId} {
+        allow read: if true;
+        allow write: if false;
+      }
+      match /empMapping/{doc} {
+        allow read: if true;   // users can read to look up Emp. ID
+        allow write: if true;  // protected by admin-only login in admin.html
+      }
+    }
+  }
+
+
+═══════════════════════════════════════════════════════
+STEP 3 — Add emp-id-patch.js to your app.html
+═══════════════════════════════════════════════════════
+Open your app.html and add this ONE line just before
+the closing </body> tag:
+
+  <script src="emp-id-patch.js"></script>
+
+Make sure it comes AFTER your existing firebase.js script tag.
+
+Example (at the bottom of app.html):
+  ...
+  <script type="module" src="firebase.js"></script>
+  <script src="app.js"></script>
+  <script src="emp-id-patch.js"></script>    ← ADD THIS
+  </body>
+  </html>
+
+
+═══════════════════════════════════════════════════════
+HOW IT WORKS
+═══════════════════════════════════════════════════════
+
+ADMIN FLOW (You / Admin):
+  1. Go to admin.html
+  2. Login with your admin Firebase account
+  3. Upload the Excel file (any format with Emp. ID + Person Code)
+  4. Map the columns if auto-detection is wrong
+  5. Click "Save to Firebase"
+  → Data saved to Firestore collection "empMapping"
+     (Person Code = document ID, Emp. ID = stored value)
+
+USER FLOW (Your app users):
+  1. User uploads PDF as normal
+  2. App extracts employee data including Person Codes
+  3. emp-id-patch.js auto-matches each Person Code
+     to the Emp. ID stored in Firebase
+  4. Emp. ID appears as the 2nd column in the table
+     and in the Excel export
+  → If no match found, the cell shows "—"
+
+
+═══════════════════════════════════════════════════════
+YOUR EXCEL FILE FORMAT
+═══════════════════════════════════════════════════════
+The admin.html auto-detects column headers. It looks for:
+
+  Person Code column → "Person Code", "PersonCode", "person_code", "Code"
+  Emp. ID column     → "Emp. Id", "Emp Id", "Employee ID", "EmpId", "emp_id"
+
+Column names are case-insensitive. If auto-detection
+picks the wrong column, just use the dropdowns to fix it.
+
+Only rows with BOTH a Person Code AND an Emp. ID are saved.
+Empty rows are skipped automatically.
+
+
+═══════════════════════════════════════════════════════
+ADMIN FEATURES
+═══════════════════════════════════════════════════════
+• Preview first 10 rows before saving
+• Batch save (handles 1000s of records efficiently)
+• View all existing Firebase records
+• Delete all records (with confirmation)
+• Admin-only access (only Firebase users with role="admin" can login)
+
+
+═══════════════════════════════════════════════════════
+TROUBLESHOOTING
+═══════════════════════════════════════════════════════
+Q: Emp. ID column not showing in the app?
+A: Make sure emp-id-patch.js is added to app.html (Step 3).
+   Also check browser console for any errors.
+
+Q: Emp. ID shows "—" for all employees?
+A: The Person Codes in the PDF must exactly match what
+   was uploaded in the Excel. Check for leading zeros
+   or spaces. Run window.empIdMap in browser console to
+   see what's loaded.
+
+Q: Admin login says "Access denied"?
+A: In your Firebase users collection, make sure the user
+   document has: role: "admin" (lowercase).
+
+Q: Want to refresh the data without reloading the page?
+A: Call window.reloadEmpIdMap() in browser console.
+═══════════════════════════════════════════════════════
