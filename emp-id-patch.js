@@ -98,8 +98,51 @@
   };
 
   /* ══════════════════════════════════════════
+   * READ % VALUES FROM WPS DOM TABLE
+   * The WPS DOM table has the CORRECT % values
+   * (using the user-typed threshold, e.g. >85%)
+   * Returns map: personCode → pctString
+   * ══════════════════════════════════════════ */
+  function captureWpsPctMap() {
+    var map = {};
+    try {
+      var sec = document.getElementById('wpsSection');
+      if (!sec) return map;
+      var tbl = sec.querySelector('table');
+      if (!tbl) return map;
+
+      /* Find column indices from header row */
+      var hdrRow = tbl.querySelector('thead tr');
+      if (!hdrRow) return map;
+      var hdrCells = hdrRow.querySelectorAll('th,td');
+      var pcColIdx  = -1, pctColIdx = -1;
+      hdrCells.forEach(function (th, i) {
+        var txt = th.textContent.trim();
+        if (pcColIdx  === -1 && /person.?code/i.test(txt)) pcColIdx  = i;
+        if (pctColIdx === -1 && txt === '%')                pctColIdx = i;
+      });
+      if (pcColIdx === -1 || pctColIdx === -1) return map;
+
+      /* Build map from tbody rows */
+      var tbody = tbl.querySelector('tbody');
+      if (!tbody) return map;
+      tbody.querySelectorAll('tr').forEach(function (tr) {
+        var tds = tr.querySelectorAll('td');
+        var pc  = tds[pcColIdx]  ? tds[pcColIdx].textContent.trim()  : '';
+        var pct = tds[pctColIdx] ? tds[pctColIdx].textContent.trim() : '';
+        if (pc && pct) map[pc] = pct;
+      });
+      console.log('[EmpID] WPS % map captured:', Object.keys(map).length, 'entries. Sample:', Object.keys(map).slice(0,3).map(function(k){ return k+'='+map[k]; }));
+    } catch (e) {
+      console.warn('[EmpID] captureWpsPctMap error:', e);
+    }
+    return map;
+  }
+
+  /* ══════════════════════════════════════════
    * EXCEL EXPORT — PATCH XLSX
-   * Only injects Emp. ID — does NOT touch % or any other column
+   * 1. Injects Emp. ID as 2nd column
+   * 2. Fixes WPS % column to match what app shows
    * ══════════════════════════════════════════ */
   function patchXlsx() {
     if (typeof XLSX === 'undefined') { setTimeout(patchXlsx, 300); return; }
@@ -109,22 +152,31 @@
     XLSX.utils.json_to_sheet = function (data, opts) {
       try {
         if (Array.isArray(data) && data.length > 0 && data[0]) {
-          var keys  = Object.keys(data[0]);
-          var pcKey = keys.find(function (k) { return /person.?code/i.test(k); });
+          var keys   = Object.keys(data[0]);
+          var pcKey  = keys.find(function (k) { return /person.?code/i.test(k); });
+          var pctKey = keys.find(function (k) { return k.trim() === '%'; });
 
           if (pcKey) {
+            /* Capture correct % values from WPS DOM (only if WPS data) */
+            var wpsPctMap = pctKey ? captureWpsPctMap() : {};
+
             /* Inject Emp. ID header into opts.header if provided */
             if (opts && Array.isArray(opts.header)) {
               opts = Object.assign({}, opts);
               opts.header = [opts.header[0], 'Emp. ID'].concat(opts.header.slice(1));
             }
-            /* Inject Emp. ID value into each data row after the first key */
+            /* Inject Emp. ID + fix % for each row */
             data = data.map(function (row) {
               var out  = {};
               var done = false;
-              var empId = window.getEmpId(row[pcKey]);
+              var pc    = String(row[pcKey] || '').trim();
+              var empId = window.getEmpId(pc);
               Object.keys(row).forEach(function (k) {
-                out[k] = row[k];
+                if (k === pctKey && wpsPctMap[pc]) {
+                  out[k] = wpsPctMap[pc]; /* ← correct % from DOM */
+                } else {
+                  out[k] = row[k];
+                }
                 if (!done) {
                   out['Emp. ID'] = empId || '—';
                   done = true;
@@ -143,21 +195,32 @@
     XLSX.utils.aoa_to_sheet = function (data, opts) {
       try {
         if (Array.isArray(data) && data.length > 1 && Array.isArray(data[0])) {
-          var header = data[0];
-          var pcIdx  = -1;
+          var header  = data[0];
+          var pcIdx   = -1, pctIdx = -1;
           for (var i = 0; i < header.length; i++) {
-            if (/person.?code/i.test(String(header[i] || ''))) { pcIdx = i; break; }
+            var h = String(header[i] || '');
+            if (pcIdx  === -1 && /person.?code/i.test(h)) pcIdx  = i;
+            if (pctIdx === -1 && h.trim() === '%')         pctIdx = i;
           }
+          /* Capture % from DOM if WPS data */
+          var wpsPctMap = (pcIdx !== -1 && pctIdx !== -1) ? captureWpsPctMap() : {};
+
           if (pcIdx !== -1) {
             data = data.map(function (row, rowIdx) {
               if (!Array.isArray(row)) return row;
               var out = row.slice();
               if (rowIdx === 0) {
+                /* Header row: insert Emp. ID at col 1 */
                 out.splice(1, 0, 'Emp. ID');
               } else {
+                /* Data row: inject Emp. ID + fix % if WPS */
                 var pc    = String(row[pcIdx] || '').trim();
                 var empId = window.getEmpId(pc);
                 out.splice(1, 0, empId || '—');
+                /* Fix % column (shifted +1 after our splice) */
+                if (pctIdx !== -1 && wpsPctMap[pc]) {
+                  out[pctIdx + 1] = wpsPctMap[pc];
+                }
               }
               return out;
             });
