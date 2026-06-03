@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>EMPWPSCTR — Admin Panel (Server)</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+:root{--bg:#0a0f1e;--card:#111827;--border:#1e2d45;--accent:#0ea5e9;--accent2:#06b6d4;--text:#e2e8f0;--muted:#64748b;--green:#10b981;--red:#ef4444;--orange:#f59e0b;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Space Grotesk',sans-serif;min-height:100vh;}
+.bg-grid{position:fixed;top:0;left:0;width:100%;height:100%;background-image:linear-gradient(rgba(14,165,233,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(14,165,233,0.03) 1px,transparent 1px);background-size:50px 50px;pointer-events:none;z-index:0;}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:16px 32px;background:rgba(10,15,30,0.9);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);}
+.logo{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.nav-right{display:flex;align-items:center;gap:12px;}
+.admin-badge{background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.35);color:var(--green);padding:5px 14px;border-radius:100px;font-size:12px;font-weight:700;letter-spacing:1px;}
+#btnLogout{background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:#fca5a5;padding:7px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;display:none;transition:all .2s;}
+#btnLogout:hover{background:rgba(239,68,68,0.2);}
+#loginScreen{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;background:var(--bg);}
+.login-box{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:44px 40px;width:min(420px,90vw);box-shadow:0 24px 64px rgba(0,0,0,0.6);}
+.login-icon{font-size:48px;text-align:center;margin-bottom:12px;}
+.login-title{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;text-align:center;margin-bottom:4px;}
+.login-sub{font-size:13px;color:var(--muted);text-align:center;margin-bottom:32px;}
+.field-label{font-size:12px;font-weight:600;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;margin-bottom:6px;display:block;}
+.field-input{width:100%;background:#0d1626;border:1px solid var(--border);border-radius:10px;padding:12px 16px;color:var(--text);font-size:14px;font-family:'Space Grotesk',sans-serif;outline:none;transition:border-color .2s;margin-bottom:16px;}
+.field-input:focus{border-color:var(--accent);}
+.btn-login{width:100%;padding:14px;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:10px;color:#fff;font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;cursor:pointer;margin-top:8px;transition:opacity .2s;}
+.btn-login:hover{opacity:.9;}
+.btn-login:disabled{opacity:.5;cursor:not-allowed;}
+.login-err{background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:#fca5a5;border-radius:8px;padding:10px 14px;font-size:13px;margin-top:14px;display:none;}
+.server-note{background:rgba(16,185,129,0.07);border:1px solid rgba(16,185,129,0.25);border-radius:10px;padding:12px 16px;font-size:12px;color:#6ee7b7;margin-bottom:20px;line-height:1.6;}
+#adminApp{display:none;padding-top:80px;}
+.page{max-width:900px;margin:0 auto;padding:40px 24px 80px;position:relative;z-index:1;}
+.page-header{margin-bottom:40px;}
+.page-tag{color:var(--green);font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;}
+.page-title{font-family:'Syne',sans-serif;font-size:32px;font-weight:800;margin-bottom:8px;}
+.page-sub{color:var(--muted);font-size:14px;line-height:1.7;}
+.upload-zone{border:2px dashed var(--border);border-radius:16px;padding:48px;text-align:center;background:var(--card);cursor:pointer;transition:all .25s;position:relative;}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--accent);background:rgba(14,165,233,0.04);}
+.upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.upload-icon{font-size:44px;margin-bottom:14px;}
+.upload-text{font-size:16px;font-weight:600;margin-bottom:6px;}
+.upload-hint{font-size:13px;color:var(--muted);}
+.upload-hint span{color:var(--accent);font-weight:600;}
+#previewSection{display:none;margin-top:32px;}
+.section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:12px;}
+.section-label{font-size:14px;font-weight:700;color:var(--text);}
+.count-badge{background:rgba(14,165,233,0.1);border:1px solid rgba(14,165,233,0.25);color:var(--accent);padding:4px 14px;border-radius:100px;font-size:12px;font-weight:700;}
+.tbl-wrap{overflow-x:auto;border-radius:12px;border:1px solid var(--border);}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+thead tr{background:#0d1626;border-bottom:1px solid var(--border);}
+th{padding:12px 16px;text-align:left;color:var(--muted);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;white-space:nowrap;}
+td{padding:11px 16px;border-bottom:1px solid rgba(30,45,69,0.6);color:var(--text);}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:rgba(14,165,233,0.03);}
+.code-cell{font-family:monospace;font-size:12px;color:#7dd3fc;}
+#mappingSection{display:none;margin-top:28px;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:28px;}
+.map-title{font-size:14px;font-weight:700;margin-bottom:18px;}
+.map-row{display:flex;align-items:center;gap:16px;margin-bottom:14px;flex-wrap:wrap;}
+.map-label{font-size:13px;color:var(--muted);width:120px;flex-shrink:0;}
+.map-select{flex:1;min-width:200px;background:#0d1626;border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:13px;font-family:'Space Grotesk',sans-serif;outline:none;}
+.map-select:focus{border-color:var(--accent);}
+.action-bar{display:flex;align-items:center;gap:16px;margin-top:28px;flex-wrap:wrap;}
+.btn-save{padding:14px 36px;background:linear-gradient(135deg,var(--green),#059669);border:none;border-radius:10px;color:#fff;font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:opacity .2s;display:flex;align-items:center;gap:8px;}
+.btn-save:hover{opacity:.9;}
+.btn-save:disabled{opacity:.45;cursor:not-allowed;}
+.btn-clear{padding:14px 24px;background:transparent;border:1px solid var(--border);border-radius:10px;color:var(--muted);font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;}
+.btn-clear:hover{border-color:var(--red);color:#fca5a5;}
+.status-box{border-radius:10px;padding:14px 18px;font-size:13px;margin-top:18px;display:none;}
+.status-box.info{background:rgba(14,165,233,0.08);border:1px solid rgba(14,165,233,0.25);color:#7dd3fc;}
+.status-box.success{background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.25);color:#6ee7b7;}
+.status-box.error{background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);color:#fca5a5;}
+.progress-wrap{margin-top:14px;display:none;}
+.progress-track{height:6px;background:var(--border);border-radius:3px;overflow:hidden;}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:3px;width:0%;transition:width .3s;}
+.progress-text{font-size:12px;color:var(--muted);margin-top:6px;}
+.stats-row{display:flex;gap:16px;margin-top:28px;flex-wrap:wrap;}
+.stat-card{flex:1;min-width:140px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;text-align:center;}
+.stat-val{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:var(--accent);}
+.stat-lbl{font-size:12px;color:var(--muted);margin-top:4px;}
+#existingSection{display:none;margin-top:40px;}
+.existing-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:12px;}
+.btn-load{padding:9px 20px;background:rgba(14,165,233,0.1);border:1px solid rgba(14,165,233,0.3);border-radius:8px;color:var(--accent);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;}
+.btn-load:hover{background:rgba(14,165,233,0.2);}
+.btn-delete-all{padding:9px 20px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:8px;color:#fca5a5;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;}
+.btn-delete-all:hover{background:rgba(239,68,68,0.2);}
+</style>
+</head>
+<body>
+<div class="bg-grid"></div>
+<nav>
+  <div class="logo">EMPWPSCTR</div>
+  <div class="nav-right">
+    <div class="admin-badge">🔒 Server Admin</div>
+    <button id="btnLogout">Logout</button>
+  </div>
+</nav>
+
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="login-icon">🔐</div>
+    <div class="login-title">Admin Access</div>
+    <div class="login-sub">Server-based storage — no Firebase required.</div>
+    <div class="server-note">✅ Data is saved securely on the server.<br>Any user on any device will see the Emp. ID data.</div>
+    <label class="field-label">Admin Password</label>
+    <input class="field-input" id="loginPass" type="password" placeholder="Enter admin password"/>
+    <button class="btn-login" id="btnLogin">Sign In →</button>
+    <div class="login-err" id="loginErr"></div>
+  </div>
+</div>
+
+<div id="adminApp">
+  <div class="page">
+    <div class="page-header">
+      <div class="page-tag">Server Admin Panel</div>
+      <div class="page-title">Employee ID Mapping</div>
+      <div class="page-sub">Upload an Excel file with <strong>Emp. ID</strong> and <strong>Person Code</strong> columns. Data is saved to the server — available to all users automatically.</div>
+    </div>
+
+    <div class="upload-zone" id="dropZone">
+      <input type="file" id="fileInput" accept=".xlsx,.xls,.csv"/>
+      <div class="upload-icon">📊</div>
+      <div class="upload-text">Drag & drop your Excel file here</div>
+      <div class="upload-hint">or click to browse — <span>.xlsx / .xls / .csv</span> supported</div>
+    </div>
+
+    <div id="sheetInfo" style="display:none;margin-top:16px;background:rgba(14,165,233,0.07);border:1px solid rgba(14,165,233,0.22);border-radius:10px;padding:12px 18px;font-size:13px;color:#7dd3fc;line-height:1.7;"></div>
+
+    <div id="mappingSection">
+      <div class="map-title">📋 Map Your Columns</div>
+      <div class="map-row">
+        <div class="map-label">Person Code</div>
+        <select class="map-select" id="colPersonCode"></select>
+      </div>
+      <div class="map-row">
+        <div class="map-label">Emp. ID</div>
+        <select class="map-select" id="colEmpId"></select>
+      </div>
+    </div>
+
+    <div id="previewSection">
+      <div class="section-head">
+        <div class="section-label">📄 Preview (first 10 rows)</div>
+        <div class="count-badge" id="totalCount">0 records</div>
+      </div>
+      <div class="tbl-wrap">
+        <table id="previewTable">
+          <thead><tr id="previewHead"></tr></thead>
+          <tbody id="previewBody"></tbody>
+        </table>
+      </div>
+
+      <div id="skippedSection" style="display:none;margin-top:24px;background:#0d1626;border:1px solid rgba(245,158,11,0.35);border-radius:14px;padding:22px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
+          <div>
+            <div style="font-size:14px;font-weight:700;color:var(--orange);">⚠️ Skipped Rows — <span id="skippedCountLbl">0</span></div>
+            <div style="font-size:11px;color:var(--muted);margin-top:3px;">These rows have no Emp. ID or no Person Code — they will NOT be saved.</div>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+            <select id="skippedFilter" onchange="renderSkippedTable()" style="background:#0a0f1e;border:1px solid var(--border);border-radius:8px;padding:7px 12px;color:var(--text);font-size:12px;font-family:'Space Grotesk',sans-serif;outline:none;">
+              <option value="all">All reasons</option>
+              <option value="no_eid">No Emp. ID</option>
+              <option value="no_pc">No Person Code</option>
+            </select>
+            <button onclick="downloadSkipped()" style="padding:8px 20px;background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.5);border-radius:8px;color:var(--orange);font-size:13px;font-weight:700;cursor:pointer;">📥 Export to Excel</button>
+          </div>
+        </div>
+        <div id="skippedTableWrap" class="tbl-wrap" style="max-height:400px;overflow-y:auto;border-radius:10px;"></div>
+      </div>
+
+      <div class="action-bar" style="margin-top:24px;">
+        <button class="btn-save" id="btnSave">
+          <span>💾</span> Save to Server
+        </button>
+        <button class="btn-clear" id="btnClear">Clear</button>
+      </div>
+
+      <div class="status-box" id="statusBox"></div>
+      <div class="progress-wrap" id="progressWrap">
+        <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+        <div class="progress-text" id="progressText">Saving...</div>
+      </div>
+    </div>
+
+    <div class="stats-row" id="statsRow" style="display:none;">
+      <div class="stat-card"><div class="stat-val" id="statSaved">0</div><div class="stat-lbl">Records Saved</div></div>
+      <div class="stat-card"><div class="stat-val" id="statSkipped" style="color:var(--orange);">0</div><div class="stat-lbl">Skipped</div></div>
+      <div class="stat-card"><div class="stat-val" id="statTotal">0</div><div class="stat-lbl">Total on Server</div></div>
+    </div>
+
+    <div id="existingSection">
+      <div class="existing-header">
+        <div class="section-label">🗄️ Current Server Data</div>
+        <div style="display:flex;gap:10px;">
+          <button class="btn-load" id="btnLoadExisting">Load Data</button>
+          <button class="btn-delete-all" id="btnDeleteAll">Delete All</button>
+        </div>
+      </div>
+      <div id="existingContent" style="color:var(--muted);font-size:13px;">Click "Load Data" to view current records.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+let parsedRows  = [];
+let allHeaders  = [];
+let skippedRows = [];
+let adminPassword = '';
+
+const loginScreen  = document.getElementById('loginScreen');
+const adminApp     = document.getElementById('adminApp');
+const btnLogin     = document.getElementById('btnLogin');
+const loginErr     = document.getElementById('loginErr');
+const btnLogout    = document.getElementById('btnLogout');
+const dropZone     = document.getElementById('dropZone');
+const fileInput    = document.getElementById('fileInput');
+const mappingSection = document.getElementById('mappingSection');
+const previewSection = document.getElementById('previewSection');
+const colPersonCode  = document.getElementById('colPersonCode');
+const colEmpId       = document.getElementById('colEmpId');
+const previewHead    = document.getElementById('previewHead');
+const previewBody    = document.getElementById('previewBody');
+const totalCount     = document.getElementById('totalCount');
+const btnSave        = document.getElementById('btnSave');
+const btnClear       = document.getElementById('btnClear');
+const statusBox      = document.getElementById('statusBox');
+const progressWrap   = document.getElementById('progressWrap');
+const progressFill   = document.getElementById('progressFill');
+const progressText   = document.getElementById('progressText');
+const statsRow       = document.getElementById('statsRow');
+
+btnLogin.addEventListener('click', doLogin);
+document.addEventListener('keydown', e => { if (e.key === 'Enter' && loginScreen.style.display !== 'none') doLogin(); });
+
+async function doLogin() {
+  const pass = document.getElementById('loginPass').value;
+  if (!pass) { showLoginErr('Please enter the admin password.'); return; }
+  btnLogin.disabled = true;
+  btnLogin.textContent = 'Checking...';
+  loginErr.style.display = 'none';
+  try {
+    const r = await fetch('https://f18d820d-cc6b-4d8f-bc63-b4c382def94e-00-1xvxg4vkwk67q.pike.replit.dev/api/emp-mapping/verify-admin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: pass })
+    });
+    const data = await r.json();
+    if (data.ok) {
+      adminPassword = pass;
+      loginScreen.style.display = 'none';
+      adminApp.style.display = 'block';
+      btnLogout.style.display = 'inline-flex';
+      document.getElementById('existingSection').style.display = 'block';
+    } else {
+      showLoginErr('❌ Invalid password.');
+    }
+  } catch(e) {
+    showLoginErr('⚠️ Connection error. Try again.');
+  }
+  btnLogin.disabled = false;
+  btnLogin.textContent = 'Sign In →';
+}
+
+function showLoginErr(msg) {
+  loginErr.textContent = msg;
+  loginErr.style.display = 'block';
+}
+
+btnLogout.addEventListener('click', () => {
+  adminPassword = '';
+  loginScreen.style.display = 'flex';
+  adminApp.style.display = 'none';
+  btnLogout.style.display = 'none';
+  document.getElementById('loginPass').value = '';
+  clearAll();
+});
+
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('drag');
+  const file = e.dataTransfer.files[0];
+  if (file) handleFile(file);
+});
+fileInput.addEventListener('change', () => {
+  if (fileInput.files[0]) handleFile(fileInput.files[0]);
+});
+
+function handleFile(file) {
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const wb = XLSX.read(e.target.result, { type: 'array' });
+      const sheetNames = wb.SheetNames;
+      let combinedRows = [];
+      let detectedHeaders = null;
+      const sheetSummary = [];
+      sheetNames.forEach(function(name) {
+        const ws   = wb.Sheets[name];
+        const data = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+        if (!data || data.length < 2) { sheetSummary.push(name + ': 0 rows (skipped)'); return; }
+        const sheetHeaders = data[0].map(h => String(h).trim());
+        if (!detectedHeaders) detectedHeaders = sheetHeaders;
+        const headerMap = detectedHeaders.map(h =>
+          sheetHeaders.findIndex(sh => sh.toLowerCase() === h.toLowerCase())
+        );
+        const rows = data.slice(1).filter(row => row.some(c => String(c).trim() !== ''));
+        const mapped = rows.map(row => headerMap.map(ci => ci !== -1 ? row[ci] : ''));
+        combinedRows = combinedRows.concat(mapped);
+        sheetSummary.push(name + ': ' + mapped.length + ' rows');
+      });
+      if (!detectedHeaders || combinedRows.length === 0) { alert('No data found in any sheet.'); return; }
+      allHeaders = detectedHeaders;
+      parsedRows = combinedRows;
+      const infoEl = document.getElementById('sheetInfo');
+      infoEl.textContent = '📋 ' + sheetNames.length + ' sheet(s): ' + sheetSummary.join(' | ');
+      infoEl.style.display = 'block';
+      populateColumnSelects(allHeaders);
+      renderPreview(parsedRows, allHeaders);
+      updateSkippedPreview();
+      mappingSection.style.display = 'block';
+      previewSection.style.display = 'block';
+      totalCount.textContent = parsedRows.length + ' records (all sheets)';
+    } catch(err) {
+      alert('Could not read file: ' + err.message);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function bestGuess(headers, keywords) {
+  for (const kw of keywords) {
+    const idx = headers.findIndex(h => h.toLowerCase().includes(kw.toLowerCase()));
+    if (idx !== -1) return idx;
+  }
+  return 0;
+}
+
+function populateColumnSelects(headers) {
+  [colPersonCode, colEmpId].forEach(sel => {
+    sel.innerHTML = '';
+    headers.forEach((h, i) => {
+      const opt = document.createElement('option');
+      opt.value = i;
+      opt.textContent = h || '(Column ' + (i+1) + ')';
+      sel.appendChild(opt);
+    });
+  });
+  colPersonCode.value = bestGuess(headers, ['person code','personcode','person_code','code']);
+  colEmpId.value      = bestGuess(headers, ['emp. id','emp id','employee id','empid','emp.id','employee_id','emp_id']);
+}
+
+function renderPreview(rows, headers) {
+  previewHead.innerHTML = '';
+  ['#', ...headers].forEach(h => {
+    const th = document.createElement('th');
+    th.textContent = h;
+    previewHead.appendChild(th);
+  });
+  previewBody.innerHTML = '';
+  rows.slice(0, 10).forEach((row, i) => {
+    const tr = document.createElement('tr');
+    const tdNum = document.createElement('td');
+    tdNum.textContent = i + 1;
+    tdNum.style.color = 'var(--muted)';
+    tr.appendChild(tdNum);
+    row.forEach(cell => {
+      const td = document.createElement('td');
+      td.textContent = cell;
+      td.className = 'code-cell';
+      tr.appendChild(td);
+    });
+    previewBody.appendChild(tr);
+  });
+}
+
+[colPersonCode, colEmpId].forEach(sel => sel.addEventListener('change', () => {
+  renderPreview(parsedRows, allHeaders);
+  updateSkippedPreview();
+}));
+
+function updateSkippedPreview() {
+  if (!parsedRows.length) return;
+  const pcIdx  = parseInt(colPersonCode.value);
+  const empIdx = parseInt(colEmpId.value);
+  skippedRows = [];
+  parsedRows.forEach(row => {
+    const pc  = String(row[pcIdx]  ?? '').trim();
+    const eid = String(row[empIdx] ?? '').trim();
+    if (!eid) { skippedRows.push({ row, reason: 'no_eid' }); return; }
+    if (!pc)  { skippedRows.push({ row, reason: 'no_pc'  }); return; }
+  });
+  const sec = document.getElementById('skippedSection');
+  if (skippedRows.length > 0) {
+    document.getElementById('skippedCountLbl').textContent = skippedRows.length + ' rows';
+    document.getElementById('skippedFilter').value = 'all';
+    renderSkippedTable();
+    sec.style.display = 'block';
+  } else {
+    sec.style.display = 'none';
+  }
+}
+
+btnSave.addEventListener('click', saveToServer);
+
+async function saveToServer() {
+  if (!parsedRows.length) return;
+  const pcIdx  = parseInt(colPersonCode.value);
+  const empIdx = parseInt(colEmpId.value);
+  let skipped = 0;
+  skippedRows = [];
+
+  const records = [];
+  parsedRows.forEach(row => {
+    const pc  = String(row[pcIdx]  ?? '').trim();
+    const eid = String(row[empIdx] ?? '').trim();
+    if (!eid) { skippedRows.push({ row, reason: 'no_eid' }); skipped++; return; }
+    if (!pc)  { skippedRows.push({ row, reason: 'no_pc'  }); skipped++; return; }
+    records.push({ personCode: pc, empId: eid });
+  });
+
+  if (!records.length) { showStatus('error', '❌ No valid records to save.'); return; }
+
+  btnSave.disabled = true;
+  statusBox.style.display = 'none';
+  statsRow.style.display = 'none';
+  progressWrap.style.display = 'block';
+  progressFill.style.width = '30%';
+  progressText.textContent = 'Saving ' + records.length + ' records to server...';
+
+  try {
+    const r = await fetch('https://f18d820d-cc6b-4d8f-bc63-b4c382def94e-00-1xvxg4vkwk67q.pike.replit.dev/api/emp-mapping/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: adminPassword, records })
+    });
+    const data = await r.json();
+    progressFill.style.width = '100%';
+    if (data.ok) {
+      document.getElementById('statSaved').textContent   = data.saved;
+      document.getElementById('statSkipped').textContent = skipped;
+      document.getElementById('statTotal').textContent   = data.total;
+      statsRow.style.display = 'flex';
+      showStatus('success', '✅ Saved ' + data.saved + ' records to server!' + (skipped ? ' ' + skipped + ' rows skipped.' : ' All rows saved!'));
+    } else {
+      showStatus('error', '❌ ' + (data.error || 'Save failed'));
+    }
+  } catch(e) {
+    showStatus('error', '❌ Connection error: ' + e.message);
+  }
+  progressWrap.style.display = 'none';
+  btnSave.disabled = false;
+}
+
+function renderSkippedTable() {
+  const filter = document.getElementById('skippedFilter').value;
+  const pcIdx  = parseInt(colPersonCode.value);
+  const empIdx = parseInt(colEmpId.value);
+  const wrap   = document.getElementById('skippedTableWrap');
+  const rows = filter === 'all' ? skippedRows : skippedRows.filter(s => s.reason === filter);
+  document.getElementById('skippedCountLbl').textContent =
+    rows.length + ' rows' + (filter !== 'all' ? ' (' + (filter === 'no_eid' ? 'No Emp. ID' : 'No Person Code') + ')' : '');
+  if (!rows.length) { wrap.innerHTML = '<div style="padding:20px;color:var(--muted);font-size:13px;">No rows match this filter.</div>'; return; }
+  const reasonLabel = { no_eid: '⚠️ No Emp. ID', no_pc: '⚠️ No Person Code' };
+  const reasonColor = { no_eid: '#f59e0b', no_pc: '#ef4444' };
+  let html = '<table><thead><tr><th>#</th><th>Reason</th>';
+  allHeaders.forEach(h => { html += '<th>' + h + '</th>'; });
+  html += '</tr></thead><tbody>';
+  rows.forEach((s, i) => {
+    html += '<tr><td style="color:var(--muted)">' + (i+1) + '</td>';
+    html += '<td style="color:' + reasonColor[s.reason] + ';font-weight:700;white-space:nowrap;font-size:11px;">' + reasonLabel[s.reason] + '</td>';
+    s.row.forEach((cell, ci) => {
+      const isEmpty = String(cell ?? '').trim() === '';
+      const highlight = (ci === pcIdx && s.reason === 'no_pc') || (ci === empIdx && s.reason === 'no_eid');
+      html += '<td class="code-cell" style="' + (highlight ? 'background:rgba(239,68,68,0.12);color:#fca5a5;' : '') + (isEmpty ? 'color:var(--muted);font-style:italic;' : '') + '">' + (isEmpty ? '(empty)' : String(cell)) + '</td>';
+    });
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+  wrap.innerHTML = html;
+}
+
+function downloadSkipped() {
+  if (!skippedRows.length) return;
+  const filter = document.getElementById('skippedFilter').value;
+  const rows   = filter === 'all' ? skippedRows : skippedRows.filter(s => s.reason === filter);
+  const reasonLabel = { no_eid: 'No Emp. ID', no_pc: 'No Person Code' };
+  const aoa = [['Reason', ...allHeaders]];
+  rows.forEach(s => { aoa.push([reasonLabel[s.reason], ...s.row.map(c => c ?? '')]); });
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Skipped Rows');
+  XLSX.writeFile(wb, 'skipped_rows.xlsx');
+}
+
+function showStatus(type, msg) {
+  statusBox.className = 'status-box ' + type;
+  statusBox.textContent = msg;
+  statusBox.style.display = 'block';
+}
+
+btnClear.addEventListener('click', clearAll);
+function clearAll() {
+  parsedRows = []; allHeaders = []; skippedRows = [];
+  fileInput.value = '';
+  mappingSection.style.display  = 'none';
+  previewSection.style.display  = 'none';
+  statusBox.style.display       = 'none';
+  progressWrap.style.display    = 'none';
+  statsRow.style.display        = 'none';
+  document.getElementById('skippedSection').style.display = 'none';
+  const si = document.getElementById('sheetInfo');
+  if (si) { si.style.display = 'none'; si.textContent = ''; }
+}
+
+document.getElementById('btnLoadExisting').addEventListener('click', async () => {
+  const content = document.getElementById('existingContent');
+  content.textContent = 'Loading...';
+  try {
+    const r = await fetch('https://f18d820d-cc6b-4d8f-bc63-b4c382def94e-00-1xvxg4vkwk67q.pike.replit.dev/api/emp-mapping');
+    const data = await r.json();
+    if (!data.ok || data.count === 0) { content.textContent = 'No records found on server.'; return; }
+    const rows = Object.entries(data.data).sort((a,b) => a[0].localeCompare(b[0]));
+    const tblWrap = document.createElement('div');
+    tblWrap.className = 'tbl-wrap';
+    tblWrap.innerHTML = `<table>
+      <thead><tr><th>#</th><th>Person Code</th><th>Emp. ID</th></tr></thead>
+      <tbody>${rows.map(([pc,eid],i)=>`<tr>
+        <td style="color:var(--muted)">${i+1}</td>
+        <td class="code-cell">${pc}</td>
+        <td class="code-cell" style="color:#6ee7b7">${eid}</td>
+      </tr>`).join('')}</tbody></table>`;
+    content.innerHTML = '';
+    content.appendChild(tblWrap);
+    const badge = document.createElement('div');
+    badge.style.cssText = 'margin-top:10px;font-size:13px;color:var(--muted);';
+    badge.textContent = data.count + ' records total';
+    content.appendChild(badge);
+  } catch(e) {
+    content.textContent = 'Error loading data: ' + e.message;
+  }
+});
+
+document.getElementById('btnDeleteAll').addEventListener('click', async () => {
+  if (!confirm('⚠️ Delete ALL employee mapping records from the server?\n\nThis cannot be undone.')) return;
+  const content = document.getElementById('existingContent');
+  content.textContent = 'Deleting...';
+  try {
+    const r = await fetch('https://f18d820d-cc6b-4d8f-bc63-b4c382def94e-00-1xvxg4vkwk67q.pike.replit.dev/api/emp-mapping/delete-all', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: adminPassword })
+    });
+    const data = await r.json();
+    if (data.ok) {
+      content.textContent = '✅ All records deleted from server.';
+      document.getElementById('statTotal').textContent = '0';
+    } else {
+      content.textContent = '❌ ' + (data.error || 'Delete failed');
+    }
+  } catch(e) {
+    content.textContent = 'Error: ' + e.message;
+  }
+});
+</script>
+</body>
+</html>
