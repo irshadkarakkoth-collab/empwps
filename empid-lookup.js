@@ -17,6 +17,8 @@
         if (result && result.status === 'ok' && result.user) {
           localStorage.setItem(ROLE_KEY, (result.user.role || '').toLowerCase().trim());
           localStorage.setItem(USER_KEY, (result.user.username || '').toUpperCase().trim());
+          // Re-inject the toolbar button now that we know the role
+          setTimeout(injectTitlebarUI, 300);
         }
         return result;
       };
@@ -365,22 +367,17 @@
     var hdrRow = document.querySelector('#sw table thead tr.hdr');
     if (!hdrRow || document.getElementById('th-empId')) return;
 
-    // Append EMP. ID at the END — never insert in the middle (breaks app.js column tracking)
+    // Insert EMP. ID as 2nd column (after #)
     var th = document.createElement('th');
     th.id = 'th-empId';
     th.textContent = 'EMP. ID';
     th.style.cssText = 'background:#142030;color:#7dd3fc;font-weight:800;white-space:nowrap;text-align:center;font-size:12px;letter-spacing:.3px;border-left:2px solid rgba(14,165,233,.3);cursor:default;';
     th.title = 'Employee ID — loaded from cloud mapping';
-    hdrRow.appendChild(th);
+    var ths = hdrRow.querySelectorAll('th');
+    if (ths.length > 1) hdrRow.insertBefore(th, ths[1]);
+    else hdrRow.appendChild(th);
 
-    // Also append an empty placeholder in the filter row (no input — avoids disrupting app.js filters)
-    var filterRow = document.querySelector('#sw table thead tr.cfr');
-    if (filterRow && !document.getElementById('cf-empId')) {
-      var fth = document.createElement('th');
-      fth.id = 'cf-empId';
-      fth.style.cssText = 'background:#142030;border-left:2px solid rgba(14,165,233,.15);';
-      filterRow.appendChild(fth);
-    }
+    // Do NOT touch the filter row — app.js uses its cell count internally
   }
 
   function filterByEmpId(value) {
@@ -405,8 +402,10 @@
       empIdCell = document.createElement('td');
       empIdCell.setAttribute('data-empid', '');
       empIdCell.style.cssText = 'font-size:12px;font-family:monospace;text-align:center;border-left:2px solid rgba(14,165,233,.15);';
-      // Always append at the END — inserting mid-row breaks app.js column tracking
-      row.appendChild(empIdCell);
+      // Insert as 2nd cell (after # column)
+      var tds = row.querySelectorAll('td');
+      if (tds.length > 1) row.insertBefore(empIdCell, tds[1]);
+      else row.appendChild(empIdCell);
     }
 
     // Find 14-digit person code in the row
@@ -485,17 +484,10 @@
     th.textContent = 'EMP. ID';
     th.style.cssText = 'background:#142030;color:#7dd3fc;font-weight:800;white-space:nowrap;text-align:center;font-size:12px;letter-spacing:.3px;border-left:2px solid rgba(14,165,233,.3);cursor:default;';
     th.title = 'Employee ID — from cloud mapping';
-    // Append at END to avoid disrupting app.js column index tracking
-    hdrRow.appendChild(th);
+    // Insert as 2nd column (after first TH)
+    hdrRow.insertBefore(th, ths[1]);
 
-    // Append blank placeholder in filter row only — no input to avoid conflicts
-    var filterRow = thead.querySelector('tr.cfr');
-    if (filterRow && !filterRow.querySelector('[data-empid-filter]')) {
-      var fth = document.createElement('th');
-      fth.setAttribute('data-empid-filter', '1');
-      fth.style.cssText = 'background:#142030;border-left:2px solid rgba(14,165,233,.15);';
-      filterRow.appendChild(fth);
-    }
+    // Do NOT touch the filter row — app.js uses its cell count internally
 
     table._empIdHdrDone = true;
   }
@@ -676,21 +668,18 @@
   }
 
   function init() {
-    var appWrap = document.getElementById('appWrap');
-    if (!appWrap) { setTimeout(init, 400); return; }
-
-    function tryInject() {
-      var s = appWrap.style.display;
-      if (s !== 'none' && s !== '') { onAppVisible(); return true; }
-      return false;
+    var _done = false;
+    function trySetup() {
+      if (_done) return;
+      // Fire as soon as the main toolbar (.wbtns) exists in the DOM
+      if (document.querySelector('.titlebar .wbtns')) {
+        _done = true;
+        onAppVisible();
+        return;
+      }
+      setTimeout(trySetup, 400);
     }
-
-    if (!tryInject()) {
-      var obs = new MutationObserver(function () {
-        if (tryInject()) obs.disconnect();
-      });
-      obs.observe(appWrap, { attributes: true, attributeFilter: ['style'] });
-    }
+    trySetup();
   }
 
   if (document.readyState === 'loading') {
