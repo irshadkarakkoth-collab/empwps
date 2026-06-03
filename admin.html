@@ -196,7 +196,7 @@ tr:hover td{background:rgba(14,165,233,0.03);}
     <!-- STATS -->
     <div class="stats-row" id="statsRow" style="display:none;">
       <div class="stat-card"><div class="stat-val" id="statSaved">0</div><div class="stat-lbl">Records Saved</div></div>
-      <div class="stat-card"><div class="stat-val" id="statSkipped">0</div><div class="stat-lbl">Skipped (empty)</div></div>
+      <div class="stat-card"><div class="stat-val" id="statSkipped">0</div><div class="stat-lbl">Skipped (no Emp. ID)</div></div>
       <div class="stat-card"><div class="stat-val" id="statTotal">0</div><div class="stat-lbl">Total in Firebase</div></div>
     </div>
 
@@ -473,9 +473,12 @@ async function saveToFirebase() {
 
   const BATCH_SIZE = 450;
   const validRows = parsedRows.filter(row => {
-    const pc  = String(row[pcIdx]  || '').trim();
-    const eid = String(row[empIdx] || '').trim();
-    return pc && eid;
+    const pc  = String(row[pcIdx]  ?? '').trim();
+    const eid = String(row[empIdx] ?? '').trim();
+    /* Skip ONLY if Emp. ID is empty — Person Code is also needed as the key */
+    if (!eid) return false;   // no Emp. ID → skip
+    if (!pc)  return false;   // no Person Code → can't save without a key
+    return true;
   });
   skipped = parsedRows.length - validRows.length;
 
