@@ -1,308 +1,286 @@
 /**
- * EMPWPSCTR — Employee ID Lookup Patch
- * ------------------------------------------------------------
- * Add this script AFTER firebase.js and BEFORE the closing </body>
- * tag in your app.html file.
- *
- * What it does:
- *  1. On load, fetches the full empMapping collection from Firebase
- *     and caches it as window.empIdMap = { personCode: empId }
- *  2. Patches the table renderer to inject an "Emp. ID" column
- *     (2nd column) in both Employee List and WPS Salary tables.
- *  3. Patches the Excel export to include the Emp. ID column.
- * ------------------------------------------------------------
+ * EMPWPSCTR — Employee ID Lookup Patch v2
+ * Add this script AFTER firebase.js and BEFORE </body> in app.html
  */
-
-(function() {
+(function () {
   'use strict';
 
   /* ── CONFIG ── */
-  const FIREBASE_API_KEY = 'AIzaSyD2cHjy5-MQuD85S_FegWA0PNG3aXdBJxs';
-  const FIREBASE_PROJECT  = 'empwppconvert';
-  const COLLECTION        = 'empMapping';
-  const CACHE_KEY         = 'empIdMapCache';
-  const CACHE_TTL_MS      = 10 * 60 * 1000; // 10 minutes
+  var API_KEY   = 'AIzaSyD2cHjy5-MQuD85S_FegWA0PNG3aXdBJxs';
+  var PROJECT   = 'empwppconvert';
+  var COLL      = 'empMapping';
+  var CACHE_KEY = 'empIdMapCache';
+  var CACHE_TTL = 10 * 60 * 1000; // 10 min
 
-  /* ── Global lookup map: { personCode (string) → empId (string) } ── */
+  /* Column header text to detect Person Code column */
+  var PC_HEADERS = ['person code', 'personcode', 'person_code'];
+
+  /* ── GLOBAL MAP ── */
   window.empIdMap = {};
 
-  /* ──────────────────────────────────────────────────────────
-   * 1. LOAD MAPPING FROM FIREBASE (REST API, no SDK needed)
-   * ────────────────────────────────────────────────────────── */
-  async function loadEmpIdMap() {
-    /* Try memory cache first */
-    if (Object.keys(window.empIdMap).length > 0) return;
-
-    /* Try sessionStorage cache */
+  /* ──────────────────────────────────────────────
+   * 1. LOAD FROM FIREBASE (paged REST, no SDK)
+   * ────────────────────────────────────────────── */
+  async function loadMap() {
+    /* sessionStorage cache */
     try {
-      const cached = sessionStorage.getItem(CACHE_KEY);
-      if (cached) {
-        const { ts, data } = JSON.parse(cached);
-        if (Date.now() - ts < CACHE_TTL_MS) {
-          window.empIdMap = data;
-          console.log('[EmpID] Loaded ' + Object.keys(data).length + ' records from cache.');
+      var c = sessionStorage.getItem(CACHE_KEY);
+      if (c) {
+        var p = JSON.parse(c);
+        if (Date.now() - p.ts < CACHE_TTL) {
+          window.empIdMap = p.data;
+          console.log('[EmpID] ' + Object.keys(p.data).length + ' records from cache');
           return;
         }
       }
-    } catch(e) {}
+    } catch (e) {}
 
-    /* Fetch from Firestore REST */
+    var all = [];
+    var nextPage = null;
     try {
-      let pageToken = null;
-      let allDocs = [];
       do {
-        let url = 'https://firestore.googleapis.com/v1/projects/' + FIREBASE_PROJECT
-          + '/databases/(default)/documents/' + COLLECTION
-          + '?key=' + FIREBASE_API_KEY + '&pageSize=300';
-        if (pageToken) url += '&pageToken=' + pageToken;
+        var url = 'https://firestore.googleapis.com/v1/projects/' + PROJECT
+          + '/databases/(default)/documents/' + COLL
+          + '?key=' + API_KEY + '&pageSize=300'
+          + (nextPage ? '&pageToken=' + nextPage : '');
+        var res  = await fetch(url);
+        var json = await res.json();
+        if (json.documents) all = all.concat(json.documents);
+        nextPage = json.nextPageToken || null;
+      } while (nextPage);
 
-        const res  = await fetch(url);
-        const data = await res.json();
-        if (data.documents) allDocs = allDocs.concat(data.documents);
-        pageToken = data.nextPageToken || null;
-      } while (pageToken);
-
-      const map = {};
-      allDocs.forEach(function(d) {
-        const f  = d.fields || {};
-        const pc = (f.personCode && f.personCode.stringValue) || '';
-        const id = (f.empId      && f.empId.stringValue)      || '';
+      var map = {};
+      all.forEach(function (d) {
+        var f  = d.fields || {};
+        var pc = (f.personCode && f.personCode.stringValue) || '';
+        var id = (f.empId      && f.empId.stringValue)      || '';
         if (pc) map[pc] = id;
       });
-
       window.empIdMap = map;
-      console.log('[EmpID] Loaded ' + allDocs.length + ' records from Firebase.');
+      console.log('[EmpID] Loaded ' + all.length + ' records from Firebase');
 
-      /* Cache it */
       try {
         sessionStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), data: map }));
-      } catch(e) {}
-    } catch(err) {
-      console.warn('[EmpID] Failed to load mapping:', err);
+      } catch (e) {}
+    } catch (err) {
+      console.warn('[EmpID] Load failed:', err);
+      /* Retry in 5 seconds */
+      setTimeout(loadMap, 5000);
     }
   }
 
-  /* ──────────────────────────────────────────────────────────
-   * 2. LOOKUP HELPER
-   * ────────────────────────────────────────────────────────── */
-  window.getEmpId = function(personCode) {
-    if (!personCode) return '';
-    return window.empIdMap[String(personCode).trim()] || '';
+  window.getEmpId = function (personCode) {
+    return window.empIdMap[String(personCode || '').trim()] || '';
   };
 
-  /* ──────────────────────────────────────────────────────────
-   * 3. TABLE COLUMN INJECTION (MutationObserver)
-   *
-   *    Watches every <table> in the real-app-wrapper for rows
-   *    being added, then injects an Emp. ID cell at position 2
-   *    (after the row number / first column).
-   * ────────────────────────────────────────────────────────── */
-  const EMP_ID_ATTR    = 'data-empid-injected';
-  const HEADER_ATTR    = 'data-empid-header';
-  const PERSON_CODE_COL_NAMES = ['person code', 'personcode', 'person_code'];
+  window.reloadEmpIdMap = async function () {
+    try { sessionStorage.removeItem(CACHE_KEY); } catch (e) {}
+    window.empIdMap = {};
+    await loadMap();
+    scanAllTables();
+  };
 
-  /* Find the column index that holds Person Code in a <thead> row */
-  function findPersonCodeColIndex(thead) {
+  /* ──────────────────────────────────────────────
+   * 2. TABLE INJECTION
+   * ────────────────────────────────────────────── */
+  var INJECTED_ROW = 'data-eid-done';
+  var INJECTED_HDR = 'data-eid-hdr';
+  var EMP_ID_TH_CLASS = 'eid-th';
+
+  function isPersonCodeHeader(text) {
+    var t = (text || '').trim().toLowerCase();
+    return PC_HEADERS.some(function (h) { return t === h || t.includes(h); });
+  }
+
+  function getPersonCodeColIndex(thead) {
     if (!thead) return -1;
-    const ths = thead.querySelectorAll('th');
-    for (let i = 0; i < ths.length; i++) {
-      const txt = ths[i].textContent.trim().toLowerCase();
-      if (PERSON_CODE_COL_NAMES.some(n => txt.includes(n))) return i;
+    var ths = thead.querySelectorAll('th, td');
+    for (var i = 0; i < ths.length; i++) {
+      if (isPersonCodeHeader(ths[i].textContent)) return i;
     }
     return -1;
   }
 
-  /* Inject header cell if not already injected */
-  function injectHeaderCell(thead) {
-    if (!thead || thead.getAttribute(HEADER_ATTR)) return;
-    const headerRow = thead.querySelector('tr');
-    if (!headerRow) return;
-    const ths = headerRow.querySelectorAll('th');
-    if (ths.length < 2) return;
+  function injectHeader(thead) {
+    if (!thead || thead.hasAttribute(INJECTED_HDR)) return false;
+    var pcIdx = getPersonCodeColIndex(thead);
+    if (pcIdx === -1) return false;
 
-    /* Insert after 1st column */
-    const th = document.createElement('th');
+    var headerRow = thead.querySelector('tr');
+    if (!headerRow) return false;
+    var ths = headerRow.querySelectorAll('th, td');
+    if (ths.length === 0) return false;
+
+    /* Build the Emp. ID header cell */
+    var th = document.createElement('th');
     th.textContent = 'Emp. ID';
-    th.style.cssText = 'color:#6ee7b7;white-space:nowrap;';
-    th.setAttribute('data-empid-th', '1');
-    headerRow.insertBefore(th, ths[1]);
-    thead.setAttribute(HEADER_ATTR, '1');
+    th.className = EMP_ID_TH_CLASS;
+    th.style.cssText = [
+      'color:#6ee7b7',
+      'background:#112240',
+      'font-weight:700',
+      'font-size:12px',
+      'padding:8px 12px',
+      'white-space:nowrap',
+      'border-right:1px solid rgba(14,165,233,0.2)',
+      'text-align:left'
+    ].join(';');
+
+    /* Insert as 2nd column (after the # column) */
+    var insertBefore = ths[1] || null;
+    headerRow.insertBefore(th, insertBefore);
+    thead.setAttribute(INJECTED_HDR, pcIdx);
+    return true;
   }
 
-  /* Inject data cell into a body row */
-  function injectDataCell(tr, empId) {
-    if (tr.getAttribute(EMP_ID_ATTR)) return;
-    const tds = tr.querySelectorAll('td');
-    if (tds.length < 1) return;
+  function injectRow(tr, pcIdx) {
+    if (tr.hasAttribute(INJECTED_ROW)) return;
+    var tds = tr.querySelectorAll('td');
+    if (tds.length <= pcIdx) return;
 
-    const td = document.createElement('td');
+    var personCode = tds[pcIdx].textContent.trim();
+    var empId      = window.getEmpId(personCode);
+
+    var td = document.createElement('td');
     td.textContent = empId || '—';
-    td.style.cssText = 'color:' + (empId ? '#6ee7b7' : '#4a5568') + ';font-family:monospace;font-size:12px;white-space:nowrap;';
-    td.setAttribute('data-empid-td', '1');
-    tr.insertBefore(td, tds[1] || tds[0].nextSibling);
-    tr.setAttribute(EMP_ID_ATTR, empId || '');
+    td.setAttribute('data-eid-pc', personCode);
+    td.style.cssText = [
+      'color:' + (empId ? '#6ee7b7' : '#4a5568'),
+      'font-family:monospace',
+      'font-size:12px',
+      'padding:8px 12px',
+      'white-space:nowrap',
+      'border-right:1px solid rgba(14,165,233,0.12)'
+    ].join(';');
+
+    var insertBefore = tds[1] || null;
+    tr.insertBefore(td, insertBefore);
+    tr.setAttribute(INJECTED_ROW, empId || '—');
   }
 
-  /* Process a single table */
   function processTable(table) {
-    const thead = table.querySelector('thead');
+    if (!table || !table.querySelector) return;
+
+    var thead = table.querySelector('thead');
     if (!thead) return;
-    /* Skip tables that already have our header */
-    if (thead.getAttribute(HEADER_ATTR)) return;
 
-    const pcColIdx = findPersonCodeColIndex(thead);
-    if (pcColIdx === -1) return; /* Not an employee table */
-
-    injectHeaderCell(thead);
-
-    /* Process existing body rows */
-    table.querySelectorAll('tbody tr').forEach(function(tr) {
-      if (tr.getAttribute(EMP_ID_ATTR) !== null) return;
-      const tds = tr.querySelectorAll('td');
-      if (tds.length <= pcColIdx) return;
-      const personCode = tds[pcColIdx].textContent.trim();
-      injectDataCell(tr, window.getEmpId(personCode));
-    });
-  }
-
-  /* Watch for new rows added to tables */
-  function startObserver() {
-    const appWrapper = document.getElementById('real-app-wrapper') || document.body;
-
-    const observer = new MutationObserver(function(mutations) {
-      mutations.forEach(function(m) {
-        m.addedNodes.forEach(function(node) {
-          if (node.nodeType !== 1) return;
-
-          /* New table added */
-          if (node.tagName === 'TABLE') { processTable(node); return; }
-
-          /* New row added inside a table */
-          if (node.tagName === 'TR') {
-            const table = node.closest('table');
-            if (!table) return;
-            const thead = table.querySelector('thead');
-            if (!thead || !thead.getAttribute(HEADER_ATTR)) { processTable(table); return; }
-
-            /* Header already injected — just add the cell to this new row */
-            if (node.closest('tbody')) {
-              if (node.getAttribute(EMP_ID_ATTR) !== null) return;
-              const pcColIdx = findPersonCodeColIndex(thead);
-              if (pcColIdx === -1) return;
-              const tds = node.querySelectorAll('td');
-              if (tds.length <= pcColIdx) return;
-              const personCode = tds[pcColIdx].textContent.trim();
-              injectDataCell(node, window.getEmpId(personCode));
-            }
-            return;
-          }
-
-          /* Subtree changes (table rebuilt) */
-          node.querySelectorAll('table').forEach(processTable);
-        });
-      });
-    });
-
-    observer.observe(appWrapper, { childList: true, subtree: true });
-  }
-
-  /* ──────────────────────────────────────────────────────────
-   * 4. EXCEL EXPORT PATCH
-   *
-   *    Wraps the global exportToExcel / exportXLSX / any
-   *    window function name the original app uses for export,
-   *    and injects the Emp. ID as the 2nd column in the data.
-   * ────────────────────────────────────────────────────────── */
-  function patchExcelExport() {
-    /* Known export function names used by the obfuscated app */
-    const EXPORT_FN_NAMES = [
-      'exportToExcel', 'exportXLSX', 'downloadExcel',
-      'exportData', 'doExport', 'exportFile'
-    ];
-
-    function wrapExportFn(name) {
-      if (typeof window[name] !== 'function') return;
-      if (window[name].__empIdPatched) return;
-      const original = window[name];
-      window[name] = function() {
-        /* Inject Emp. ID into global employee data array if present */
-        injectEmpIdIntoData();
-        return original.apply(this, arguments);
-      };
-      window[name].__empIdPatched = true;
+    /* Get or inject header, record pcIdx */
+    var pcIdx;
+    if (thead.hasAttribute(INJECTED_HDR)) {
+      pcIdx = parseInt(thead.getAttribute(INJECTED_HDR), 10);
+    } else {
+      pcIdx = getPersonCodeColIndex(thead);
+      if (pcIdx === -1) return; /* not an employee table */
+      injectHeader(thead);
     }
 
-    EXPORT_FN_NAMES.forEach(wrapExportFn);
-
-    /* Also watch for any future assignment */
-    EXPORT_FN_NAMES.forEach(function(name) {
-      let _val = window[name];
-      Object.defineProperty(window, name, {
-        get: function() { return _val; },
-        set: function(fn) {
-          _val = fn;
-          if (typeof fn === 'function' && !fn.__empIdPatched) {
-            const orig = fn;
-            _val = function() {
-              injectEmpIdIntoData();
-              return orig.apply(this, arguments);
-            };
-            _val.__empIdPatched = true;
-          }
-        },
-        configurable: true
-      });
+    /* Inject body rows */
+    var tbody = table.querySelector('tbody');
+    if (!tbody) return;
+    var rows = tbody.querySelectorAll('tr');
+    rows.forEach(function (tr) {
+      injectRow(tr, pcIdx);
     });
   }
 
-  /* ──────────────────────────────────────────────────────────
-   * 5. DATA ARRAY INJECTION
-   *
-   *    The app stores extracted records in a global array
-   *    (window.empData, window.allRows, window.tableData, etc.)
-   *    We add empId to each record if Person Code is present
-   *    and it isn't already there.
-   * ────────────────────────────────────────────────────────── */
-  const DATA_ARRAY_NAMES = [
-    'empData', 'allRows', 'tableData', 'employeeData',
-    'extractedData', 'wpsData', 'allRecords', 'empRows'
-  ];
-
-  function injectEmpIdIntoData() {
-    DATA_ARRAY_NAMES.forEach(function(name) {
-      const arr = window[name];
-      if (!Array.isArray(arr)) return;
-      arr.forEach(function(row) {
-        if (!row || typeof row !== 'object') return;
-        if (row.empId !== undefined) return; /* already set */
-
-        /* Find Person Code value */
-        const pc = row['Person Code'] || row['personCode'] || row['person_code'] ||
-                   row['PersonCode']  || row['PERSON CODE'] || '';
-        row.empId = window.getEmpId(String(pc).trim());
-      });
-    });
-  }
-
-  /* ──────────────────────────────────────────────────────────
-   * 6. PERIODIC RE-PROCESS (fallback for dynamic renders)
-   * ────────────────────────────────────────────────────────── */
-  function reProcessAllTables() {
+  function scanAllTables() {
     document.querySelectorAll('table').forEach(processTable);
   }
 
-  /* ──────────────────────────────────────────────────────────
-   * 7. INIT
-   * ────────────────────────────────────────────────────────── */
-  async function init() {
-    await loadEmpIdMap();
-    startObserver();
-    patchExcelExport();
-    reProcessAllTables();
+  /* ──────────────────────────────────────────────
+   * 3. MUTATION OBSERVER — watches the whole body
+   *    for ANY table/row changes
+   * ────────────────────────────────────────────── */
+  function startObserver() {
+    var observer = new MutationObserver(function (mutations) {
+      var needScan = false;
+      for (var i = 0; i < mutations.length; i++) {
+        var m = mutations[i];
+        if (m.addedNodes.length > 0) { needScan = true; break; }
+        if (m.type === 'characterData') { needScan = true; break; }
+      }
+      if (needScan) {
+        /* Debounce: wait 60ms then scan */
+        clearTimeout(startObserver._t);
+        startObserver._t = setTimeout(scanAllTables, 60);
+      }
+    });
 
-    /* Re-process a few times after page settles */
-    setTimeout(reProcessAllTables, 1000);
-    setTimeout(reProcessAllTables, 3000);
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      characterData: false
+    });
+  }
+
+  /* ──────────────────────────────────────────────
+   * 4. INTERVAL FALLBACK — every 2s
+   *    Catches cases where observer misses changes
+   * ────────────────────────────────────────────── */
+  function startInterval() {
+    setInterval(function () {
+      scanAllTables();
+      /* Also re-fill any cells where empId was '—' but map is now loaded */
+      if (Object.keys(window.empIdMap).length > 0) {
+        document.querySelectorAll('[data-eid-pc]').forEach(function (td) {
+          var pc = td.getAttribute('data-eid-pc');
+          if (!pc) return;
+          var eid = window.getEmpId(pc);
+          if (eid && td.textContent === '—') {
+            td.textContent = eid;
+            td.style.color = '#6ee7b7';
+            var tr = td.closest('tr');
+            if (tr) tr.setAttribute(INJECTED_ROW, eid);
+          }
+        });
+      }
+    }, 2000);
+  }
+
+  /* ──────────────────────────────────────────────
+   * 5. PATCH extractPDF — run scan after extract
+   * ────────────────────────────────────────────── */
+  function patchExtractPDF() {
+    /* Wait until extractPDF function is defined */
+    if (typeof window.extractPDF === 'function' && !window.extractPDF.__eidPatched) {
+      var orig = window.extractPDF;
+      window.extractPDF = function () {
+        var result = orig.apply(this, arguments);
+        /* Scan after a short delay (allow render to complete) */
+        setTimeout(scanAllTables, 500);
+        setTimeout(scanAllTables, 1500);
+        setTimeout(scanAllTables, 3000);
+        return result;
+      };
+      window.extractPDF.__eidPatched = true;
+      return true;
+    }
+    return false;
+  }
+
+  /* ──────────────────────────────────────────────
+   * 6. INIT
+   * ────────────────────────────────────────────── */
+  async function init() {
+    /* Load Firebase data */
+    await loadMap();
+
+    /* Patch extractPDF if already defined, or watch for it */
+    if (!patchExtractPDF()) {
+      var patchAttempts = 0;
+      var patchInterval = setInterval(function () {
+        if (patchExtractPDF() || ++patchAttempts > 30) clearInterval(patchInterval);
+      }, 500);
+    }
+
+    /* Start observer and interval */
+    startObserver();
+    startInterval();
+
+    /* Initial scan */
+    scanAllTables();
+    setTimeout(scanAllTables, 1000);
+    setTimeout(scanAllTables, 3000);
   }
 
   if (document.readyState === 'loading') {
@@ -310,14 +288,5 @@
   } else {
     init();
   }
-
-  /* Expose refresh function so app can call window.reloadEmpIdMap() after admin saves */
-  window.reloadEmpIdMap = async function() {
-    try { sessionStorage.removeItem(CACHE_KEY); } catch(e) {}
-    window.empIdMap = {};
-    await loadEmpIdMap();
-    reProcessAllTables();
-    console.log('[EmpID] Map reloaded.');
-  };
 
 })();
