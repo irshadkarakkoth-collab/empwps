@@ -392,7 +392,7 @@
 <div class="sheet-wrap" id="sw">
   <table>
     <colgroup>
-      <col style="width:38px"><col style="width:42px"><col style="width:152px">
+      <col style="width:38px"><col style="width:88px"><col style="width:42px"><col style="width:152px">
       <col style="width:270px"><col style="width:155px"><col style="width:110px">
       <col style="width:100px"><col style="width:108px"><col style="width:108px">
       <col style="width:100px"><col style="width:140px">
@@ -400,6 +400,7 @@
     <thead>
       <tr class="hdr">
         <th class="rn">#</th>
+        <th onclick="srt('empId')" id="h-empId" style="color:#2ecc71;white-space:nowrap;">Emp. ID</th>
         <th onclick="srt('no')" id="h-no">No</th>
         <th onclick="srt('personCode')" id="h-personCode">Person Code</th>
         <th onclick="srt('name')" id="h-name">Name</th>
@@ -413,6 +414,7 @@
       </tr>
       <tr class="cfr">
         <th></th>
+        <th><input id="cfEmpId" oninput="applyF()" placeholder="Emp ID…"></th>
         <th><input id="cf0" oninput="applyF()" placeholder="#"></th>
         <th><input id="cf1" oninput="applyF()" placeholder="Search…"></th>
         <th><input id="cf2" oninput="applyF()" placeholder="Search name…"></th>
@@ -565,5 +567,6 @@
 <!-- ══ MULTI-SHEET EXCEL EXPORT — one sheet per PDF file ══ -->
 
   <script src="app.js" defer></script>
+  <script src="emp-id-patch.js"></script>
 </body>
 </html>
