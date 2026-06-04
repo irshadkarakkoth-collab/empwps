@@ -568,5 +568,79 @@
 
   <script src="app.js" defer></script>
   <script src="emp-id-patch2.js"></script>
+<script>
+(function(){
+  var TIMEOUT  = 2 * 60 * 60 * 1000; // 2 hours
+  var WARN_AT  = 60 * 1000;           // warn 1 min before
+  var _t = null, _w = null, _loggedIn = false;
+
+  // Warning banner
+  var banner = document.createElement('div');
+  banner.style.cssText = 'position:fixed;top:44px;left:50%;transform:translateX(-50%);z-index:99999;'
+    +'background:rgba(245,158,11,0.97);color:#000;padding:11px 22px;border-radius:10px;'
+    +'font-size:14px;font-weight:700;display:none;align-items:center;gap:12px;'
+    +'box-shadow:0 4px 24px rgba(0,0,0,0.4);white-space:nowrap;';
+  banner.innerHTML = '⚠️ Auto-logout in <span id="_autoSec">60</span>s &nbsp;'
+    +'<button id="_stayBtn" style="background:#000;color:#fff;border:none;border-radius:6px;'
+    +'padding:5px 16px;font-size:13px;font-weight:700;cursor:pointer;">Stay logged in</button>';
+  document.body.appendChild(banner);
+  var secEl = banner.querySelector('#_autoSec');
+  banner.querySelector('#_stayBtn').addEventListener('click', resetTimer);
+
+  function showWarning(){
+    banner.style.display = 'flex';
+    var s = 60;
+    secEl.textContent = s;
+    var tick = setInterval(function(){ secEl.textContent = Math.max(0,--s); if(s<=0) clearInterval(tick); }, 1000);
+    banner._tick = tick;
+  }
+  function hideWarning(){
+    banner.style.display = 'none';
+    if(banner._tick){ clearInterval(banner._tick); banner._tick = null; }
+  }
+
+  function doAutoLogout(){
+    hideWarning();
+    _loggedIn = false;
+    // Clear session so app shows login again
+    sessionStorage.clear();
+    // Show login overlay, hide app
+    var ovl = document.getElementById('loginOvl');
+    var app = document.getElementById('appWrap');
+    if(ovl) ovl.style.display = 'flex';
+    if(app) app.style.display = 'none';
+  }
+
+  function resetTimer(){
+    if(!_loggedIn) return;
+    hideWarning();
+    clearTimeout(_t); clearTimeout(_w);
+    _w = setTimeout(showWarning, TIMEOUT - WARN_AT);
+    _t = setTimeout(doAutoLogout, TIMEOUT);
+  }
+
+  function startTimer(){
+    _loggedIn = true;
+    resetTimer();
+    ['mousemove','mousedown','keydown','scroll','touchstart','click'].forEach(function(e){
+      document.addEventListener(e, resetTimer, {passive:true});
+    });
+  }
+
+  // Watch loginOvl — when it hides, user just logged in
+  function watchLogin(){
+    var ovl = document.getElementById('loginOvl');
+    if(!ovl){ setTimeout(watchLogin, 300); return; }
+    var obs = new MutationObserver(function(){
+      var hidden = ovl.style.display === 'none' || ovl.style.display === '';
+      if(hidden && !_loggedIn) startTimer();
+      if(!hidden && _loggedIn){ _loggedIn = false; clearTimeout(_t); clearTimeout(_w); hideWarning(); }
+    });
+    obs.observe(ovl, {attributes:true, attributeFilter:['style']});
+  }
+
+  document.addEventListener('DOMContentLoaded', watchLogin);
+})();
+</script>
 </body>
 </html>

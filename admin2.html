@@ -252,6 +252,7 @@ async function doLogin() {
       adminApp.style.display = 'block';
       btnLogout.style.display = 'inline-flex';
       document.getElementById('existingSection').style.display = 'block';
+      startInactivityTimer();
     } else {
       showLoginErr('❌ Invalid password.');
     }
@@ -267,14 +268,86 @@ function showLoginErr(msg) {
   loginErr.style.display = 'block';
 }
 
-btnLogout.addEventListener('click', () => {
+function doLogout() {
   adminPassword = '';
   loginScreen.style.display = 'flex';
   adminApp.style.display = 'none';
   btnLogout.style.display = 'none';
   document.getElementById('loginPass').value = '';
   clearAll();
-});
+  stopInactivityTimer();
+  hideTimeoutWarning();
+}
+
+btnLogout.addEventListener('click', doLogout);
+
+// ── Auto-logout after 2 hours of inactivity ──────────────────────────────────
+var INACTIVITY_LIMIT = 2 * 60 * 60 * 1000; // 2 hours
+var WARN_BEFORE      = 60 * 1000;           // warn 1 min before
+var _inactivityTimer = null;
+var _warnTimer       = null;
+var _warnEl          = null;
+var _warnCountdown   = null;
+
+function createWarningBanner() {
+  if (_warnEl) return;
+  _warnEl = document.createElement('div');
+  _warnEl.style.cssText = 'position:fixed;top:70px;left:50%;transform:translateX(-50%);z-index:9999;'
+    + 'background:rgba(245,158,11,0.95);color:#000;padding:12px 24px;border-radius:10px;'
+    + 'font-size:14px;font-weight:700;display:none;align-items:center;gap:12px;'
+    + 'box-shadow:0 4px 20px rgba(0,0,0,0.4);backdrop-filter:blur(8px);';
+  _warnEl.innerHTML = '⚠️ Auto-logout in <span id="_warnSec">60</span>s due to inactivity &nbsp;'
+    + '<button onclick="resetInactivityTimer()" style="background:#000;color:#fff;border:none;'
+    + 'border-radius:6px;padding:5px 14px;font-size:13px;font-weight:700;cursor:pointer;">Stay logged in</button>';
+  document.body.appendChild(_warnEl);
+  _warnCountdown = _warnEl.querySelector('#_warnSec');
+}
+
+function showTimeoutWarning() {
+  createWarningBanner();
+  _warnEl.style.display = 'flex';
+  var secs = 60;
+  _warnCountdown.textContent = secs;
+  var tick = setInterval(function() {
+    secs--;
+    if (_warnCountdown) _warnCountdown.textContent = Math.max(0, secs);
+    if (secs <= 0) clearInterval(tick);
+  }, 1000);
+  _warnEl._tick = tick;
+}
+
+function hideTimeoutWarning() {
+  if (!_warnEl) return;
+  if (_warnEl._tick) clearInterval(_warnEl._tick);
+  _warnEl.style.display = 'none';
+}
+
+function resetInactivityTimer() {
+  if (!adminPassword) return;
+  hideTimeoutWarning();
+  clearTimeout(_inactivityTimer);
+  clearTimeout(_warnTimer);
+  _warnTimer = setTimeout(showTimeoutWarning, INACTIVITY_LIMIT - WARN_BEFORE);
+  _inactivityTimer = setTimeout(function() {
+    doLogout();
+    showStatus('info', '🔒 You were logged out after 2 hours of inactivity.');
+  }, INACTIVITY_LIMIT);
+}
+
+function stopInactivityTimer() {
+  clearTimeout(_inactivityTimer);
+  clearTimeout(_warnTimer);
+}
+
+function startInactivityTimer() {
+  createWarningBanner();
+  resetInactivityTimer();
+  ['mousemove','mousedown','keydown','scroll','touchstart','click'].forEach(function(evt) {
+    document.addEventListener(evt, resetInactivityTimer, { passive: true });
+  });
+}
+
+window.resetInactivityTimer = resetInactivityTimer;
 
 dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag'); });
 dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag'));
@@ -437,13 +510,32 @@ async function saveToServer() {
       body: JSON.stringify({ password: adminPassword, records })
     });
     const data = await r.json();
-    progressFill.style.width = '100%';
+    progressFill.style.width = '60%';
     if (data.ok) {
       document.getElementById('statSaved').textContent   = data.saved;
       document.getElementById('statSkipped').textContent = skipped;
       document.getElementById('statTotal').textContent   = data.total;
       statsRow.style.display = 'flex';
-      showStatus('success', '✅ Saved ' + data.saved + ' records to server!' + (skipped ? ' ' + skipped + ' rows skipped.' : ' All rows saved!'));
+
+      // Push to GitHub
+      progressText.textContent = 'Pushing to GitHub...';
+      try {
+        const gh = await fetch('https://f18d820d-cc6b-4d8f-bc63-b4c382def94e-00-1xvxg4vkwk67q.pike.replit.dev/api/emp-mapping/push-to-github', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: adminPassword })
+        });
+        const ghData = await gh.json();
+        progressFill.style.width = '100%';
+        if (ghData.ok) {
+          showStatus('success', '✅ Saved ' + data.saved + ' records & pushed to GitHub!' + (skipped ? ' ' + skipped + ' rows skipped.' : ''));
+        } else {
+          showStatus('success', '✅ Saved ' + data.saved + ' records to server. ⚠️ GitHub push failed: ' + (ghData.error || 'unknown error'));
+        }
+      } catch(ghErr) {
+        progressFill.style.width = '100%';
+        showStatus('success', '✅ Saved ' + data.saved + ' records to server. ⚠️ GitHub push failed: ' + ghErr.message);
+      }
     } else {
       showStatus('error', '❌ ' + (data.error || 'Save failed'));
     }
