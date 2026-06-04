@@ -394,8 +394,8 @@
     <colgroup>
       <col style="width:38px"><col style="width:88px"><col style="width:42px"><col style="width:152px">
       <col style="width:270px"><col style="width:155px"><col style="width:110px">
-      <col style="width:100px"><col style="width:108px"><col style="width:108px">
-      <col style="width:100px"><col style="width:140px">
+      <col style="width:100px"><col style="width:108px"><col style="width:130px">
+      <col style="width:108px"><col style="width:100px"><col style="width:140px">
     </colgroup>
     <thead>
       <tr class="hdr">
@@ -408,6 +408,7 @@
         <th onclick="srt('passport')" id="h-passport">Passport No.</th>
         <th onclick="srt('nationality')" id="h-nationality">Nationality</th>
         <th onclick="srt('cardNo')" id="h-cardNo">Card Number</th>
+        <th id="h-cardType" style="white-space:nowrap;">Type</th>
         <th onclick="srt('expiry')" id="h-expiry">Expiry Date</th>
         <th onclick="srt('companyCode')" id="h-companyCode">Company Code</th>
         <th onclick="srt('source')" id="h-source">Source File</th>
@@ -422,6 +423,7 @@
         <th><input id="cf4" oninput="applyF()" placeholder="Search…"></th>
         <th><input id="cf5" oninput="applyF()" placeholder="Search…"></th>
         <th><input id="cf6" oninput="applyF()" placeholder="Search…"></th>
+        <th><input id="cfType" oninput="applyTypeFilter()" placeholder="Type…" style="width:100px;"></th>
         <th><input id="cf7" oninput="applyF()" placeholder="DD/MM/YYYY"></th>
         <th><input id="cf9" oninput="applyF()" placeholder="Code…"></th>
         <th><input id="cf8" oninput="applyF()" placeholder="Filename…"></th>

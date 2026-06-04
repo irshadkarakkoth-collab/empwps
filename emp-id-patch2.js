@@ -1,8 +1,8 @@
 /**
- * EMPWPSCTR — Emp. ID Patch v2 (Server Edition)
- * ─────────────────────────────────────────────────
- * Loads Emp. ID mappings from the local server API
- * instead of Firebase. Everything else is identical.
+ * EMPWPSCTR — Emp. ID + Type Patch v3 (Server Edition)
+ * ─────────────────────────────────────────────────────
+ * Loads Emp. ID mappings from GitHub.
+ * Also injects a "Type" column (card/permit type from PDF).
  */
 (function () {
   'use strict';
@@ -11,6 +11,7 @@
   var TTL   = 10 * 60 * 1000; // 10 minutes
 
   window.empIdMap = {};
+  window.empCardTypeByPersonCode = window.empCardTypeByPersonCode || {};
 
   async function loadMap() {
     try {
@@ -45,6 +46,10 @@
     return window.empIdMap[String(pc || '').trim()] || '';
   };
 
+  window.getCardType = function (pc) {
+    return (window.empCardTypeByPersonCode || {})[String(pc || '').trim()] || '';
+  };
+
   window.checkEmpId = function (pc) {
     var result = window.getEmpId(pc);
     console.log('[EmpID-Server] checkEmpId("' + pc + '") =', result || '(not found)');
@@ -58,6 +63,25 @@
     processAllExistingRows();
   };
 
+  /* ── Type filter ─────────────────────────────────────── */
+  var TYPE_COL_ATTR = 'data-ctype';
+
+  window.applyTypeFilter = function () {
+    var inp = document.getElementById('cfType');
+    if (!inp) return;
+    var q = inp.value.trim().toLowerCase();
+    var tbody = document.getElementById('tbody');
+    if (!tbody) return;
+    tbody.querySelectorAll('tr').forEach(function (tr) {
+      var typeCell = tr.querySelector('[' + TYPE_COL_ATTR + ']');
+      if (!typeCell) return;
+      var val = typeCell.textContent.toLowerCase();
+      var match = !q || val.indexOf(q) !== -1;
+      tr.style.display = match ? '' : 'none';
+    });
+  };
+
+  /* ── WPS Pct Map ─────────────────────────────────────── */
   function captureWpsPctMap() {
     var map = {};
     try {
@@ -87,6 +111,7 @@
     return map;
   }
 
+  /* ── XLSX Patch ──────────────────────────────────────── */
   function patchXlsx() {
     if (typeof XLSX === 'undefined') { setTimeout(patchXlsx, 300); return; }
 
@@ -97,20 +122,30 @@
           var keys   = Object.keys(data[0]);
           var pcKey  = keys.find(function (k) { return /person.?code/i.test(k); });
           var pctKey = keys.find(function (k) { return k.trim() === '%'; });
+          var cardNoKey = keys.find(function (k) { return /card.?(no|number)/i.test(k); });
           if (pcKey) {
             var wpsPctMap = pctKey ? captureWpsPctMap() : {};
             if (opts && Array.isArray(opts.header)) {
               opts = Object.assign({}, opts);
               opts.header = [opts.header[0], 'Emp. ID'].concat(opts.header.slice(1));
+              if (cardNoKey) {
+                var cnIdx = opts.header.indexOf(cardNoKey);
+                if (cnIdx !== -1) opts.header.splice(cnIdx + 1, 0, 'Type');
+              }
             }
             data = data.map(function (row) {
-              var out = {}, done = false;
+              var out = {}, empIdDone = false, typeDone = false;
               var pc    = String(row[pcKey] || '').trim();
               var empId = window.getEmpId(pc);
+              var ctype = window.getCardType(pc);
               Object.keys(row).forEach(function (k) {
                 if (k === pctKey && wpsPctMap[pc]) { out[k] = wpsPctMap[pc]; }
                 else { out[k] = row[k]; }
-                if (!done) { out['Emp. ID'] = empId || '—'; done = true; }
+                if (!empIdDone) { out['Emp. ID'] = empId || '—'; empIdDone = true; }
+                if (cardNoKey && k === cardNoKey && !typeDone) {
+                  out['Type'] = ctype || '';
+                  typeDone = true;
+                }
               });
               return out;
             });
@@ -125,17 +160,19 @@
       try {
         if (Array.isArray(data) && data.length > 1 && Array.isArray(data[0])) {
           var header = data[0];
-          var pcIdx = -1, pctIdx = -1;
+          var pcIdx = -1, pctIdx = -1, cardNoIdx = -1;
           for (var i = 0; i < header.length; i++) {
             var h = String(header[i] || '');
-            if (pcIdx  === -1 && /person.?code/i.test(h)) pcIdx  = i;
-            if (pctIdx === -1 && h.trim() === '%')         pctIdx = i;
+            if (pcIdx     === -1 && /person.?code/i.test(h))    pcIdx     = i;
+            if (pctIdx    === -1 && h.trim() === '%')            pctIdx    = i;
+            if (cardNoIdx === -1 && /card.?(no|number)/i.test(h)) cardNoIdx = i;
           }
           var wpsPctMap = (pcIdx !== -1 && pctIdx !== -1) ? captureWpsPctMap() : {};
           if (pcIdx !== -1) {
             data = data.map(function (row, rowIdx) {
               if (!Array.isArray(row)) return row;
               var out = row.slice();
+              // Insert Emp. ID at position 1
               if (rowIdx === 0) {
                 out.splice(1, 0, 'Emp. ID');
               } else {
@@ -143,6 +180,17 @@
                 var empId = window.getEmpId(pc);
                 out.splice(1, 0, empId || '—');
                 if (pctIdx !== -1 && wpsPctMap[pc]) out[pctIdx + 1] = wpsPctMap[pc];
+              }
+              // Insert Type after Card Number (now shifted by 1 due to Emp. ID)
+              if (cardNoIdx !== -1) {
+                var typeInsertIdx = cardNoIdx + 1 + 1; // +1 shift from Emp. ID
+                if (rowIdx === 0) {
+                  out.splice(typeInsertIdx, 0, 'Type');
+                } else {
+                  var pc2   = String(row[pcIdx] || '').trim();
+                  var ctype = window.getCardType(pc2);
+                  out.splice(typeInsertIdx, 0, ctype || '');
+                }
               }
               return out;
             });
@@ -155,9 +203,10 @@
     console.log('[EmpID-Server] ✅ XLSX export patched');
   }
 
+  /* ── Employee table row injection ────────────────────── */
   var DONE = 'data-eid';
 
-  function makeCell(empId) {
+  function makeEmpIdCell(empId) {
     var td = document.createElement('td');
     td.setAttribute(DONE, empId || '—');
     td.textContent = empId || '—';
@@ -167,13 +216,37 @@
     return td;
   }
 
+  function makeTypeCell(cardType) {
+    var td = document.createElement('td');
+    td.setAttribute(TYPE_COL_ATTR, cardType || '');
+    td.textContent = cardType || '';
+    var color = '#ccc', bg = 'transparent';
+    if (/renew labour/i.test(cardType))    { color = '#f39c12'; bg = 'rgba(243,156,18,0.12)'; }
+    else if (/new labour/i.test(cardType)) { color = '#27ae60'; bg = 'rgba(39,174,96,0.12)'; }
+    else if (/work permit/i.test(cardType)){ color = '#3498db'; bg = 'rgba(52,152,219,0.12)'; }
+    td.style.cssText = 'color:' + color + ';background:' + bg
+      + ';font-size:11px;font-weight:600;padding:4px 8px;white-space:nowrap;'
+      + 'text-align:center;border-radius:4px;';
+    return td;
+  }
+
   function injectEmpRow(tr) {
     if (tr.hasAttribute(DONE)) return;
     var tds = tr.querySelectorAll('td');
     if (tds.length < 3) return;
-    var pc    = String(tds[2].textContent).trim();
-    var empId = window.getEmpId(pc);
-    tr.insertBefore(makeCell(empId), tds[1]);
+    var pc       = String(tds[2].textContent).trim();
+    var empId    = window.getEmpId(pc);
+    var cardType = window.getCardType(pc);
+
+    // Insert Emp. ID before tds[1] (No column)
+    tr.insertBefore(makeEmpIdCell(empId), tds[1]);
+
+    // Insert Type after Card Number (tds[7] = original Card Number cell)
+    // After Emp. ID insertion, tds[7] is still the same DOM element
+    if (tds[7]) {
+      tr.insertBefore(makeTypeCell(cardType), tds[7].nextSibling);
+    }
+
     tr.setAttribute(DONE, empId || '—');
   }
 
@@ -192,7 +265,12 @@
     }).observe(tbody, { childList: true, subtree: true });
   }
 
+  /* ── WPS table row injection ─────────────────────────── */
   var WPS_DONE = 'data-weid';
+
+  function makeCell(empId) {
+    return makeEmpIdCell(empId);
+  }
 
   function makeWpsTh(isFilter) {
     var th = document.createElement('th');
@@ -268,6 +346,7 @@
         var cell = tr.querySelector('[' + DONE + ']');
         if (cell && cell.getAttribute(DONE) === '—') {
           var tds = tr.querySelectorAll('td');
+          // After injection, Person Code is at index 3 (#, EmpID, No, PersonCode)
           var pc = tds[3] ? String(tds[3].textContent).trim() : '';
           var empId = window.getEmpId(pc);
           if (empId) {
@@ -276,6 +355,15 @@
             cell.style.fontWeight = '700';
             cell.setAttribute(DONE, empId);
             tr.setAttribute(DONE, empId);
+          }
+          // Also update type cell if it's empty
+          var typeCell = tr.querySelector('[' + TYPE_COL_ATTR + ']');
+          if (typeCell && !typeCell.getAttribute(TYPE_COL_ATTR) && pc) {
+            var ctype = window.getCardType(pc);
+            if (ctype) {
+              typeCell.textContent = ctype;
+              typeCell.setAttribute(TYPE_COL_ATTR, ctype);
+            }
           }
         } else if (!tr.hasAttribute(DONE)) {
           injectEmpRow(tr);

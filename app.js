@@ -27,6 +27,7 @@ const _0x44c704=_0x2723;(function(_0x5a47f9,_0x321403){const _0x244a95=_0x2723,_
 
   const originalExtractPDF = extractPDF;
   window.empParsedPdfMeta = window.empParsedPdfMeta || {};
+  window.empCardTypeByPersonCode = window.empCardTypeByPersonCode || {};
   const nationalities = [
     'UNITED ARAB EMIRATES','SRI LANKA','PHILIPPINES','BANGLADESH','PAKISTAN',
     'AFGHANISTAN','INDONESIA','ETHIOPIA','MOROCCO','MYANMAR','VIETNAM',
@@ -44,6 +45,7 @@ const _0x44c704=_0x2723;(function(_0x5a47f9,_0x321403){const _0x244a95=_0x2723,_
   const escapeRx = value => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const nationalityRx = new RegExp('(' + nationalities.sort((a,b)=>b.length-a.length).map(escapeRx).join('|') + ')', 'i');
   const permitRx = new RegExp(permitTypes.map(escapeRx).join('|'), 'i');
+  const cardTypeRx = /(Golden Visa Work Permit|Renew Labour Card|New Labour Card|Renew Work Permit|New Work Permit|Work Permit)/i;
   const startRx = /^([A-Z0-9]{5,12})\s+([A-Z][A-Z .'-]+)/;
   const looseStartRx = /^([A-Z0-9]{5,12})(?:\s|$)/;
   const arabicRx = /[\u0600-\u06ff\ufb50-\ufdff\ufe70-\ufeff\x00]+/g;
@@ -257,6 +259,8 @@ const _0x44c704=_0x2723;(function(_0x5a47f9,_0x321403){const _0x244a95=_0x2723,_
 
       const expiryMatch = raw.match(/\d{2}\/\d{2}\/\d{4}/);
       const expiry = expiryMatch ? expiryMatch[0] : '';
+      const cardTypeMatch = cardTypeRx.exec(raw);
+      const cardType = cardTypeMatch ? cardTypeMatch[1] : '';
 
       let afterPermit = '';
       if (permitMatch && personIndex > permitMatch.index) {
@@ -294,6 +298,7 @@ const _0x44c704=_0x2723;(function(_0x5a47f9,_0x321403){const _0x244a95=_0x2723,_
         passport: passport,
         nationality: nationality,
         cardNo: cardNo,
+        cardType: cardType,
         expiry: expiry,
         companyCode: companyCode,
         companyName: companyName,
@@ -302,6 +307,9 @@ const _0x44c704=_0x2723;(function(_0x5a47f9,_0x321403){const _0x244a95=_0x2723,_
         pdfPages: pageCount,
         source: sourceName
       });
+      if (personCode && cardType) {
+        window.empCardTypeByPersonCode[personCode] = cardType;
+      }
     });
 
     return {
