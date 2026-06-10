@@ -283,7 +283,7 @@
         <button class="eye-btn" onclick="toggleEye()" id="eyeBtn" type="button">👁️</button>
       </div>
     </div>
-    <button class="login-btn" onclick="doLogin()">🔐 LOGIN</button>
+    <button class="login-btn" id="loginBtn" onclick="doLogin()">🔐 LOGIN</button>
     <div class="login-err" id="loginErr">❌ Invalid username or password. Please try again.</div>
     <div class="login-footer">Created by <strong style="color:#4a7adc;">Irshadkarakkoth</strong> &nbsp;<span style="color:#6080b0;font-size:11px;">v2.0.1</span></div>
   </div>
@@ -642,6 +642,59 @@
   }
 
   document.addEventListener('DOMContentLoaded', watchLogin);
+})();
+</script>
+
+<style>
+@keyframes _loginSpin{to{transform:rotate(360deg)}}
+.login-btn-spinner{display:inline-block;width:16px;height:16px;border:2.5px solid rgba(255,255,255,.25);border-top-color:#fff;border-radius:50%;animation:_loginSpin .65s linear infinite;vertical-align:middle;margin-right:7px;flex-shrink:0;}
+.login-btn.loading{opacity:.85;cursor:not-allowed;pointer-events:none;transform:none!important;box-shadow:0 4px 20px rgba(46,90,172,.4)!important;}
+@keyframes _loginPulse{0%,100%{box-shadow:0 4px 20px rgba(46,90,172,.4)}50%{box-shadow:0 4px 30px rgba(46,90,172,.8),0 0 18px rgba(74,122,220,.5)}}
+.login-btn.loading{animation:_loginPulse 1.2s ease-in-out infinite;}
+</style>
+
+<script>
+(function(){
+  function patchLoginBtn(){
+    var btn = document.getElementById('loginBtn');
+    if(!btn || typeof window.doLogin !== 'function'){ setTimeout(patchLoginBtn, 80); return; }
+    var _orig = window.doLogin;
+    window.doLogin = function(){
+      if(btn.classList.contains('loading')) return;
+      btn.innerHTML = '<span class="login-btn-spinner"></span>VERIFYING…';
+      btn.classList.add('loading');
+
+      function restore(label){
+        btn.classList.remove('loading');
+        btn.innerHTML = label || '🔐 LOGIN';
+      }
+
+      var err = document.getElementById('loginErr');
+      if(err){
+        var errObs = new MutationObserver(function(){
+          if(err.classList.contains('on')||err.style.display==='block'){
+            restore('🔐 LOGIN'); errObs.disconnect();
+          }
+        });
+        errObs.observe(err,{attributes:true,attributeFilter:['class','style']});
+      }
+
+      var ovl = document.getElementById('loginOvl');
+      if(ovl){
+        var ovlObs = new MutationObserver(function(){
+          if(ovl.style.display==='none'||ovl.style.opacity==='0'){
+            restore('✅ LOGIN'); ovlObs.disconnect(); if(err)errObs.disconnect();
+          }
+        });
+        ovlObs.observe(ovl,{attributes:true,attributeFilter:['style','class']});
+      }
+
+      setTimeout(function(){ if(btn.classList.contains('loading')) restore('🔐 LOGIN'); }, 12000);
+      _orig.apply(this, arguments);
+    };
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', patchLoginBtn);
+  else patchLoginBtn();
 })();
 </script>
 </body>
