@@ -305,6 +305,10 @@
       <span style="font-size:10px;color:#ffcc44;font-weight:700;">⏱ TEST SESSION</span>
       <span id="testTimerCount" style="font-size:13px;color:#ffe066;font-weight:800;font-family:monospace;min-width:38px;text-align:center;">2:00</span>
     </div>
+    <div id="loggedUserBadge" style="display:none;align-items:center;gap:5px;background:rgba(46,90,172,.2);border:1px solid rgba(46,90,172,.4);border-radius:4px;padding:0 10px;height:24px;">
+      <span style="font-size:13px;line-height:1;">👤</span>
+      <span id="loggedUserName" style="font-size:11px;color:#a0c4ff;font-weight:700;letter-spacing:.5px;font-family:monospace;"></span>
+    </div>
     <button onclick="doLogout()" style="background:rgba(232,80,50,.25);border:1px solid rgba(232,80,50,.5);color:#ffaa99;padding:0 12px;height:24px;border-radius:4px;font-size:11px;font-weight:700;cursor:pointer;transition:all .2s;" onmouseover="this.style.background='rgba(232,80,50,.5)'" onmouseout="this.style.background='rgba(232,80,50,.25)'">🚪 Logout</button>
   </div>
 </div>
@@ -655,12 +659,54 @@
 
 <script>
 (function(){
+  function showUserBadge(name){
+    var badge = document.getElementById('loggedUserBadge');
+    var nameEl = document.getElementById('loggedUserName');
+    if(!badge || !nameEl) return;
+    nameEl.textContent = name ? name.toUpperCase() : '';
+    badge.style.display = 'flex';
+  }
+  function hideUserBadge(){
+    var badge = document.getElementById('loggedUserBadge');
+    if(badge) badge.style.display = 'none';
+  }
+
+  // Restore badge if already logged in (page reload)
+  var savedUser = sessionStorage.getItem('_empwps_user');
+  if(savedUser){
+    document.addEventListener('DOMContentLoaded', function(){
+      // Wait briefly for appWrap to be shown before displaying badge
+      setTimeout(function(){ showUserBadge(savedUser); }, 400);
+    });
+  }
+
+  // Patch doLogout to also hide badge
+  function patchLogout(){
+    if(typeof window.doLogout !== 'function'){ setTimeout(patchLogout, 80); return; }
+    var _origLogout = window.doLogout;
+    window.doLogout = function(){
+      sessionStorage.removeItem('_empwps_user');
+      hideUserBadge();
+      _origLogout.apply(this, arguments);
+    };
+  }
+  patchLogout();
+
+  // Also hide on auto-logout (sessionStorage.clear is called)
+  var _origScClear = sessionStorage.clear.bind(sessionStorage);
+  sessionStorage.clear = function(){
+    _origScClear();
+    hideUserBadge();
+  };
+
   function patchLoginBtn(){
     var btn = document.getElementById('loginBtn');
     if(!btn || typeof window.doLogin !== 'function'){ setTimeout(patchLoginBtn, 80); return; }
     var _orig = window.doLogin;
     window.doLogin = function(){
       if(btn.classList.contains('loading')) return;
+      // Capture username before call clears the input
+      var capturedUser = (document.getElementById('loginUser')||{}).value || '';
       btn.innerHTML = '<span class="login-btn-spinner"></span>VERIFYING…';
       btn.classList.add('loading');
 
@@ -684,6 +730,9 @@
         var ovlObs = new MutationObserver(function(){
           if(ovl.style.display==='none'||ovl.style.opacity==='0'){
             restore('✅ LOGIN'); ovlObs.disconnect(); if(err)errObs.disconnect();
+            // Show username badge
+            sessionStorage.setItem('_empwps_user', capturedUser);
+            showUserBadge(capturedUser);
           }
         });
         ovlObs.observe(ovl,{attributes:true,attributeFilter:['style','class']});
