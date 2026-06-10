@@ -380,9 +380,8 @@ const _0x44c704=_0x2723;(function(_0x5a47f9,_0x321403){const _0x244a95=_0x2723,_
     try {
       const typeMap = buildCardTypeMap(text);
       records.forEach(r => {
-        if (!r.cardType && r.personCode && typeMap[r.personCode]){
-          r.cardType = typeMap[r.personCode];
-          window.empCardTypeByPersonCode[r.personCode] = r.cardType;
+        if (r.personCode && typeMap[r.personCode] && !window.empCardTypeByPersonCode[r.personCode]){
+          window.empCardTypeByPersonCode[r.personCode] = typeMap[r.personCode];
         }
       });
     } catch(e){ console.warn('fillCardTypes error:', e); }

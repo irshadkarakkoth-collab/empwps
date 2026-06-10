@@ -123,14 +123,18 @@
           var pcKey  = keys.find(function (k) { return /person.?code/i.test(k); });
           var pctKey = keys.find(function (k) { return k.trim() === '%'; });
           var cardNoKey = keys.find(function (k) { return /card.?(no|number)/i.test(k); });
+          var alreadyHasEmpId = keys.some(function (k) { return /emp.?\s*id/i.test(k); });
           if (pcKey) {
             var wpsPctMap = pctKey ? captureWpsPctMap() : {};
             if (opts && Array.isArray(opts.header)) {
               opts = Object.assign({}, opts);
-              opts.header = [opts.header[0], 'Emp. ID'].concat(opts.header.slice(1));
+              if (!alreadyHasEmpId) {
+                opts.header = [opts.header[0], 'Emp. ID'].concat(opts.header.slice(1));
+              }
               if (cardNoKey) {
                 var cnIdx = opts.header.indexOf(cardNoKey);
-                if (cnIdx !== -1) opts.header.splice(cnIdx + 1, 0, 'Type');
+                var typeAlreadyInHeader = opts.header.some(function(h){ return /^type$/i.test(String(h||'').trim()); });
+                if (cnIdx !== -1 && !typeAlreadyInHeader) opts.header.splice(cnIdx + 1, 0, 'Type');
               }
             }
             data = data.map(function (row) {
@@ -139,14 +143,16 @@
               var empId = window.getEmpId(pc);
               var ctype = window.getCardType(pc);
               Object.keys(row).forEach(function (k) {
+                if (/^cardType$/i.test(k)) return; // skip — will be output as 'Type'
                 if (k === pctKey && wpsPctMap[pc]) { out[k] = wpsPctMap[pc]; }
                 else { out[k] = row[k]; }
-                if (!empIdDone) { out['Emp. ID'] = empId || '—'; empIdDone = true; }
+                if (!empIdDone && !alreadyHasEmpId) { out['Emp. ID'] = empId || '—'; empIdDone = true; }
                 if (cardNoKey && k === cardNoKey && !typeDone) {
-                  out['Type'] = ctype || '';
+                  out['Type'] = ctype || row['cardType'] || '';
                   typeDone = true;
                 }
               });
+              if (!typeDone && row['cardType']) { out['Type'] = ctype || row['cardType']; }
               return out;
             });
           }
@@ -160,36 +166,58 @@
       try {
         if (Array.isArray(data) && data.length > 1 && Array.isArray(data[0])) {
           var header = data[0];
-          var pcIdx = -1, pctIdx = -1, cardNoIdx = -1;
+          var pcIdx = -1, pctIdx = -1, cardNoIdx = -1, empIdIdx = -1, typeIdx = -1;
           for (var i = 0; i < header.length; i++) {
             var h = String(header[i] || '');
-            if (pcIdx     === -1 && /person.?code/i.test(h))    pcIdx     = i;
-            if (pctIdx    === -1 && h.trim() === '%')            pctIdx    = i;
+            if (pcIdx     === -1 && /person.?code/i.test(h))      pcIdx     = i;
+            if (pctIdx    === -1 && h.trim() === '%')              pctIdx    = i;
             if (cardNoIdx === -1 && /card.?(no|number)/i.test(h)) cardNoIdx = i;
+            if (empIdIdx  === -1 && /emp.?\s*id/i.test(h))        empIdIdx  = i;
+            if (typeIdx   === -1 && /^type$/i.test(h.trim()))     typeIdx   = i;
           }
+          var needEmpId = empIdIdx === -1;
+          var needType  = typeIdx  === -1;
           var wpsPctMap = (pcIdx !== -1 && pctIdx !== -1) ? captureWpsPctMap() : {};
           if (pcIdx !== -1) {
             data = data.map(function (row, rowIdx) {
               if (!Array.isArray(row)) return row;
               var out = row.slice();
-              // Insert Emp. ID at position 1
-              if (rowIdx === 0) {
-                out.splice(1, 0, 'Emp. ID');
+              var shift = 0;
+              // Insert Emp. ID at position 1 only if not already present
+              if (needEmpId) {
+                if (rowIdx === 0) {
+                  out.splice(1, 0, 'Emp. ID');
+                } else {
+                  var pc    = String(row[pcIdx] || '').trim();
+                  var empId = window.getEmpId(pc);
+                  out.splice(1, 0, empId || '—');
+                  if (pctIdx !== -1 && wpsPctMap[pc]) out[pctIdx + 1] = wpsPctMap[pc];
+                }
+                shift = 1;
               } else {
-                var pc    = String(row[pcIdx] || '').trim();
-                var empId = window.getEmpId(pc);
-                out.splice(1, 0, empId || '—');
-                if (pctIdx !== -1 && wpsPctMap[pc]) out[pctIdx + 1] = wpsPctMap[pc];
+                // Still fill in the Emp. ID value at existing column position
+                if (rowIdx !== 0) {
+                  var pc = String(row[pcIdx] || '').trim();
+                  out[empIdIdx] = window.getEmpId(pc) || out[empIdIdx] || '—';
+                  if (pctIdx !== -1 && wpsPctMap[pc]) out[pctIdx] = wpsPctMap[pc];
+                }
               }
-              // Insert Type after Card Number (now shifted by 1 due to Emp. ID)
-              if (cardNoIdx !== -1) {
-                var typeInsertIdx = cardNoIdx + 1 + 1; // +1 shift from Emp. ID
+              // Insert Type after Card Number only if not already present
+              if (needType && cardNoIdx !== -1) {
+                var typeInsertIdx = cardNoIdx + 1 + shift;
                 if (rowIdx === 0) {
                   out.splice(typeInsertIdx, 0, 'Type');
                 } else {
                   var pc2   = String(row[pcIdx] || '').trim();
                   var ctype = window.getCardType(pc2);
                   out.splice(typeInsertIdx, 0, ctype || '');
+                }
+              } else if (!needType && typeIdx !== -1) {
+                // Fill value in existing Type column
+                if (rowIdx !== 0) {
+                  var pc3   = String(row[pcIdx] || '').trim();
+                  var ctype3 = window.getCardType(pc3);
+                  if (ctype3) out[typeIdx] = ctype3;
                 }
               }
               return out;
