@@ -45,7 +45,7 @@ const _0x44c704=_0x2723;(function(_0x5a47f9,_0x321403){const _0x244a95=_0x2723,_
   const escapeRx = value => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const nationalityRx = new RegExp('(' + nationalities.sort((a,b)=>b.length-a.length).map(escapeRx).join('|') + ')', 'i');
   const permitRx = new RegExp(permitTypes.map(escapeRx).join('|'), 'i');
-  const cardTypeRx = /(Golden Visa Work Permit|Renew Labour Card|New Labour Card|Renew Work Permit|New Work Permit|Work Permit)/i;
+  const cardTypeRx = /(National\s+and\s+GCC\s+Lab(?:o|ou)r\s+Card(?:\s+Under\s+Cancellation)?|Golden\s+Visa\s+Work\s+Permit|Renew\s+Lab(?:o|ou)r\s+Card(?:\s+Under\s+Cancellation)?|New\s+Lab(?:o|ou)r\s+Card|Renew\s+Work\s+Permit|New\s+Work\s+Permit|Work\s+Permit)/i;
   const startRx = /^([A-Z0-9]{5,12})\s+([A-Z][A-Z .'-]+)/;
   const looseStartRx = /^([A-Z0-9]{5,12})(?:\s|$)/;
   const arabicRx = /[\u0600-\u06ff\ufb50-\ufdff\ufe70-\ufeff\x00]+/g;
@@ -357,9 +357,41 @@ const _0x44c704=_0x2723;(function(_0x5a47f9,_0x321403){const _0x244a95=_0x2723,_
     return pages.join('\n');
   }
 
-  extractPDF = async function(file, sourceName){
+  const fillCardTypeRx = /(National\s+and\s+GCC\s+Lab(?:o|ou)r\s+Card(?:\s+Under\s+Cancellation)?|Golden\s+Visa\s+Work\s+Permit|Renew\s+Lab(?:o|ou)r\s+Card(?:\s+Under\s+Cancellation)?|New\s+Lab(?:o|ou)r\s+Card|Renew\s+Work\s+Permit|New\s+Work\s+Permit|Work\s+Permit)/i;
+
+  function buildCardTypeMap(text){
+    const map = {};
+    const personCodeRx = /\b(\d{14})\b/g;
+    const lines = text.split(/\r?\n/).map(l => l.replace(/\x00/g,'').trim()).filter(Boolean);
+    for (let i = 0; i < lines.length; i++){
+      const pcMatch = personCodeRx.exec(lines[i]);
+      personCodeRx.lastIndex = 0;
+      if (!pcMatch) continue;
+      const pc = pcMatch[1];
+      if (map[pc]) continue;
+      const context = lines.slice(i, i + 7).join(' ');
+      const ctMatch = fillCardTypeRx.exec(context);
+      if (ctMatch) map[pc] = ctMatch[1];
+    }
+    return map;
+  }
+
+  function fillCardTypes(records, text){
     try {
-      const text = await readPdfText(file);
+      const typeMap = buildCardTypeMap(text);
+      records.forEach(r => {
+        if (!r.cardType && r.personCode && typeMap[r.personCode]){
+          r.cardType = typeMap[r.personCode];
+          window.empCardTypeByPersonCode[r.personCode] = r.cardType;
+        }
+      });
+    } catch(e){ console.warn('fillCardTypes error:', e); }
+  }
+
+  extractPDF = async function(file, sourceName){
+    let text;
+    try {
+      text = await readPdfText(file);
       if (looksLikeNewEmployeeList(text)) {
         const parsed = parseNewEmployeeList(text, sourceName || file.name);
         if (parsed.records.length) {
@@ -370,7 +402,11 @@ const _0x44c704=_0x2723;(function(_0x5a47f9,_0x321403){const _0x244a95=_0x2723,_
     } catch (err) {
       console.warn('New employee-list parser skipped:', err);
     }
-    return originalExtractPDF.apply(this, arguments);
+    const result = await originalExtractPDF.apply(this, arguments);
+    if (result && Array.isArray(result.records) && result.records.length && text){
+      fillCardTypes(result.records, text);
+    }
+    return result;
   };
 
   window.empNewFormatParser = {
