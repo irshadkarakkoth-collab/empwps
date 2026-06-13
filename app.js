@@ -431,7 +431,7 @@ const _0x44c704=_0x2723;(function(_0x5a47f9,_0x321403){const _0x244a95=_0x2723,_
 /* ─────────────────────────────────────────────────────── */
 
 (function(){
-  var _k = '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';
+  var _k = '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';
   var aiOpen = false;
   var chatHistory = [];
   var isLoading = false;
