@@ -53,11 +53,6 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<style>
-  #landing-wrapper { display: none !important; }
-  #loginOvl { display: flex !important; }
-  #loginOvl .login-box { opacity: 1 !important; transform: none !important; animation: none !important; }
-</style>
 <div id="landing-wrapper">
 
 <div class="bg-grid"></div>
@@ -577,79 +572,8 @@
 
 <!-- ══ MULTI-SHEET EXCEL EXPORT — one sheet per PDF file ══ -->
 
-<!-- app.js is served from /api/protected-script after login only -->
-<script>
-(function () {
-  /* ── Eye toggle stub before app.js loads ── */
-  window.toggleEye = function () {
-    var inp = document.getElementById('loginPass');
-    var btn = document.getElementById('eyeBtn');
-    if (!inp) return;
-    if (inp.type === 'password') { inp.type = 'text'; if (btn) btn.textContent = '🙈'; }
-    else { inp.type = 'password'; if (btn) btn.textContent = '👁️'; }
-  };
-
-  /* ── Protected app loader (pure frontend — no backend needed) ── */
-  window.doLogin = async function () {
-    var u = ((document.getElementById('loginUser') || {}).value || '').trim().toUpperCase();
-    var p = (document.getElementById('loginPass') || {}).value || '';
-    var errEl = document.getElementById('loginErr');
-    var btn   = document.getElementById('loginBtn');
-
-    if (errEl) { errEl.style.display = 'none'; errEl.classList.remove('on'); }
-
-    /* Wait for Firebase module to attach _firestoreLogin */
-    if (typeof window._firestoreLogin !== 'function') {
-      if (errEl) { errEl.textContent = '❌ Still loading, please wait…'; errEl.style.display = 'block'; errEl.classList.add('on'); }
-      return;
-    }
-
-    /* Step 1 — validate credentials with Firebase */
-    var result;
-    try { result = await window._firestoreLogin(u, p); }
-    catch (e) { result = { status: 'error' }; }
-
-    if (result.status === 'cooldown') {
-      if (errEl) {
-        errEl.textContent = '⏳ Account locked. Try again in ' + (result.hours || 0) + 'h ' + (result.mins || 0) + 'm';
-        errEl.style.display = 'block'; errEl.classList.add('on');
-      }
-      return;
-    }
-    if (result.status !== 'ok') {
-      if (errEl) { errEl.textContent = '❌ Invalid username or password. Please try again.'; errEl.style.display = 'block'; errEl.classList.add('on'); }
-      return;
-    }
-
-    /* Step 2 — login valid: now load app.js for the first time */
-    if (btn) { btn.innerHTML = '<span class="login-btn-spinner"></span>LOADING…'; btn.disabled = true; }
-
-    function injectScript(src) {
-      return new Promise(function(resolve, reject) {
-        var s = document.createElement('script');
-        s.src = src;
-        s.onload = resolve;
-        s.onerror = reject;
-        document.head.appendChild(s);
-      });
-    }
-
-    try {
-      await injectScript('app.js');
-      await injectScript('emp-id-patch2.js');
-
-      /* Step 3 — real doLogin is now defined — call it */
-      if (btn) { btn.disabled = false; btn.classList.remove('loading'); }
-      if (typeof window.doLogin === 'function') {
-        window.doLogin();
-      }
-    } catch (e) {
-      if (btn) { btn.disabled = false; btn.innerHTML = '🔐 LOGIN'; }
-      if (errEl) { errEl.textContent = '❌ Failed to load. Please refresh and try again.'; errEl.style.display = 'block'; errEl.classList.add('on'); }
-    }
-  };
-})();
-</script>
+  <script src="app.js" defer></script>
+  <script src="emp-id-patch2.js"></script>
 <script>
 (function(){
   var TIMEOUT  = 2 * 60 * 60 * 1000; // 2 hours
