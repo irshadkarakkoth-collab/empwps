@@ -53,15 +53,12 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-  var lw = document.getElementById('landing-wrapper');
-  if (lw) lw.style.display = 'none';
-  var lo = document.getElementById('loginOvl');
-  if (lo) { lo.style.display = 'flex'; lo.style.opacity = '1'; }
-});
-</script>
-<div id="landing-wrapper" style="display:none;">
+<style>
+  #landing-wrapper { display: none !important; }
+  #loginOvl { display: flex !important; }
+  #loginOvl .login-box { opacity: 1 !important; transform: none !important; animation: none !important; }
+</style>
+<div id="landing-wrapper">
 
 <div class="bg-grid"></div>
 <div class="glow glow1"></div>
