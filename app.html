@@ -53,7 +53,7 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div id="landing-wrapper">
+<div id="landing-wrapper" style="display:none;">
 
 <div class="bg-grid"></div>
 <div class="glow glow1"></div>
@@ -127,6 +127,9 @@
 
 <div id="app-inject-root"></div>
 <script>
+// Auto-load app immediately on page load — skip landing page
+window.addEventListener('DOMContentLoaded', function() { loadApp(); });
+
 function loadApp() {
   var btn = document.getElementById('continueBtn');
   if (btn) { btn.textContent = 'Loading…'; btn.disabled = true; }
