@@ -93,6 +93,35 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
                 + '/databases/(default)/documents/users/' + docId
                 + '?key=' + apiKey;
         var res = await fetch(url);
+
+        // ── User deleted: Firestore returns 404 when document no longer exists ──
+        if(res.status === 404){
+          clearInterval(interval);
+          sessionStorage.clear();
+          localStorage.removeItem('nesto_logged_in');
+          localStorage.removeItem('nesto_role');
+          localStorage.removeItem('nesto_sessiontime');
+          localStorage.removeItem('nesto_cooldownhours');
+          localStorage.removeItem('nesto_docid');
+          localStorage.removeItem('nesto_session_start');
+          localStorage.removeItem('nesto_session_totalsecs');
+          document.getElementById('appWrap').style.display = 'none';
+          var removedScreen = document.createElement('div');
+          removedScreen.style.cssText = 'position:fixed;inset:0;z-index:999999;background:#0a1628;display:flex;align-items:center;justify-content:center;font-family:inherit;';
+          removedScreen.innerHTML =
+            '<div style="background:#1a2540;border:2px solid rgba(220,38,38,.4);border-radius:18px;padding:44px 48px;max-width:420px;width:90%;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,.8);">' +
+              '<div style="font-size:52px;margin-bottom:16px;">🚫</div>' +
+              '<div style="font-size:17px;font-weight:800;color:#ff6b6b;margin-bottom:10px;">Account Removed</div>' +
+              '<div style="font-size:13px;color:#8090b0;line-height:1.9;margin-bottom:28px;">' +
+                'Your username has been removed<br>by the administrator.<br>' +
+                '<span style="color:#6080a0;font-size:12px;">Please contact your admin for access.</span>' +
+              '</div>' +
+              '<button onclick="location.reload()" style="background:linear-gradient(135deg,#7f1d1d,#991b1b);border:none;color:#fff;border-radius:8px;padding:12px 36px;font-size:13px;font-weight:800;cursor:pointer;letter-spacing:.5px;">← Back to Login</button>' +
+            '</div>';
+          document.body.appendChild(removedScreen);
+          return;
+        }
+
         if(!res.ok) return;
         var data = await res.json();
         var currentToken = (data.fields && data.fields.activeSessionToken && data.fields.activeSessionToken.stringValue) || '';

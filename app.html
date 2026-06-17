@@ -130,26 +130,59 @@
 function loadApp() {
   var btn = document.getElementById('continueBtn');
   if (btn) { btn.textContent = 'Loading…'; btn.disabled = true; }
+
   fetch('app-content.html', { cache: 'no-store' })
-    .then(function(r){ return r.text(); })
+    .then(function(r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.text();
+    })
     .then(function(html) {
-      // Inject HTML
+      // 1. Inject the HTML (without scripts executing yet)
       var root = document.getElementById('app-inject-root');
       root.innerHTML = html;
-      // Hide landing
+
+      // 2. Show the real-app-wrapper (it starts display:none)
+      var raw = document.getElementById('real-app-wrapper');
+      if (raw) raw.style.display = 'block';
+
+      // 3. Hide landing page
       var lw = document.getElementById('landing-wrapper');
       if (lw) lw.style.display = 'none';
-      // Execute any <script> tags injected
-      root.querySelectorAll('script').forEach(function(oldScript) {
+
+      // 4. Re-execute all <script> tags in correct order (inline first, then src)
+      //    innerHTML does NOT execute scripts — we must clone each one
+      var scripts = Array.from(root.querySelectorAll('script'));
+
+      function runNext(i) {
+        if (i >= scripts.length) return;
+        var old = scripts[i];
         var s = document.createElement('script');
-        if (oldScript.src) { s.src = oldScript.src; s.defer = oldScript.defer; }
-        else { s.textContent = oldScript.textContent; }
-        if (oldScript.type) s.type = oldScript.type;
-        oldScript.parentNode.replaceChild(s, oldScript);
-      });
+
+        // Copy attributes
+        Array.from(old.attributes).forEach(function(attr) {
+          s.setAttribute(attr.name, attr.value);
+        });
+
+        if (old.src) {
+          // External script: wait for it to load before running next
+          s.onload = function() { runNext(i + 1); };
+          s.onerror = function() { runNext(i + 1); };
+          s.src = old.src;
+          document.head.appendChild(s);
+        } else {
+          // Inline script: run immediately
+          s.textContent = old.textContent;
+          document.head.appendChild(s);
+          runNext(i + 1);
+        }
+        old.parentNode.removeChild(old);
+      }
+
+      runNext(0);
     })
-    .catch(function(e){
-      alert('Failed to load app. Please refresh the page.');
+    .catch(function(e) {
+      console.error('loadApp failed:', e);
+      alert('Failed to load app: ' + e.message + '\nPlease check app-content.html is uploaded.');
       if (btn) { btn.textContent = 'Continue →'; btn.disabled = false; }
     });
 }
