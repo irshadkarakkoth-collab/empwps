@@ -1,0 +1,622 @@
+<div id="real-app-wrapper" style="display:none;">
+
+<!-- TUTORIAL SLIDESHOW -->
+<div class="tut-ovl" id="tutOvl">
+  <div class="intro-bg" id="introBg"></div>
+  <div class="sshow">
+    <div class="sshow-header">
+      <div class="sshow-logo"><span>📋</span> EMPWPSCTR &nbsp;—&nbsp; User Tutorial</div>
+      <button class="sshow-close" id="btnSkip" onclick="closeTutorial()" title="Skip" style="display:none;">✕</button>
+    </div>
+    <div class="sshow-body">
+      <div class="slide active" id="slide0">
+        <div class="slide-badge">Welcome</div>
+        <div class="slide-title">📋 EMPWPSCTR</div>
+        <div class="slide-sub">Complete User Tutorial Guide &nbsp;•&nbsp; UAE Ministry of HR Employment List Extractor</div>
+        <div class="slide-grid">
+          <div class="slide-card"><div class="sc-icon">📄</div><div><div class="sc-title">PDF Upload</div><div class="sc-desc">Upload HR employment list PDFs instantly</div></div></div>
+          <div class="slide-card"><div class="sc-icon">⚡</div><div><div class="sc-title">Auto Extract</div><div class="sc-desc">Automatically pulls employee data from PDFs</div></div></div>
+          <div class="slide-card"><div class="sc-icon">📊</div><div><div class="sc-title">Export Data</div><div class="sc-desc">Download as Excel (.xlsx) format</div></div></div>
+          <div class="slide-card"><div class="sc-icon">🔍</div><div><div class="sc-title">Smart Filter</div><div class="sc-desc">Filter by Nationality, Job, or File source</div></div></div>
+        </div>
+        <div class="slide-tip">🌐 &nbsp; Live at: <strong style="color:#e8a020;margin-left:6px;"></strong> &nbsp;•&nbsp; Created by Irshadkarakkoth</div>
+      </div>
+      <div class="slide" id="slide1">
+        <div class="slide-badge">Overview</div>
+        <div class="slide-title">WHAT IS EMPWPSCTR?</div>
+        <div class="slide-sub">A powerful web-based tool to extract and manage employee data from UAE Ministry of Human Resources PDF files.</div>
+        <div class="slide-steps">
+          <div class="slide-step"><div class="ss-num">1</div><div><div class="ss-title">📋 EMPLOYEE LIST</div><div class="ss-desc">Extract & view employee records from HR PDFs — name, job title, passport, nationality, card number & expiry.</div></div></div>
+          <div class="slide-step"><div class="ss-num">2</div><div><div class="ss-title">💰 WPS SALARY</div><div class="ss-desc">Process salary data from WPS PDF documents — track paid & unpaid records with full history.</div></div></div>
+        </div>
+      </div>
+      <div class="slide" id="slide2">
+        <div class="slide-badge">Step 1</div>
+        <div class="slide-title">UPLOAD YOUR PDF</div>
+        <div class="slide-steps">
+          <div class="slide-step"><div class="ss-num">1</div><div><div class="ss-title">Open the Website</div><div class="ss-desc">Go to nestohrtable.netlify.app in your web browser</div></div></div>
+          <div class="slide-step"><div class="ss-num">2</div><div><div class="ss-title">📄 Drag & Drop or Browse</div><div class="ss-desc">Drag your PDF files onto the drop zone — OR — click Browse Files to select from your computer.</div></div></div>
+        </div>
+        <div class="slide-tip">💡 &nbsp; TIP: You can upload <strong>multiple PDF files at once!</strong></div>
+      </div>
+      <div class="slide" id="slide3">
+        <div class="slide-badge">Step 2</div>
+        <div class="slide-title">EXTRACT & VIEW DATA</div>
+        <div class="slide-steps">
+          <div class="slide-step"><div class="ss-num">⚡</div><div><div class="ss-title">Click Extract</div><div class="ss-desc">After uploading, click the ⚡ Extract button. The system automatically reads all employee data.</div></div></div>
+          <div class="slide-step"><div class="ss-num">📊</div><div><div class="ss-title">View the Table</div><div class="ss-desc">All records appear with: No, Person Code, Name, Job Title, Passport No., Nationality, Card Number, Expiry Date.</div></div></div>
+        </div>
+      </div>
+      <div class="slide" id="slide4">
+        <div class="slide-badge">Step 3</div>
+        <div class="slide-title">FILTER YOUR DATA</div>
+        <div class="slide-grid">
+          <div class="slide-card"><div class="sc-icon">🌍</div><div><div class="sc-title">Nationality Filter</div><div class="sc-desc">Filter employees by country of origin.</div></div></div>
+          <div class="slide-card"><div class="sc-icon">💼</div><div><div class="sc-title">Job Filter</div><div class="sc-desc">Filter by Job Title — find all with same role.</div></div></div>
+          <div class="slide-card"><div class="sc-icon">📁</div><div><div class="sc-title">File Filter</div><div class="sc-desc">Filter by specific PDF when multiple uploaded.</div></div></div>
+          <div class="slide-card"><div class="sc-icon">🔗</div><div><div class="sc-title">Combined Filters</div><div class="sc-desc">Filters work together for precise results.</div></div></div>
+        </div>
+      </div>
+            <div class="slide" id="slide5">
+        <div class="slide-badge">Expiry Colors</div>
+        <div class="slide-title">EXPIRY DATE <span>COLOR GUIDE</span></div>
+        <div class="slide-sub">Card expiry dates are color-coded so you can spot urgent renewals instantly!</div>
+        <div class="slide-grid">
+          <div class="slide-card" style="border-color:rgba(220,50,50,.5);background:rgba(220,50,50,.12);">
+            <div class="sc-icon">🔴</div>
+            <div><div class="sc-title" style="color:#ff8080;">EXPIRED</div><div class="sc-desc">Card already expired.<br>Immediate action required!</div></div>
+          </div>
+          <div class="slide-card" style="border-color:rgba(255,140,0,.5);background:rgba(255,140,0,.1);">
+            <div class="sc-icon">🟠</div>
+            <div><div class="sc-title" style="color:#ffb347;">WITHIN 30 DAYS</div><div class="sc-desc">Expiring very soon.<br>Renew urgently!</div></div>
+          </div>
+          <div class="slide-card" style="border-color:rgba(255,205,0,.5);background:rgba(255,205,0,.08);">
+            <div class="sc-icon">🟡</div>
+            <div><div class="sc-title" style="color:#ffe066;">WITHIN 90 DAYS</div><div class="sc-desc">Expiring soon.<br>Plan renewal in advance.</div></div>
+          </div>
+          <div class="slide-card" style="border-color:rgba(40,167,69,.5);background:rgba(40,167,69,.08);">
+            <div class="sc-icon">🟢</div>
+            <div><div class="sc-title" style="color:#66dd88;">VALID</div><div class="sc-desc">Card is valid.<br>No action needed.</div></div>
+          </div>
+        </div>
+        <div class="slide-tip">💡 &nbsp; Check the <strong>Expiry Date</strong> column in the table — colors update automatically based on today's date!</div>
+      </div>
+<div class="slide" id="slide6">
+        <div class="slide-badge">Step 5</div>
+        <div class="slide-title">EXPORT YOUR DATA</div>
+        <div class="slide-grid">
+          <div class="slide-card"><div class="sc-icon">📥</div><div><div class="sc-title">Excel (.xlsx)</div><div class="sc-desc">Best for analysis. Works with Microsoft Excel & Google Sheets with full formatting.</div></div></div>
+
+        </div>
+        <div class="slide-tip">🗑️ &nbsp; Use the <strong>Clear</strong> button to reset and start fresh extraction.</div>
+      </div>
+      <div class="slide" id="slide7">
+        <div class="slide-badge">Step 6</div>
+        <div class="slide-title">📂 HISTORY <span>FEATURE</span></div>
+        <div class="slide-sub">Every extraction is automatically saved — no manual action needed!</div>
+        <div class="slide-grid">
+          <div class="slide-card"><div class="sc-icon">🕓</div><div><div class="sc-title">Employee History</div><div class="sc-desc">All previous PDF extractions saved. Click any session to reload data instantly without re-uploading!</div></div></div>
+          <div class="slide-card"><div class="sc-icon">💰</div><div><div class="sc-title">WPS Salary History</div><div class="sc-desc">All WPS salary sessions saved. Review past salary runs anytime without re-uploading files!</div></div></div>
+          <div class="slide-card"><div class="sc-icon">💾</div><div><div class="sc-title">Saved Locally</div><div class="sc-desc">History is stored in your browser's localStorage — survives tab close & PC restart automatically!</div></div></div>
+          <div class="slide-card"><div class="sc-icon">📥</div><div><div class="sc-title">Export from History</div><div class="sc-desc">Download Excel directly from any history entry — no need to re-extract the PDF again!</div></div></div>
+        </div>
+        <div class="slide-tip">⚠️ &nbsp; History is saved on <strong>this browser only</strong>. Clearing browser cache will delete history.</div>
+      </div>
+      <div class="slide" id="slide8">
+        <div class="slide-badge">Summary</div>
+        <div class="slide-title">COMPLETE WORKFLOW</div>
+        <div class="slide-flow">
+          <div class="sf-step"><div class="sf-num">1</div><div class="sf-icon">🌐</div><div class="sf-lbl">Open</div><div class="sf-sub">Website</div></div>
+          <div class="sf-arr">→</div>
+          <div class="sf-step"><div class="sf-num">2</div><div class="sf-icon">📂</div><div class="sf-lbl">Upload</div><div class="sf-sub">PDF files</div></div>
+          <div class="sf-arr">→</div>
+          <div class="sf-step"><div class="sf-num">3</div><div class="sf-icon">⚡</div><div class="sf-lbl">Extract</div><div class="sf-sub">Click button</div></div>
+          <div class="sf-arr">→</div>
+          <div class="sf-step"><div class="sf-num">4</div><div class="sf-icon">🔍</div><div class="sf-lbl">Filter</div><div class="sf-sub">Sort data</div></div>
+          <div class="sf-arr">→</div>
+          <div class="sf-step"><div class="sf-num">5</div><div class="sf-icon">📥</div><div class="sf-lbl">Export</div><div class="sf-sub">Excel</div></div>
+        </div>
+        <div class="slide-tip">✅ &nbsp; That's it! EMPWPSCTR makes HR data extraction <strong>fast, easy and accurate.</strong></div>
+      </div>
+      <div class="slide slide-ty" id="slide9">
+        <div class="ty-icon">🙏</div>
+        <div class="ty-title">THANK YOU!</div>
+        <div class="ty-sub">for using EMPWPSCTR</div>
+        <div class="ty-author">✨ &nbsp; Created by Irshadkarakkoth &nbsp; ✨</div>
+      </div>
+    </div>
+    <div class="sshow-footer">
+      <div class="sshow-dots" id="sshowDots"></div>
+      <div class="sshow-counter" id="sshowCounter">1 / 9</div>
+      <div class="sshow-nav">
+        <button class="snav" id="btnPrev" onclick="slideNav(-1)" style="display:none">◀ Prev</button>
+        <button class="snav" id="btnNext" onclick="slideNav(1)">Next ▶</button>
+        <button class="snav enter" id="btnEnter" onclick="closeTutorial()" style="display:none">🔐 Login</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- LOGIN PAGE -->
+<div class="login-ovl" id="loginOvl">
+  <div class="login-bg" id="loginBg"></div>
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="login-logo-icon">📋</div>
+      <div class="login-logo-title">EMPWPSCTR</div>
+      <div class="login-logo-sub">HR &amp; Payroll Management System</div>
+    </div>
+    <div class="login-field">
+      <label>Username</label>
+      <input type="text" id="loginUser" placeholder="Enter username" autocomplete="off" onkeydown="if(event.key==='Enter')document.getElementById('loginPass').focus()">
+    </div>
+    <div class="login-field">
+      <label>Password</label>
+      <div class="login-pass-wrap">
+        <input type="password" id="loginPass" placeholder="Enter password" autocomplete="off" onkeydown="if(event.key==='Enter')doLogin()">
+        <button class="eye-btn" onclick="toggleEye()" id="eyeBtn" type="button">👁️</button>
+      </div>
+    </div>
+    <button class="login-btn" id="loginBtn" onclick="doLogin()">🔐 LOGIN</button>
+    <div class="login-err" id="loginErr">❌ Invalid username or password. Please try again.</div>
+    <div class="login-footer">Created by <strong style="color:#4a7adc;">Irshadkarakkoth</strong> &nbsp;<span style="color:#6080b0;font-size:11px;">v2.0.1</span></div>
+  </div>
+</div>
+<!-- ══ FIREBASE SDK ══ -->
+<script type="module" src="firebase.js"></script>
+
+<!-- SESSION CONFLICT MODAL removed -->
+
+<div id="appWrap" style="display:none;position:fixed;inset:0;flex-direction:column;overflow:hidden;">
+<div class="titlebar">
+  <div class="tbl"><img src="data:image/png;base64,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" style="height:22px;width:22px;object-fit:contain;border-radius:3px;margin-right:6px;"> <span id="appTitle">EMPWPSCTR</span></div>
+  <div style="display:flex;gap:0;margin:0 auto;">
+    <button id="tabEmp" onclick="switchMode('emp')" style="background:#2e5aac;color:#fff;border:none;padding:0 22px;height:34px;font-size:12px;font-weight:700;cursor:pointer;border-right:1px solid rgba(255,255,255,.2);">📋 EMPLOYEE LIST</button>
+    <button id="tabWps" onclick="switchMode('wps')" style="background:transparent;color:#b8ccef;border:none;padding:0 22px;height:34px;font-size:12px;font-weight:700;cursor:pointer;">💰 WPS SALARY</button>
+  </div>
+  <div class="wbtns" style="align-items:center;gap:6px;">
+    <div id="testTimerBadge" style="display:none;align-items:center;gap:6px;background:rgba(255,180,0,.15);border:1px solid rgba(255,180,0,.5);border-radius:4px;padding:0 10px;height:24px;">
+      <span style="font-size:10px;color:#ffcc44;font-weight:700;">⏱ TEST SESSION</span>
+      <span id="testTimerCount" style="font-size:13px;color:#ffe066;font-weight:800;font-family:monospace;min-width:38px;text-align:center;">2:00</span>
+    </div>
+    <div id="loggedUserBadge" style="display:none;align-items:center;gap:5px;background:rgba(46,90,172,.2);border:1px solid rgba(46,90,172,.4);border-radius:4px;padding:0 10px;height:24px;">
+      <span style="font-size:13px;line-height:1;">👤</span>
+      <span id="loggedUserName" style="font-size:11px;color:#a0c4ff;font-weight:700;letter-spacing:.5px;font-family:monospace;"></span>
+    </div>
+    <button onclick="doLogout()" style="background:rgba(232,80,50,.25);border:1px solid rgba(232,80,50,.5);color:#ffaa99;padding:0 12px;height:24px;border-radius:4px;font-size:11px;font-weight:700;cursor:pointer;transition:all .2s;" onmouseover="this.style.background='rgba(232,80,50,.5)'" onmouseout="this.style.background='rgba(232,80,50,.25)'">🚪 Logout</button>
+  </div>
+</div>
+
+<div id="empSection" style="display:flex;flex-direction:column;flex:1;overflow:hidden;min-height:0;">
+  <div class="ribbon" id="empRibbon" style="border-top:1px solid #eee;">
+    <div class="rg">
+      <button class="rb big" onclick="document.getElementById('fi').click()">
+        <span class="ri">📂</span><span>Open PDF</span>
+      </button>
+      <input type="file" id="fi" multiple accept=".pdf" style="display:none">
+    </div>
+    <div class="rg">
+      <button class="rb big" id="btnEx" onclick="extractAll()" disabled>
+        <span class="ri">⚡</span><span>Extract</span>
+      </button>
+      <button class="rb" id="btnCl" onclick="clearAll()" disabled>
+        <span class="ri">🗑️</span><span>Clear</span>
+      </button>
+    </div>
+    <div class="rg">
+      <button class="rb" id="btnXl" onclick="exportExcel()" disabled>
+        <span class="ri">📥</span><span>Excel</span>
+      </button>
+      <button class="rb" disabled title="Coming Soon!" style="opacity:.6;cursor:not-allowed;position:relative;" onclick="toast('📄 CSV export — Coming Soon!','')">
+        <span class="ri">📄</span><span>CSV</span>
+        <span style="position:absolute;top:2px;right:3px;background:#e8a020;color:#fff;font-size:8px;font-weight:800;padding:1px 4px;border-radius:6px;line-height:1.4;">SOON</span>
+      </button>
+
+    </div>
+    <div class="rg">
+      <button class="rb" onclick="openHistory()" id="btnHist">
+        <span class="ri">🕓</span><span>History</span>
+      </button>
+    </div>
+    <div style="margin-left:auto;padding-right:16px;display:flex;align-items:center;">
+      <span style="font-size:11px;color:#999;font-style:italic;white-space:nowrap;">Created by <strong style="color:#1f3864;font-style:normal;">Irshadkarakkoth</strong></span>
+    </div>
+  </div>
+  <!-- PILLS SCROLLABLE BAR -->
+  <div id="pillsBar" style="display:none;background:#f0f4fb;border-bottom:1px solid #c8d4e8;padding:6px 10px;overflow-x:auto;overflow-y:hidden;flex-shrink:0;">
+    <div class="pills" id="pills" style="flex-wrap:nowrap;white-space:nowrap;min-width:max-content;"></div>
+  </div>
+
+  <div id="empWelcome" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:#f5f7fb;padding:40px;">
+    <div style="font-size:60px;">📋</div>
+    <div style="font-size:22px;font-weight:700;color:#1f3864;">Employee List Extractor</div>
+    <div style="font-size:13px;color:#666;max-width:460px;text-align:center;line-height:1.6;">Upload UAE Ministry of Human Resources <strong>Employment List</strong> PDFs — employee data is automatically extracted and displayed in a spreadsheet.</div>
+    <div class="dropzone" id="dz">
+      <div class="dz-icon">📄</div>
+      <div class="dz-title">Drag &amp; Drop PDF files here</div>
+      <div class="dz-hint">Supports all UAE Ministry of HR employment list formats</div>
+      <button class="browse-btn" onclick="document.getElementById('fi').click()">📂 Browse Files</button>
+    </div>
+  </div>
+
+<div class="sheet-hdr" id="shHdr">
+  <div style="display:flex;align-items:center;justify-content:center;gap:24px;font-size:12px;font-weight:500;opacity:.92;">
+    <span>📂 Files: <strong id="shTotal">0</strong></span>
+    <span style="opacity:.5">|</span>
+    <span>📄 Extracted: <strong id="shExtracted">0</strong></span>
+  </div>
+</div>
+<div id="empPdfMeta" style="display:none;background:#fff7e6;border-bottom:1px solid #e8c84a;padding:5px 10px;font-size:11px;color:#7d5a00;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
+<div class="fbar" id="fbar">
+  <label>🔍</label>
+  <input type="text" id="gs" placeholder="Search anything…" oninput="applyF()">
+  <label>Nationality:</label>
+  <select id="fNat" onchange="applyF()"><option value="">All</option></select>
+  <label>Job:</label>
+  <select id="fJob" onchange="applyF()"><option value="">All</option></select>
+  <label>File:</label>
+  <select id="fSrc" onchange="applyF()"><option value="">All Files</option></select>
+  <!-- Expiry Color Legend -->
+  <div style="display:flex;align-items:center;gap:6px;margin-left:6px;padding:3px 10px;background:#fff;border:1px solid #c8d4e8;border-radius:4px;flex-wrap:wrap;">
+    <span style="font-size:10px;color:#888;font-weight:700;margin-right:2px;">EXPIRY:</span>
+    <span style="display:flex;align-items:center;gap:3px;font-size:10px;font-weight:700;color:#c00;"><span style="width:10px;height:10px;background:#ffc7c7;border:1px solid #e88;border-radius:2px;display:inline-block;"></span>Expired</span>
+    <span style="display:flex;align-items:center;gap:3px;font-size:10px;font-weight:700;color:#c05000;"><span style="width:10px;height:10px;background:#ffe0b2;border:1px solid #e8a020;border-radius:2px;display:inline-block;"></span>&lt;30d</span>
+    <span style="display:flex;align-items:center;gap:3px;font-size:10px;font-weight:700;color:#7a6000;"><span style="width:10px;height:10px;background:#fff9c4;border:1px solid #e8d800;border-radius:2px;display:inline-block;"></span>&lt;90d</span>
+    <span style="display:flex;align-items:center;gap:3px;font-size:10px;font-weight:700;color:#276221;"><span style="width:10px;height:10px;background:#c6efce;border:1px solid #5cb870;border-radius:2px;display:inline-block;"></span>Valid</span>
+  </div>
+  <span class="rinfo" id="rinfo">0 records</span>
+</div>
+
+<div class="sheet-wrap" id="sw">
+  <table>
+    <colgroup>
+      <col style="width:38px"><col style="width:88px"><col style="width:42px"><col style="width:152px">
+      <col style="width:270px"><col style="width:155px"><col style="width:110px">
+      <col style="width:100px"><col style="width:108px"><col style="width:130px">
+      <col style="width:108px"><col style="width:100px"><col style="width:140px">
+    </colgroup>
+    <thead>
+      <tr class="hdr">
+        <th class="rn">#</th>
+        <th onclick="srt('empId')" id="h-empId" style="color:#2ecc71;white-space:nowrap;">Emp. ID</th>
+        <th onclick="srt('no')" id="h-no">No</th>
+        <th onclick="srt('personCode')" id="h-personCode">Person Code</th>
+        <th onclick="srt('name')" id="h-name">Name</th>
+        <th onclick="srt('job')" id="h-job">Job Title</th>
+        <th onclick="srt('passport')" id="h-passport">Passport No.</th>
+        <th onclick="srt('nationality')" id="h-nationality">Nationality</th>
+        <th onclick="srt('cardNo')" id="h-cardNo">Card Number</th>
+        <th id="h-cardType" style="white-space:nowrap;">Type</th>
+        <th onclick="srt('expiry')" id="h-expiry">Expiry Date</th>
+        <th onclick="srt('companyCode')" id="h-companyCode">Company Code</th>
+        <th onclick="srt('source')" id="h-source">Source File</th>
+      </tr>
+      <tr class="cfr">
+        <th></th>
+        <th><input id="cfEmpId" oninput="applyF()" placeholder="Emp ID…"></th>
+        <th><input id="cf0" oninput="applyF()" placeholder="#"></th>
+        <th><input id="cf1" oninput="applyF()" placeholder="Search…"></th>
+        <th><input id="cf2" oninput="applyF()" placeholder="Search name…"></th>
+        <th><input id="cf3" oninput="applyF()" placeholder="Search job…"></th>
+        <th><input id="cf4" oninput="applyF()" placeholder="Search…"></th>
+        <th><input id="cf5" oninput="applyF()" placeholder="Search…"></th>
+        <th><input id="cf6" oninput="applyF()" placeholder="Search…"></th>
+        <th><input id="cfType" oninput="applyTypeFilter()" placeholder="Type…" style="width:100px;"></th>
+        <th><input id="cf7" oninput="applyF()" placeholder="DD/MM/YYYY"></th>
+        <th><input id="cf9" oninput="applyF()" placeholder="Code…"></th>
+        <th><input id="cf8" oninput="applyF()" placeholder="Filename…"></th>
+      </tr>
+    </thead>
+    <tbody id="tbody"></tbody>
+  </table>
+</div>
+
+<div class="sbar">
+  <span id="sb0">🟢 Ready</span><span class="sp">|</span>
+  <span id="sb1">No files loaded</span><span class="sp">|</span>
+  <span id="sb2">0 records</span><span class="sp">|</span>
+  <span id="sb3">—</span>
+  <span class="sp" style="margin-left:auto">|</span><span id="sbt"></span>
+</div>
+</div><!-- end empSection -->
+
+<div id="wpsSection" style="display:none;flex-direction:column;flex:1;overflow:hidden;min-height:0;"></div>
+
+<!-- WPS HISTORY PANEL -->
+<div class="hist-ovl" id="wpsHistOvl" onclick="wpsCloseHistoryOutside(event)">
+  <div class="hist-panel" id="wpsHistPanel">
+    <div class="hist-head">
+      <h3>🕓 WPS Salary History</h3>
+      <button class="hist-close" onclick="wpsCloseHistory()">✕</button>
+    </div>
+    <div class="hist-actions">
+      <button class="hist-clear-btn" onclick="wpsClearHistory()">🗑️ Clear All</button>
+      <span class="hist-count" id="wpsHistCount">0 sessions</span>
+    </div>
+    <div class="hist-list" id="wpsHistList"></div>
+  </div>
+</div>
+<div class="hist-ovl" id="histOvl" onclick="closeHistoryOutside(event)">
+  <div class="hist-panel" id="histPanel">
+    <div class="hist-head">
+      <h3>🕓 Extraction History</h3>
+      <button class="hist-close" onclick="closeHistory()">✕</button>
+    </div>
+    <div class="hist-actions">
+      <button class="hist-clear-btn" onclick="clearHistory()">🗑️ Clear All</button>
+      <span class="hist-count" id="histCount">0 sessions</span>
+    </div>
+    <div class="hist-list" id="histList"></div>
+  </div>
+</div>
+
+<div class="povl" id="povl">
+  <div class="pbox">
+    <h3>⚡ Extracting Data…</h3>
+    <p id="plbl">Processing…</p>
+    <div class="ptrack"><div class="pfill" id="pfill"></div></div>
+    <div class="ppct" id="ppct">0%</div>
+  </div>
+</div>
+<div class="toast" id="tst"></div>
+
+<!-- EXCEL COLOR CHOICE MODAL -->
+<div id="xlColorModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9500;align-items:center;justify-content:center;">
+  <div style="background:#1a2540;border:1px solid rgba(46,90,172,.5);border-radius:14px;padding:32px 36px;width:360px;box-shadow:0 20px 60px rgba(0,0,0,.7);">
+    <div style="font-size:16px;font-weight:800;color:#fff;margin-bottom:6px;">📊 Export Excel</div>
+    <div style="font-size:12px;color:#6080b0;margin-bottom:24px;">Choose export format:</div>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <button onclick="xlExportChoice(true)" style="background:linear-gradient(135deg,#1f6e2e,#28a745);border:none;border-radius:10px;padding:16px;color:#fff;cursor:pointer;text-align:left;transition:all .2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
+        <div style="font-size:15px;font-weight:800;margin-bottom:4px;">🎨 With Colors</div>
+        <div style="font-size:11px;opacity:.8;">Expiry dates highlighted in Red / Orange / Yellow / Green based on status</div>
+      </button>
+      <button onclick="xlExportChoice(false)" style="background:linear-gradient(135deg,#1f3864,#2e5aac);border:none;border-radius:10px;padding:16px;color:#fff;cursor:pointer;text-align:left;transition:all .2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
+        <div style="font-size:15px;font-weight:800;margin-bottom:4px;">⬜ Without Colors</div>
+        <div style="font-size:11px;opacity:.8;">Plain Excel file — clean data without any color formatting</div>
+      </button>
+      <button onclick="document.getElementById('xlColorModal').style.display='none'" style="background:transparent;border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:10px;color:#6080b0;cursor:pointer;font-size:12px;">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- DOWNLOAD CONFIRM DIALOG -->
+<div class="dl-ovl" id="dlOvl">
+  <div class="dl-box">
+    <h3>Download file</h3>
+    <p>Are you sure you want to download this file?</p>
+    <div style="display:flex;align-items:center;background:#1a1a1a;border:1px solid #444;border-radius:5px;overflow:hidden;margin-bottom:22px;">
+      <input class="dl-filename" id="dlFilename" type="text" value="file" spellcheck="false" style="flex:1;background:transparent;border:none;padding:10px 6px 10px 14px;font-size:13px;color:#eee;font-family:monospace;outline:none;min-width:0;">
+      <span id="dlExt" style="padding:10px 14px 10px 0;font-size:13px;color:#aaa;font-family:monospace;white-space:nowrap;flex-shrink:0;"></span>
+    </div>
+    <div class="dl-actions">
+      <button class="dl-cancel" onclick="dlCancel()">Cancel</button>
+      <button class="dl-confirm" onclick="dlConfirm()">Download file</button>
+    </div>
+  </div>
+</div>
+</div><!-- end appWrap -->
+
+</div>
+
+<!-- ══ AI CHAT STYLES ══ -->
+
+<!-- ══ AI CHAT HTML ══ -->
+<button id="aiChatBtn" onclick="toggleAiChat()" title="Ask AI Assistant">
+  🤖
+  <span id="aiChatBadge">AI</span>
+</button>
+
+<div id="aiChatPanel">
+  <div class="ai-header">
+    <div class="ai-avatar bot ai-header-icon">🤖</div>
+    <div class="ai-header-info">
+      <div class="ai-header-title">HR AI Assistant</div>
+      <div class="ai-header-sub">Powered by EMPWPSCTR · Always Ready</div>
+    </div>
+    <button class="ai-header-close" onclick="toggleAiChat()">✕ Close</button>
+  </div>
+
+  <div id="aiChatView" style="display:flex;flex-direction:column;flex:1;min-height:0;">
+    <div class="ai-messages" id="aiMessages"></div>
+    <div class="ai-quick-btns">
+      <span class="ai-quick-label">Quick</span>
+      <span class="ai-quick-btn" onclick="quickAsk('How do I extract employee data?')">📋 Extract data</span>
+      <span class="ai-quick-btn" onclick="quickAsk('What do expiry colors mean?')">🎨 Expiry colors</span>
+      <span class="ai-quick-btn" onclick="quickAsk('How to export to Excel?')">📊 Excel export</span>
+      <span class="ai-quick-btn" onclick="quickAsk('How does WPS salary work?')">💰 WPS salary</span>
+      <span class="ai-quick-btn" onclick="quickAsk('Is my data private and secure?')">🔒 Privacy</span>
+      <span class="ai-quick-btn" onclick="quickAsk('What nationalities are supported?')">🌍 Nationalities</span>
+      <span class="ai-quick-btn" onclick="quickAsk('How does history work?')">🕓 History</span>
+      <span class="ai-quick-btn" onclick="quickAsk('The app is not working, what do I do?')">❌ Troubleshoot</span>
+      <span class="ai-quick-btn" onclick="quickAsk('What can you see on my current screen?')">Screen check</span>
+    </div>
+    <div class="ai-input-area">
+      <textarea class="ai-input" id="aiUserInput" placeholder="Ask anything about this app…" rows="1"
+        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAiMsg();}"
+        oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,80)+'px';"
+      ></textarea>
+      <button class="ai-send" id="aiSendBtn" onclick="sendAiMsg()">➤</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ AI CHAT SCRIPT ══ -->
+
+<!-- ══ WPS SALARY % THRESHOLD — EXTRACT INTERCEPT ══ -->
+
+<!-- ══ MULTI-SHEET EXCEL EXPORT — one sheet per PDF file ══ -->
+
+  <script src="app.js" defer></script>
+  <script src="emp-id-patch2.js"></script>
+<script>
+(function(){
+  var TIMEOUT  = 2 * 60 * 60 * 1000; // 2 hours
+  var WARN_AT  = 60 * 1000;           // warn 1 min before
+  var _t = null, _w = null, _loggedIn = false;
+
+  // Warning banner
+  var banner = document.createElement('div');
+  banner.style.cssText = 'position:fixed;top:44px;left:50%;transform:translateX(-50%);z-index:99999;'
+    +'background:rgba(245,158,11,0.97);color:#000;padding:11px 22px;border-radius:10px;'
+    +'font-size:14px;font-weight:700;display:none;align-items:center;gap:12px;'
+    +'box-shadow:0 4px 24px rgba(0,0,0,0.4);white-space:nowrap;';
+  banner.innerHTML = '⚠️ Auto-logout in <span id="_autoSec">60</span>s &nbsp;'
+    +'<button id="_stayBtn" style="background:#000;color:#fff;border:none;border-radius:6px;'
+    +'padding:5px 16px;font-size:13px;font-weight:700;cursor:pointer;">Stay logged in</button>';
+  document.body.appendChild(banner);
+  var secEl = banner.querySelector('#_autoSec');
+  banner.querySelector('#_stayBtn').addEventListener('click', resetTimer);
+
+  function showWarning(){
+    banner.style.display = 'flex';
+    var s = 60;
+    secEl.textContent = s;
+    var tick = setInterval(function(){ secEl.textContent = Math.max(0,--s); if(s<=0) clearInterval(tick); }, 1000);
+    banner._tick = tick;
+  }
+  function hideWarning(){
+    banner.style.display = 'none';
+    if(banner._tick){ clearInterval(banner._tick); banner._tick = null; }
+  }
+
+  function doAutoLogout(){
+    hideWarning();
+    _loggedIn = false;
+    // Clear session so app shows login again
+    sessionStorage.clear();
+    // Show login overlay, hide app
+    var ovl = document.getElementById('loginOvl');
+    var app = document.getElementById('appWrap');
+    if(ovl) ovl.style.display = 'flex';
+    if(app) app.style.display = 'none';
+  }
+
+  function resetTimer(){
+    if(!_loggedIn) return;
+    hideWarning();
+    clearTimeout(_t); clearTimeout(_w);
+    _w = setTimeout(showWarning, TIMEOUT - WARN_AT);
+    _t = setTimeout(doAutoLogout, TIMEOUT);
+  }
+
+  function startTimer(){
+    _loggedIn = true;
+    resetTimer();
+    ['mousemove','mousedown','keydown','scroll','touchstart','click'].forEach(function(e){
+      document.addEventListener(e, resetTimer, {passive:true});
+    });
+  }
+
+  // Watch loginOvl — when it hides, user just logged in
+  function watchLogin(){
+    var ovl = document.getElementById('loginOvl');
+    if(!ovl){ setTimeout(watchLogin, 300); return; }
+    var obs = new MutationObserver(function(){
+      var hidden = ovl.style.display === 'none' || ovl.style.display === '';
+      if(hidden && !_loggedIn) startTimer();
+      if(!hidden && _loggedIn){ _loggedIn = false; clearTimeout(_t); clearTimeout(_w); hideWarning(); }
+    });
+    obs.observe(ovl, {attributes:true, attributeFilter:['style']});
+  }
+
+  document.addEventListener('DOMContentLoaded', watchLogin);
+})();
+</script>
+
+<style>
+@keyframes _loginSpin{to{transform:rotate(360deg)}}
+.login-btn-spinner{display:inline-block;width:16px;height:16px;border:2.5px solid rgba(255,255,255,.25);border-top-color:#fff;border-radius:50%;animation:_loginSpin .65s linear infinite;vertical-align:middle;margin-right:7px;flex-shrink:0;}
+.login-btn.loading{opacity:.85;cursor:not-allowed;pointer-events:none;transform:none!important;box-shadow:0 4px 20px rgba(46,90,172,.4)!important;}
+@keyframes _loginPulse{0%,100%{box-shadow:0 4px 20px rgba(46,90,172,.4)}50%{box-shadow:0 4px 30px rgba(46,90,172,.8),0 0 18px rgba(74,122,220,.5)}}
+.login-btn.loading{animation:_loginPulse 1.2s ease-in-out infinite;}
+</style>
+
+<script>
+(function(){
+  function showUserBadge(name){
+    var badge = document.getElementById('loggedUserBadge');
+    var nameEl = document.getElementById('loggedUserName');
+    if(!badge || !nameEl) return;
+    nameEl.textContent = name ? name.toUpperCase() : '';
+    badge.style.display = 'flex';
+  }
+  function hideUserBadge(){
+    var badge = document.getElementById('loggedUserBadge');
+    if(badge) badge.style.display = 'none';
+  }
+
+  // Restore badge if already logged in (page reload)
+  var savedUser = sessionStorage.getItem('_empwps_user');
+  if(savedUser){
+    document.addEventListener('DOMContentLoaded', function(){
+      // Wait briefly for appWrap to be shown before displaying badge
+      setTimeout(function(){ showUserBadge(savedUser); }, 400);
+    });
+  }
+
+  // Patch doLogout to also hide badge
+  function patchLogout(){
+    if(typeof window.doLogout !== 'function'){ setTimeout(patchLogout, 80); return; }
+    var _origLogout = window.doLogout;
+    window.doLogout = function(){
+      sessionStorage.removeItem('_empwps_user');
+      hideUserBadge();
+      _origLogout.apply(this, arguments);
+    };
+  }
+  patchLogout();
+
+  // Also hide on auto-logout (sessionStorage.clear is called)
+  var _origScClear = sessionStorage.clear.bind(sessionStorage);
+  sessionStorage.clear = function(){
+    _origScClear();
+    hideUserBadge();
+  };
+
+  function patchLoginBtn(){
+    var btn = document.getElementById('loginBtn');
+    if(!btn || typeof window.doLogin !== 'function'){ setTimeout(patchLoginBtn, 80); return; }
+    var _orig = window.doLogin;
+    window.doLogin = function(){
+      if(btn.classList.contains('loading')) return;
+      // Capture username before call clears the input
+      var capturedUser = (document.getElementById('loginUser')||{}).value || '';
+      btn.innerHTML = '<span class="login-btn-spinner"></span>VERIFYING…';
+      btn.classList.add('loading');
+
+      function restore(label){
+        btn.classList.remove('loading');
+        btn.innerHTML = label || '🔐 LOGIN';
+      }
+
+      var err = document.getElementById('loginErr');
+      if(err){
+        var errObs = new MutationObserver(function(){
+          if(err.classList.contains('on')||err.style.display==='block'){
+            restore('🔐 LOGIN'); errObs.disconnect();
+          }
+        });
+        errObs.observe(err,{attributes:true,attributeFilter:['class','style']});
+      }
+
+      var ovl = document.getElementById('loginOvl');
+      if(ovl){
+        var ovlObs = new MutationObserver(function(){
+          if(ovl.style.display==='none'||ovl.style.opacity==='0'){
+            restore('✅ LOGIN'); ovlObs.disconnect(); if(err)errObs.disconnect();
+            // Show username badge
+            sessionStorage.setItem('_empwps_user', capturedUser);
+            showUserBadge(capturedUser);
+          }
+        });
+        ovlObs.observe(ovl,{attributes:true,attributeFilter:['style','class']});
+      }
+
+      setTimeout(function(){ if(btn.classList.contains('loading')) restore('🔐 LOGIN'); }, 12000);
+      _orig.apply(this, arguments);
+    };
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', patchLoginBtn);
+  else patchLoginBtn();
+})();
+</script>
