@@ -157,7 +157,12 @@ function loadApp() {
       var scripts = Array.from(root.querySelectorAll('script'));
 
       function runNext(i) {
-        if (i >= scripts.length) return;
+        if (i >= scripts.length) {
+          // All scripts loaded — DOMContentLoaded already fired, so dispatch it again
+          // so that app.js tutorial init and other listeners run correctly
+          document.dispatchEvent(new Event('DOMContentLoaded'));
+          return;
+        }
         var old = scripts[i];
         var s = document.createElement('script');
 
