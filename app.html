@@ -524,50 +524,6 @@
 
 </div>
 
-<!-- ══ AI CHAT STYLES ══ -->
-
-<!-- ══ AI CHAT HTML ══ -->
-<button id="aiChatBtn" onclick="toggleAiChat()" title="Ask AI Assistant">
-  🤖
-  <span id="aiChatBadge">AI</span>
-</button>
-
-<div id="aiChatPanel">
-  <div class="ai-header">
-    <div class="ai-avatar bot ai-header-icon">🤖</div>
-    <div class="ai-header-info">
-      <div class="ai-header-title">HR AI Assistant</div>
-      <div class="ai-header-sub">Powered by EMPWPSCTR · Always Ready</div>
-    </div>
-    <button class="ai-header-close" onclick="toggleAiChat()">✕ Close</button>
-  </div>
-
-  <div id="aiChatView" style="display:flex;flex-direction:column;flex:1;min-height:0;">
-    <div class="ai-messages" id="aiMessages"></div>
-    <div class="ai-quick-btns">
-      <span class="ai-quick-label">Quick</span>
-      <span class="ai-quick-btn" onclick="quickAsk('How do I extract employee data?')">📋 Extract data</span>
-      <span class="ai-quick-btn" onclick="quickAsk('What do expiry colors mean?')">🎨 Expiry colors</span>
-      <span class="ai-quick-btn" onclick="quickAsk('How to export to Excel?')">📊 Excel export</span>
-      <span class="ai-quick-btn" onclick="quickAsk('How does WPS salary work?')">💰 WPS salary</span>
-      <span class="ai-quick-btn" onclick="quickAsk('Is my data private and secure?')">🔒 Privacy</span>
-      <span class="ai-quick-btn" onclick="quickAsk('What nationalities are supported?')">🌍 Nationalities</span>
-      <span class="ai-quick-btn" onclick="quickAsk('How does history work?')">🕓 History</span>
-      <span class="ai-quick-btn" onclick="quickAsk('The app is not working, what do I do?')">❌ Troubleshoot</span>
-      <span class="ai-quick-btn" onclick="quickAsk('What can you see on my current screen?')">Screen check</span>
-    </div>
-    <div class="ai-input-area">
-      <textarea class="ai-input" id="aiUserInput" placeholder="Ask anything about this app…" rows="1"
-        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAiMsg();}"
-        oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,80)+'px';"
-      ></textarea>
-      <button class="ai-send" id="aiSendBtn" onclick="sendAiMsg()">➤</button>
-    </div>
-  </div>
-</div>
-
-<!-- ══ AI CHAT SCRIPT ══ -->
-
 <!-- ══ WPS SALARY % THRESHOLD — EXTRACT INTERCEPT ══ -->
 
 <!-- ══ MULTI-SHEET EXCEL EXPORT — one sheet per PDF file ══ -->
